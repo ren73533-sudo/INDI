@@ -5,9 +5,10 @@ Le trader a demandé une première version itérative des key levels et reversal
 ## Lire d'abord
 
 1. `docs/GPT-HANDOFF.md` : cahier des charges d'origine, conservé sans modification.
-2. `docs/DECISIONS.md` : choix explicites de la V0.1, ambiguïtés et limites.
-3. `docs/TRADINGVIEW-CHECKLIST.md` : recette sur données réelles.
-4. `indicators/nq_key_levels.pine` : source autonome à coller dans TradingView.
+2. `REPORT.md` : revue de la V0.1 et correctifs de la V0.2. À lire avant de toucher au Pine.
+3. `docs/DECISIONS.md` : choix explicites, ambiguïtés et limites.
+4. `docs/TRADINGVIEW-CHECKLIST.md` : recette sur données réelles.
+5. `indicators/nq_key_levels.pine` : source autonome à coller dans TradingView.
 
 ## Invariants de stratégie
 

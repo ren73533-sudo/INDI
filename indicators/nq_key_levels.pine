@@ -1,5 +1,5 @@
 //@version=6
-indicator("INDI · NQ Key Levels & Reversal Zones [v0.1]", "INDI NQ", overlay = true, max_lines_count = 400, max_boxes_count = 200, max_labels_count = 400, max_bars_back = 500)
+indicator("INDI · NQ Key Levels & Reversal Zones [v0.2]", "INDI NQ", overlay = true, max_lines_count = 500, max_boxes_count = 200, max_labels_count = 400, max_bars_back = 500)
 
 // Strategy requirements: docs/GPT-HANDOFF.md. Implementation decisions: docs/DECISIONS.md.
 // Display only. No orders, alerts, directional filter or entry signals.
@@ -29,7 +29,8 @@ string expansionMode = input.string("Ensemble", "Armement ±3 / ±3.5 / ±4", op
 bool showFib = input.bool(true, "Afficher les niveaux individuels", group = G_FIB)
 bool showGeometry = input.bool(false, "Afficher 0 / 1 / 1.5 (contexte uniquement)", group = G_FIB)
 bool showDormant = input.bool(false, "Afficher l'expansion dormante en gris", group = G_FIB)
-bool showPrevious = input.bool(true, "Afficher les Fib du jour UTC précédent", tooltip = "Reste actif dans le moteur même si masqué. Deux jours calendaires et plus : supprimés. Aucun report du vendredi au lundi.", group = G_FIB)
+bool showPrevious = input.bool(true, "Afficher les Fib de la série précédente", tooltip = "Reste actif dans le moteur même si masqué. Seules les deux dernières séries publiées sont conservées.", group = G_FIB)
+string fibRetention = input.string("Séance précédente", "Conservation des Fib", options = ["Séance précédente", "Jour calendaire précédent"], tooltip = "Séance précédente (défaut v0.2) : on garde les deux dernières séries RÉELLEMENT publiées, donc vendredi reste visible le lundi. Jour calendaire précédent : comportement v0.1, une série de plus de 24 h est supprimée même si aucune autre n'a été publiée depuis.", group = G_FIB)
 
 bool useVwap = input.bool(true, "Activer VWAP ±2 / ±3 dans les confluences", group = G_VWAP)
 string vwapAnchor = input.string("Futures 22:00 UTC", "Ancrage", options = ["Futures 22:00 UTC", "Futures CME 18:00 New York", "RTH New York", "Jour UTC", "Heure UTC personnalisée"], group = G_VWAP)
@@ -63,6 +64,8 @@ bool showRb = input.bool(true, "Afficher les zones de mèche", group = G_RB)
 
 bool showLabels = input.bool(true, "Étiquettes avec prix", group = G_VIEW)
 bool showDashboard = input.bool(true, "Tableau d'état", group = G_VIEW)
+bool persistFib = input.bool(false, "Tracer les Fib principaux dans l'historique", tooltip = "VALIDATION. Tout le reste n'est dessiné que sur la dernière bougie : sans ceci, impossible de remonter à une matinée annotée sans Bar Replay. Trace ±2 / ±2.25 / ±2.5 de chaque jour publié, de leur naissance à la fin de leur journée UTC. Les niveaux dormants, VWAP, profil et POI restent hors historique : ils se recalculent et les figer suggérerait des signaux rétrospectifs.", group = G_VIEW)
+int persistDays = input.int(40, "Jours de Fib historiques conservés", minval = 1, maxval = 80, tooltip = "6 lignes par jour. Au-delà, les plus anciennes sont supprimées pour rester sous la limite d'objets de TradingView.", group = G_VIEW)
 bool showDead = input.bool(false, "Afficher aussi les niveaux invalidés en gris", group = G_VIEW)
 int extendBars = input.int(35, "Projection à droite (bougies)", minval = 5, maxval = 250, group = G_VIEW)
 int labelSpacing = input.int(0, "Décalage entre étiquettes (bougies)", minval = 0, maxval = 3, group = G_VIEW)
@@ -185,19 +188,28 @@ f_range() =>
 [range0, range1, rangeDay, rangeReady] = request.security(syminfo.tickerid, fibTf, f_range(), gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_on)
 
 var array<Level> fibs = array.new<Level>()
+var array<int> fibEpochs = array.new_int()
+var array<line> staticLines = array.new<line>()
 var int publishedDay = na
 var float today0 = na
 var float today1 = na
 int utcDay = f_day(time)
 bool newDay = barstate.isfirst or utcDay != utcDay[1]
+// v0.2: retention counts PUBLISHED series, not elapsed calendar days. A calendar
+// purge deletes Friday during the weekend, so Monday opens with no previous set
+// at all — one trading day in five running a concept short.
+bool calendarRetention = fibRetention == "Jour calendaire précédent"
 if newDay
     today0 := na
     today1 := na
-    int i = array.size(fibs) - 1
-    while i >= 0
-        if array.get(fibs, i).epoch < utcDay - DAY_MS
-            array.remove(fibs, i)
-        i -= 1
+    if calendarRetention
+        int i = array.size(fibs) - 1
+        while i >= 0
+            if array.get(fibs, i).epoch < utcDay - DAY_MS
+                array.remove(fibs, i)
+            i -= 1
+        while array.size(fibEpochs) > 0 and array.get(fibEpochs, 0) < utcDay - DAY_MS
+            array.shift(fibEpochs)
 
 if rangeReady and rangeDay == utcDay and (na(publishedDay) or publishedDay != rangeDay)
     today0 := range0
@@ -213,6 +225,22 @@ if rangeReady and rangeDay == utcDay and (na(publishedDay) or publishedDay != ra
         level.leg := range1 - range0
         level.active := math.abs(multiplier) <= 2.5
         array.push(fibs, level)
+        // Static trace: primaries only. Expansion arms later, so drawing it at
+        // birth would show a level that was not yet available that morning.
+        if persistFib and level.active
+            array.push(staticLines, line.new(level.born, price, utcDay + DAY_MS, price, xloc = xloc.bar_time, color = color.new(fibTodayColor, 35), style = f_style(), width = lineWidth))
+    if not array.includes(fibEpochs, utcDay)
+        array.push(fibEpochs, utcDay)
+    if not calendarRetention
+        while array.size(fibEpochs) > 2
+            int stale = array.shift(fibEpochs)
+            int k = array.size(fibs) - 1
+            while k >= 0
+                if array.get(fibs, k).epoch == stale
+                    array.remove(fibs, k)
+                k -= 1
+    while array.size(staticLines) > persistDays * 6
+        line.delete(array.shift(staticLines))
 
 for level in fibs
     bool justArmed = false
@@ -434,13 +462,15 @@ plot(curveVisible and showSd1 and not anchorChanged ? mean - deviation : na, "VW
 var array<line> drawnLines = array.new<line>()
 var array<label> drawnLabels = array.new<label>()
 var array<box> drawnBoxes = array.new<box>()
-var table dashboard = table.new(position.top_right, 2, 10, bgcolor = panelColor, border_width = 1)
+var table dashboard = table.new(position.top_right, 2, 11, bgcolor = panelColor, border_width = 1)
 
 f_priceText(Level level) =>
     level.lo == level.hi ? str.tostring(level.lo, format.mintick) : str.tostring(level.lo, format.mintick) + "–" + str.tostring(level.hi, format.mintick)
 
+// "J-1" lies once retention follows sessions: on a Monday the previous series is
+// Friday's. The actual UTC date removes the ambiguity.
 f_name(Level level) =>
-    level.kind == 1 ? (level.epoch == utcDay ? "Fib J " : "Fib J-1 ") + level.caption : level.caption
+    level.kind == 1 ? (level.epoch == utcDay ? "Fib J " : "Fib " + str.format_time(level.epoch, "dd/MM", "UTC") + " ") + level.caption : level.caption
 
 f_color(Level level) =>
     color c = switch level.kind
@@ -569,11 +599,12 @@ if barstate.islast
         string fibState = publishedDay == utcDay ? str.tostring(today0, format.mintick) + " → " + str.tostring(today1, format.mintick) : time < utcDay + rangeEnd * 60000 ? "Construction UTC…" : "Absente / incomplète / ambiguë"
         string vwapState = not vwapComplete ? "Historique / ancrage incomplet" : not accumulateVwap ? "Hors RTH" : weight <= 0 ? "Volume absent" : not vwapReady ? "Initialisation…" : "Formule hlc3 pondérée · ≠ DRW vérifié"
         string vpState = vpOverflow ? "CAPACITÉ DÉPASSÉE : élargir les lignes" : not vpComplete ? "Journée incomplète" : not vpReady ? "Initialisation / volume absent" : "ESTIMÉ · " + str.tostring(array.size(profile)) + " lignes"
-        array<string> keys = array.from("INDI NQ · v0.1", "Fib " + fibTf + "m", "VWAP", "Ancrage", "Profil UTC", "RB conservés", "Confluences", "Invalidation", "Données", "Validation")
+        string retentionState = (calendarRetention ? "Jour calendaire" : "Séance") + " · " + str.tostring(array.size(fibEpochs)) + " série(s)" + (persistFib ? " · historique tracé" : "")
+        array<string> keys = array.from("INDI NQ · v0.2", "Fib " + fibTf + "m", "Conservation", "VWAP", "Ancrage", "Profil UTC", "RB conservés", "Confluences", "Invalidation", "Données", "Validation")
         string dataState = (not na(volume) and volume > 0 ? "Volume disponible" : "Volume absent / nul") + (syminfo.root == "NQ" ? " · NQ" : " · vérifier NQ1!")
-        array<string> values = array.from("Affichage uniquement", fibState, vwapState, vwapAnchor, vpState, str.tostring(array.size(rbs)) + " · retirés par limite : " + str.tostring(evictedRb), str.tostring(poiCount) + " zones · " + str.tostring(array.size(candidates)) + " niveaux actifs", str.tostring(invalidation, "#.##") + " pts · extrêmes", dataState, "V1 : à comparer au graphique manuel")
-        for row = 0 to 9
+        array<string> values = array.from("Affichage uniquement", fibState, retentionState, vwapState, vwapAnchor, vpState, str.tostring(array.size(rbs)) + " · retirés par limite : " + str.tostring(evictedRb), str.tostring(poiCount) + " zones · " + str.tostring(array.size(candidates)) + " niveaux actifs", str.tostring(invalidation, "#.##") + " pts · extrêmes", dataState, "V1 : à comparer au graphique manuel")
+        for row = 0 to 10
             table.cell(dashboard, 0, row, array.get(keys, row), text_color = textColor, text_size = f_font(), bgcolor = panelColor)
             table.cell(dashboard, 1, row, array.get(values, row), text_color = textColor, text_size = f_font(), bgcolor = panelColor)
     else
-        table.clear(dashboard, 0, 0, 1, 9)
+        table.clear(dashboard, 0, 0, 1, 10)
