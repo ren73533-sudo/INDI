@@ -1,8 +1,8 @@
-# INDI — NQ Key Levels & Reversal Zones v0.3
+# INDI — NQ Key Levels & Reversal Zones v0.3.1
 
 A customizable **TradingView Pine Script v6** indicator for the trader's key levels and confluence zones. Original requirements: [docs/GPT-HANDOFF.md](docs/GPT-HANDOFF.md). No orders, entry arrows, trade alerts or directional bias filter.
 
-**Full download: [INDI-v0.3.0.zip](https://github.com/ren73533-sudo/INDI/blob/main/downloads/INDI-v0.3.0.zip).** Open the ZIP on GitHub and use its download button. After extraction, read `START_HERE.md`. The source and tests are also available directly in this repository.
+**Full download: [INDI-v0.3.1.zip](https://github.com/ren73533-sudo/INDI/blob/main/downloads/INDI-v0.3.1.zip).** Open the ZIP on GitHub and use its download button. After extraction, read `START_HERE.md`. The source and tests are also available directly in this repository.
 
 ## Use in TradingView
 
@@ -12,6 +12,8 @@ A customizable **TradingView Pine Script v6** indicator for the trader's key lev
 4. Keep historical Fib traces OFF initially. Customize calibration and colors in Settings.
 
 TradingView compilation and real-chart behavior still need external verification. Offline checks use PineTS, a third-party runtime.
+
+The full display is retained: **RB wick boxes, individual Fib levels, VWAP references and curves, VAH / VAL / POC, price labels, colors and calibration**. RB boxes remain visible even when no POI qualifies. The original 71 input IDs, defaults, types, titles and groups are preserved. v0.3.1 removes the extra missing-minute and wall-clock adjacency restrictions added to RB detection in v0.3, restoring the original next-available-source-candle rule.
 
 ## Same POIs across chart timeframes
 
@@ -43,7 +45,7 @@ Settings cover concept participation, tolerance, minimum concepts, invalidation,
 - DRW equivalence is unverified without its source. The profile estimates volume distribution; bar volume is not actual volume-at-price.
 - Forming-minute changes appear in the next snapshot, including invalidations and expansion.
 - Source history defaults to 20,000 1m candles, adjustable from 3,000 to 100,000 and subject to plan/feed availability. Price adjustments and session settings must match between charts.
-- Incomplete source candles or missing minutes in the Fib window prevent publication. Incomplete VWAP / profile initialization is flagged.
+- Missing minutes in the Fib construction window prevent Fib publication. RB candles aggregate available data; an absent minute does not itself disqualify a rejection. Incomplete VWAP / profile initialization is flagged.
 - Historical Fib traces show static anchors, continue through invalidations, and are not a trade or eligibility record. Use Bar Replay for past confluence.
 - RB retention is limited by configured capacity and available source history. Optional 4H structure context remains unimplemented and is not a filter.
 

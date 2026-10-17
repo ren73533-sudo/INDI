@@ -1,4 +1,4 @@
-# Current implementation decisions — v0.3
+# Current implementation decisions — v0.3.1
 
 The original specification is unchanged in [GPT-HANDOFF.md](GPT-HANDOFF.md). Historical v0.2 reasoning is in `REPORT.md`; this document describes the current implementation.
 
@@ -33,11 +33,11 @@ These are working calibration defaults. DRW equivalence, discretionary RB matchi
 
 ## Timing and data
 
-A single 1m engine builds complete UTC-aligned construction / RB candles. Incomplete buckets are discarded. The Fib range requires its complete sequence of source candles, and equal extremes keep the first occurrence. If both extremes belong to the same candle or the range is flat, no anchor order is invented.
+A single 1m engine builds UTC-aligned construction / RB candles. Fib construction requires complete buckets. RB construction aggregates available data, restoring v0.2 source-bar behavior: sparse minutes do not disqualify the candle, and an absent final minute is finalized at the next available bar. The Fib range requires its complete sequence of source candles, and equal extremes keep the first occurrence. If both extremes belong to the same candle or the range is flat, no anchor order is invented.
 
 The engine exports a deep copy of the state **before the forming minute is updated**. This gives the same completed-minute levels and reference price across 1m / 5m / 10m / 15m / 30m / 1h / 4h, with up to one minute of delay. A completed range can become available at its boundary, e.g. 07:30 UTC; the v0.2 report's claimed mandatory extra 5-minute delay does not apply.
 
-New Fib levels and RBs cannot be invalidated by wicks preceding their birth. Expansion is not invalidated retroactively on its arming candle. Rejection and confirmation candles must be consecutive in time; no confirmation across a market closure.
+New Fib levels and RBs cannot be invalidated by wicks preceding their birth. Expansion is not invalidated retroactively on its arming candle. Rejection and confirmation must be consecutive available source candles, as in v0.2. The extra v0.3 wall-clock adjacency restriction was removed; the next available candle can follow a session gap.
 
 Source history defaults to 20,000 1m candles, configurable within plan/feed limits. The panel reports the actual snapshot time. Identical data and input settings are required to compare charts. VWAP history is sampled at the display timeframe; current references come from the shared engine.
 
@@ -48,6 +48,8 @@ The daily UTC profile distributes each candle's volume by price-range overlap on
 For point levels, cluster width is at most tolerance. For wick intervals, use their common overlap / gap: `max(lower edges) - min(upper edges) <= tolerance`. No transitive chaining. One broad RB can participate in multiple separate groups. Subsets are suppressed; nearest groups are retained up to the display cap. Colors and nearest-zone ranking use the engine reference price.
 
 Historical primary Fib traces are static anchor references only and continue through invalidation. Their maximum is 75 sets × 6 = 450 lines, with pruning before allocation and capacity reserved for live references. They are not an eligibility or trade history. Use Bar Replay for historical confluence.
+
+The trader explicitly requires the full original display. Keep RB wick boxes, individual Fib / VWAP / profile references, historical VWAP curves, labels, calibration and color controls. Reference display is independent of confluence qualification; a lone RB is still drawn. Only a POI mark requires the configured minimum (two distinct types by default).
 
 ## Outstanding external checks
 

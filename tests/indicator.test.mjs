@@ -147,6 +147,14 @@ test('strict concepts reject Fib + Fib; loose mode accepts the same two levels',
   assert.equal(plotValue(loose, 'TEST zones'), 1);
 });
 
+test('each pair of distinct concept types qualifies without requiring the other families', async () => {
+  for (const [first, second] of [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]) {
+    const result = await run(shortBars(), {}, poiProbe([[100, 100, first], [105, 105, second]]));
+    assert.equal(plotValue(result, 'TEST zones'), 1, `types ${first} + ${second}`);
+    assert.equal(plotValue(result, 'TEST largest'), 2);
+  }
+});
+
 test('POI tolerance constrains the entire cluster, without chaining distant points', async () => {
   const result = await run(shortBars(), {}, poiProbe([[100, 100, 1], [110, 110, 2], [120, 120, 3]]));
   assert.equal(plotValue(result, 'TEST zones'), 2);

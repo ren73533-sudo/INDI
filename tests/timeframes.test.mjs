@@ -37,6 +37,14 @@ test('1m / 5m / 10m / 15m / 30m / 1h / 4h share identical source state and nonem
     assert.ok(snapshot.zones.length > 0, `expected actual confluence on ${tf}`);
     assert.ok(snapshot.zones.every(z => z.kinds >= 2));
     const boxes = result.plots.__boxes__.data.at(-1).value;
+    const lines = result.plots.__lines__.data.at(-1).value;
+    for (const family of [snapshot.fibs, snapshot.vwap, snapshot.vp]) {
+      const visible = family.filter(level => level.active && !level.dead);
+      assert.ok(visible.length > 0, `expected individual references on ${tf}`);
+      for (const level of visible)
+        assert.ok(lines.some(line => line.x1 === level.born && line.y1 === level.lo && line.y2 === level.hi), `individual ${level.caption} line missing on ${tf}`);
+    }
+    assert.ok(result.plots['VWAP hlc3'].data.some(point => Number.isFinite(point.value)), `VWAP curve missing on ${tf}`);
     for (const zone of snapshot.zones)
       assert.ok(boxes.some(box => box.left === snapshot.asOf && box.top === zone.hi + 0.5 && box.bottom === zone.lo - 0.5), `POI box not drawn on ${tf}`);
     if (!baseline) baseline = snapshot;
@@ -87,12 +95,57 @@ test('confirmed 5m / 10m / 15m RBs survive chart-timeframe changes', async () =>
     [104, 105, 115, 103], [105, 102, 106, 101], [102, 102, 103, 101]];
   const bars = Array.from({ length: 90 }, (_, i) => candle(SEPT23 + i * MINUTE, ...groups[Math.floor(i / 15)]));
   let baseline;
-  for (const tf of ['1', '10', '240']) {
+  for (const tf of timeframes) {
     const result = await run(bars, {}, '', tf);
     const rbs = levels(result, 'rbs').map(levelSummary);
     assert.ok(rbs.some(l => l.caption === 'RB 15m'), tf);
+    const boxes = result.plots.__boxes__.data.at(-1).value;
+    for (const rb of rbs.filter(level => level.active && !level.dead))
+      assert.ok(boxes.some(box => box.left === rb.born && box.top === rb.hi && box.bottom === rb.lo), `${rb.caption} box missing on ${tf}`);
     if (!baseline) baseline = rbs;
     else assert.deepEqual(rbs, baseline, tf);
+  }
+});
+
+test('RB boxes and price labels stay visible without any qualifying POI on every chart timeframe', async () => {
+  const groups = [[100, 101, 102, 99], [101, 102, 103, 100], [102, 103, 104, 101],
+    [104, 105, 115, 103], [105, 102, 106, 101], [102, 102, 103, 101]];
+  const bars = Array.from({ length: 30 }, (_, i) => candle(SEPT23 + i * MINUTE, ...groups[Math.floor(i / 5)]));
+  const inputs = { 'Include Fib in confluence': false, 'Include VWAP ±2 / ±3 in confluence': false,
+    'Include VAH / VAL in confluence': false, 'Include RBs in confluence': false, '10 min': false, '15 min': false };
+  for (const tf of timeframes) {
+    const result = await run(bars, inputs, '', tf);
+    assert.equal(state(result, 'zones').array.length, 0, tf);
+    const rb = levels(result, 'rbs')[0];
+    assert.ok(rb && !rb.dead, tf);
+    const boxes = result.plots.__boxes__.data.at(-1).value;
+    assert.ok(boxes.some(box => box.left === rb.born && box.top === 115 && box.bottom === 105), tf);
+    const labels = result.plots.__labels__.data.at(-1).value;
+    assert.ok(labels.some(label => label.text.startsWith('RB 5m · ')), tf);
+  }
+  const hidden = await run(bars, { ...inputs, 'Show rejection wick zones': false });
+  assert.equal(hidden.plots.__boxes__.data.at(-1).value.length, 0);
+  assert.equal(levels(hidden, 'rbs').length, 1, 'display toggle must not remove the RB from the engine');
+});
+
+test('RB detection retains the original next-available-candle rule with missing minutes and session gaps', async () => {
+  const groups = [[100, 101, 102, 99], [101, 102, 103, 100], [102, 103, 104, 101],
+    [104, 105, 115, 103], [105, 102, 106, 101], [102, 102, 103, 101]];
+  const full = Array.from({ length: 30 }, (_, i) => candle(SEPT23 + i * MINUTE, ...groups[Math.floor(i / 5)]));
+  const missing = full.filter((_, i) => ![16, 19, 20, 23, 24].includes(i));
+  const sessionGap = full.map((bar, i) => i < 20 ? bar : { ...bar,
+    openTime: bar.openTime + 60 * MINUTE, closeTime: bar.closeTime + 60 * MINUTE });
+  for (const bars of [missing, sessionGap]) {
+    let baseline;
+    for (const tf of ['1', '10', '240']) {
+      const result = await run(bars, { '10 min': false, '15 min': false }, '', tf);
+      const rbs = levels(result, 'rbs').map(levelSummary);
+      assert.equal(rbs.length, 1, `lost the original RB on ${tf}`);
+      assert.equal(rbs[0].lo, 105);
+      assert.equal(rbs[0].hi, 115);
+      if (!baseline) baseline = rbs;
+      else assert.deepEqual(rbs, baseline, tf);
+    }
   }
 });
 

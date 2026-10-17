@@ -1,5 +1,5 @@
 //@version=6
-indicator("INDI · NQ Key Levels & Reversal Zones [v0.3]", "INDI NQ", overlay = true, max_lines_count = 500, max_boxes_count = 200, max_labels_count = 400, max_bars_back = 500, dynamic_requests = true)
+indicator("INDI · NQ Key Levels & Reversal Zones [v0.3.1]", "INDI NQ", overlay = true, max_lines_count = 500, max_boxes_count = 200, max_labels_count = 400, max_bars_back = 500, dynamic_requests = true)
 
 // Strategy requirements: docs/GPT-HANDOFF.md. Implementation decisions: docs/DECISIONS.md.
 // Display only. No orders, alerts, directional filter or entry signals.
@@ -13,8 +13,6 @@ const string G_RB = "05 · Confirmed Rejection Blocks"
 const string G_VIEW = "06 · Display"
 const string G_COL = "07 · Colors"
 const int DAY_MS = 86400000
-
-int engineBars = input.int(20000, "Engine history (1-minute candles)", minval = 3000, maxval = 100000, tooltip = "Shared source history on every chart timeframe. Increase if earlier sessions or older RBs are missing. Availability depends on your TradingView plan and feed.", group = G_CORE)
 
 float tolerance = input.float(15.0, "POI tolerance (points)", minval = 5, maxval = 50, step = 0.25, group = G_CORE)
 bool distinctKinds = input.bool(true, "Require distinct concept types", tooltip = "ON: Fib + VWAP, for example. Two Fib levels or two RBs still count as one type. OFF: two levels are sufficient.", group = G_CORE)
@@ -93,6 +91,9 @@ color poiAtPriceColor = input.color(#e3bd54, "POI at price", group = G_COL)
 color inactiveColor = input.color(#747b88, "Dormant / invalidated", group = G_COL)
 color textColor = input.color(#edf2f7, "Text", group = G_COL)
 color panelColor = input.color(#18212d, "Panel background", group = G_COL)
+
+// Append new controls after the original inputs to preserve their input IDs.
+int engineBars = input.int(20000, "Engine history (1-minute candles)", minval = 3000, maxval = 100000, tooltip = "Shared source history on every chart timeframe. Increase if earlier sessions or older RBs are missing. Availability depends on your TradingView plan and feed.", group = G_CORE)
 
 // kind: 1 Fib, 2 VWAP, 3 volume profile, 4 RB. side: +1 resistance, -1 support.
 type Level
@@ -187,27 +188,33 @@ f_anchor(string tz, int h, int m) =>
     int dayOffset = localMinute < h * 60 + m ? -1 : 0
     timestamp(tz, year(time, tz), month(time, tz), dayofmonth(time, tz) + dayOffset, h, m)
 
-// One invocation per distinct source timeframe. Incomplete source candles are
-// discarded, including truncated history and missing-minute buckets.
-f_aggregate(int minutes) =>
+// Fib needs the complete construction window. RBs keep the original source-bar
+// definition: aggregate the available trades, including sparse source candles.
+// If the final minute is absent, publish that closed RB candle at the next bar.
+f_aggregate(int minutes, bool requireFull) =>
     int duration = minutes * 60000
     int bucket = int(math.floor(time / duration)) * duration
     var Candle current = na
     var int count = 0
     var bool startsAtBoundary = false
+    var bool emitted = false
+    Candle completed = na
     if na(current) or current.start != bucket
+        if not na(current) and not emitted and not requireFull
+            completed := current.copy()
         current := Candle.new(bucket, bucket + duration, open, high, low, close, nz(volume))
         count := 1
         startsAtBoundary := time == bucket
+        emitted := false
     else
         current.h := math.max(current.h, high)
         current.l := math.min(current.l, low)
         current.c := close
         current.v += nz(volume)
         count += 1
-    Candle completed = na
-    if time_close == current.finish and startsAtBoundary and count == minutes
+    if na(completed) and time_close == current.finish and (not requireFull or (startsAtBoundary and count == minutes))
         completed := current.copy()
+        emitted := true
     completed
 
 f_range(Candle completed) =>
@@ -268,7 +275,6 @@ f_updateRbs(Candle completed, array<Candle> history, array<Level> levels, string
             Candle rejection = array.get(history, 1)
             Candle before = array.get(history, 2)
             Candle earlier = array.get(history, 2 + leadBars)
-            bool consecutive = confirmation.start == rejection.finish
             float bodyHi = math.max(rejection.o, rejection.c)
             float bodyLo = math.min(rejection.o, rejection.c)
             float body = math.max(bodyHi - bodyLo, syminfo.mintick)
@@ -281,8 +287,8 @@ f_updateRbs(Candle completed, array<Candle> history, array<Level> levels, string
             bool rejectLow = span > 0 and lower >= wickBodyRatio * body and lower >= span * wickPercent / 100.0
             bool reverseDown = confirmation.c < confirmation.o and confirmation.c < (rbConfirm == "Body" ? bodyLo : rejection.l)
             bool reverseUp = confirmation.c > confirmation.o and confirmation.c > (rbConfirm == "Body" ? bodyHi : rejection.h)
-            bool upperRb = consecutive and upMove and rejectHigh and reverseDown and confirmation.h < rejection.h + invalidation
-            bool lowerRb = consecutive and downMove and rejectLow and reverseUp and confirmation.l > rejection.l - invalidation
+            bool upperRb = upMove and rejectHigh and reverseDown and confirmation.h < rejection.h + invalidation
+            bool lowerRb = downMove and rejectLow and reverseUp and confirmation.l > rejection.l - invalidation
             if upperRb or lowerRb
                 array.push(levels, f_level(upperRb ? bodyHi : rejection.l, upperRb ? rejection.h : bodyLo, 4, caption, confirmation.finish, rejection.start, upperRb ? 1 : -1))
         while array.size(history) > leadBars + 3
@@ -339,7 +345,7 @@ f_engine() =>
     int utcDay = f_day(time)
     bool newDay = na(stateDay) or utcDay != stateDay
     bool calendarRetention = fibRetention == "Previous calendar day"
-    [range0, range1, rangeDay, rangeReady] = f_range(f_aggregate(int(fibSeconds / 60)))
+    [range0, range1, rangeDay, rangeReady] = f_range(f_aggregate(int(fibSeconds / 60), true))
     if newDay
         today0 := na
         today1 := na
@@ -512,9 +518,9 @@ f_engine() =>
                 if not invalidateMoving
                     level.side := f_side(level.lo, close)
 
-    f_updateRbs(f_aggregate(5), history5, rbs, "RB 5m", rb5)
-    f_updateRbs(f_aggregate(10), history10, rbs, "RB 10m", rb10)
-    f_updateRbs(f_aggregate(15), history15, rbs, "RB 15m", rb15)
+    f_updateRbs(f_aggregate(5, false), history5, rbs, "RB 5m", rb5)
+    f_updateRbs(f_aggregate(10, false), history10, rbs, "RB 10m", rb10)
+    f_updateRbs(f_aggregate(15, false), history15, rbs, "RB 15m", rb15)
     for level in rbs
         if not level.dead and level.born <= time and f_breached(level)
             level.dead := true
@@ -726,7 +732,7 @@ if barstate.islast
         string vwapState = not vwapComplete ? "Incomplete history / anchor" : not accumulateVwap ? "Outside RTH" : weight <= 0 ? "No volume" : not vwapReady ? "Warming up…" : "Weighted hlc3 formula · DRW match unverified"
         string vpState = vpOverflow ? "CAPACITY EXCEEDED: increase row size" : not vpComplete ? "Incomplete UTC day" : not vpReady ? "Warming up / no volume" : "ESTIMATED · " + str.tostring(array.size(profile)) + " rows"
         string retentionState = (calendarRetention ? "Calendar day" : "Session") + " · " + str.tostring((engineAvailable ? snapshot.fibSets : 0)) + " set(s)" + (persistFib ? " · history traces on" : "")
-        array<string> keys = array.from("INDI NQ · v0.3", "1m engine as of", "Fib " + fibTf + "m", "Retention", "VWAP", "Anchor", "UTC profile", "Retained RBs", "Confluence", "Invalidation", "Data", "Validation")
+        array<string> keys = array.from("INDI NQ · v0.3.1", "1m engine as of", "Fib " + fibTf + "m", "Retention", "VWAP", "Anchor", "UTC profile", "Retained RBs", "Confluence", "Invalidation", "Data", "Validation")
         string dataState = (engineAvailable and snapshot.sourceVolume > 0 ? "Volume available" : "Missing / zero volume") + (syminfo.root == "NQ" ? " · NQ" : " · check NQ1!")
         array<string> values = array.from("Display only", engineAvailable ? str.format_time(snapshot.asOf, "yyyy-MM-dd HH:mm", "UTC") + " UTC" : "1m DATA UNAVAILABLE: check history / feed", fibState, retentionState, vwapState, vwapAnchor, vpState, str.tostring(array.size(rbs)) + " · removed by capacity: " + str.tostring(evictedRb), str.tostring(poiCount) + " zones · " + str.tostring(array.size(candidates)) + " active levels", str.tostring(invalidation, "#.##") + " pts · high / low", dataState, "Completed 1m data · up to one minute delay")
         for row = 0 to 11
