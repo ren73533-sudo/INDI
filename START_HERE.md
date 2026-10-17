@@ -1,24 +1,20 @@
-# INDI v0.1.0 — Download bundle
+# INDI v0.3.0 — Start here
 
-## Use the indicator
+Copy the entire `indicators/nq_key_levels.pine` file into a new TradingView Pine Editor indicator, save and add it to NQ1! using standard candles.
 
-Open `indicators/nq_key_levels.pine`, copy the entire file into a new TradingView Pine Editor indicator, save, and add it to a standard NQ1! 1-minute chart. No local installation is needed for TradingView.
+Supported charts: **1m, 5m, 10m, 15m, 30m, 1h, 4h**. A shared 1m engine keeps the same levels and POI rules across them. Its source timestamp appears in the panel. Forming-minute changes are excluded, with up to a one-minute delay. Keep historical Fib traces OFF for the first test.
 
-This is the first iteration. TradingView compilation and real-chart validation remain outstanding. The volume profile is an estimate; the VWAP has not been compared with DRW.
+All indicator text is English. POIs require at least **two distinct concept types** by default. Settings customize calibration, participation, colors, labels and display.
 
-## Continue with Claude Code
+TradingView compilation and real-market validation remain outstanding. The profile is estimated; the VWAP has not been matched against DRW's source.
 
-Open this folder in Claude Code and read `CLAUDE.md`. Original requirements, implementation decisions and a chart-validation checklist are in `docs/`.
+Read `README.md`, `docs/TIMEFRAMES.md` and `docs/TRADINGVIEW-CHECKLIST.md`. `CLAUDE.md` contains the current developer handoff. Original handoff/review documents are historical; current conventions are in `docs/DECISIONS.md`.
 
-## Run offline tests
-
-Node.js 22+ is required only for development tests. Open a terminal in this extracted folder, then run:
+Node.js 22+ is needed only for offline development checks. From this extracted folder:
 
 ```sh
 npm ci --ignore-scripts --no-audit --no-fund
 npm test
 ```
 
-On macOS/Linux, `bash INSTALL.sh` performs both steps. Dependency installation needs access to registry.npmjs.org. The 17 offline checks passed in the cloud using PineTS 0.11.1; this is not an official TradingView compilation.
-
-The complete source and dependency lockfile are included. Generated dependencies and Git metadata are excluded. `SHA256SUMS` contains the checksums of the packaged files.
+On macOS/Linux, `bash INSTALL.sh` performs both steps. The POI reaction-study workflow is in `docs/POI-STUDY.md`; real NQ1! 1m CSV data is still needed. No trading profitability is implied by software tests.

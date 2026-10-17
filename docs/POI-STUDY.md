@@ -48,7 +48,7 @@ npm run study -- /path/to/NQ_1m.csv --session both --threshold 15 --inputs /path
 
 ## Replay instrumentation and limits
 
-The production indicator is left unchanged. Its in-memory replay copy has the same PineTS chart-guard shim documented in `tests/helpers.mjs`. It additionally calculates the profile for every replayed UTC day instead of only `last_bar_time`'s date, and captures zone snapshots after each completed candle. Formulas, confirmation offsets, invalidation, session retention and concept eligibility remain those of the source. A prefix-consistency test compares replayed frames with a run that cannot see the later candles.
+The production indicator is left unchanged. Its in-memory study copy exports every completed-minute engine snapshot instead of only the latest one, and uses the production engine’s daily profile. It materializes custom input default literals to work around PineTS 0.11.1 dropping secondary-request overrides; calculation expressions are unchanged. A flat zero-volume observation minute exposes the state after the final supplied candle, but is never scored. Each snapshot timestamp is checked against the actual candle close. A prefix-consistency test verifies that later data does not change earlier zones. See `TIMEFRAMES.md` for the engine architecture.
 
 PineTS is a third-party runtime. These results, once data is supplied, will still need spot checks against TradingView Bar Replay. The estimated volume profile and unverified DRW match remain limitations. This is not tick replay and cannot establish within-minute execution or exchange queue priority.
 

@@ -1,9 +1,9 @@
 //@version=6
-indicator("INDI · NQ Key Levels & Reversal Zones [v0.2]", "INDI NQ", overlay = true, max_lines_count = 500, max_boxes_count = 200, max_labels_count = 400, max_bars_back = 500)
+indicator("INDI · NQ Key Levels & Reversal Zones [v0.3]", "INDI NQ", overlay = true, max_lines_count = 500, max_boxes_count = 200, max_labels_count = 400, max_bars_back = 500, dynamic_requests = true)
 
 // Strategy requirements: docs/GPT-HANDOFF.md. Implementation decisions: docs/DECISIONS.md.
 // Display only. No orders, alerts, directional filter or entry signals.
-// Confirmed HTF requests use past candles + lookahead_on, never a developing HTF candle.
+// A shared 1-minute engine builds all source candles. Display uses the previous completed minute.
 
 const string G_CORE = "01 · Calibration / confluence"
 const string G_FIB = "02 · Fib STDV · candle bodies only"
@@ -14,6 +14,8 @@ const string G_VIEW = "06 · Display"
 const string G_COL = "07 · Colors"
 const int DAY_MS = 86400000
 
+int engineBars = input.int(20000, "Engine history (1-minute candles)", minval = 3000, maxval = 100000, tooltip = "Shared source history on every chart timeframe. Increase if earlier sessions or older RBs are missing. Availability depends on your TradingView plan and feed.", group = G_CORE)
+
 float tolerance = input.float(15.0, "POI tolerance (points)", minval = 5, maxval = 50, step = 0.25, group = G_CORE)
 bool distinctKinds = input.bool(true, "Require distinct concept types", tooltip = "ON: Fib + VWAP, for example. Two Fib levels or two RBs still count as one type. OFF: two levels are sufficient.", group = G_CORE)
 int minimumConcepts = input.int(2, "Minimum concepts / levels", minval = 2, maxval = 4, group = G_CORE)
@@ -23,9 +25,9 @@ int maxPoi = input.int(15, "Maximum displayed POI zones", minval = 1, maxval = 3
 float poiPadding = input.float(0.5, "POI visual padding (points)", minval = 0, maxval = 10, step = 0.25, tooltip = "Display only: does not change confluence or invalidation.", group = G_CORE)
 
 bool useFib = input.bool(true, "Include Fib in confluence", group = G_FIB)
-string fibTf = input.timeframe("5", "Construction timeframe", options = ["1", "5", "15"], tooltip = "Default: 5 minutes, matching the prototype. Changing this changes candle bodies and anchors. Use a 1-minute or 5-minute chart no higher than this timeframe.", group = G_FIB)
+string fibTf = input.timeframe("5", "Construction timeframe", options = ["1", "5", "10", "15"], tooltip = "Default: 5 minutes, matching the prototype. These candles are built from 1-minute data independently of the chart timeframe. Changing this input changes the Fib anchors.", group = G_FIB)
 string fibWindow = input.session("0000-0730", "Fixed UTC range window", tooltip = "The window must stay within one UTC day without crossing midnight. Both boundaries must align with the construction timeframe.", group = G_FIB)
-string expansionMode = input.string("Both sides", "Arm ±3 / ±3.5 / ±4 expansion", options = ["Both sides", "By multiplier sign"], tooltip = "Both sides: a close outside [-2.5, +2.5] arms both bands. By multiplier sign: each sign arms independently. Uses closes on the chart timeframe.", group = G_FIB)
+string expansionMode = input.string("Both sides", "Arm ±3 / ±3.5 / ±4 expansion", options = ["Both sides", "By multiplier sign"], tooltip = "Both sides: a close outside [-2.5, +2.5] arms both bands. By multiplier sign: each sign arms independently. Uses completed 1-minute closes on every chart timeframe.", group = G_FIB)
 bool showFib = input.bool(true, "Show individual Fib levels", group = G_FIB)
 bool showGeometry = input.bool(false, "Show 0 / 1 / 1.5 (context only)", group = G_FIB)
 bool showDormant = input.bool(false, "Show dormant expansion in gray", group = G_FIB)
@@ -65,7 +67,7 @@ bool showRb = input.bool(true, "Show rejection wick zones", group = G_RB)
 bool showLabels = input.bool(true, "Show labels with prices", group = G_VIEW)
 bool showDashboard = input.bool(true, "Show status panel", group = G_VIEW)
 bool persistFib = input.bool(false, "Show historical primary Fib traces", tooltip = "VALIDATION ONLY. Draws ±2 / ±2.25 / ±2.5 for each published day from publication to UTC day end. These static anchor traces do not track invalidation. Other level objects and POIs show the current state; use Bar Replay to inspect past confluence. Keep this OFF for the first test.", group = G_VIEW)
-int persistDays = input.int(40, "Historical Fib days to retain", minval = 1, maxval = 80, tooltip = "Six lines per day. Older traces are removed beyond this count. Keep at 40 or below to reserve drawing capacity for live levels.", group = G_VIEW)
+int persistDays = input.int(40, "Historical Fib days to retain", minval = 1, maxval = 75, tooltip = "Six lines per day. Older traces are removed beyond this count. Keep at 40 or below to reserve drawing capacity for live levels.", group = G_VIEW)
 bool showDead = input.bool(false, "Show invalidated levels in gray", group = G_VIEW)
 int extendBars = input.int(35, "Right projection (candles)", minval = 5, maxval = 250, group = G_VIEW)
 int labelSpacing = input.int(0, "Label spacing (candles)", minval = 0, maxval = 3, group = G_VIEW)
@@ -115,6 +117,43 @@ type Poi
     string details
     array<int> memberIds
 
+type Candle
+    int start
+    int finish
+    float o
+    float h
+    float l
+    float c
+    float v
+
+type EngineState
+    int asOf
+    int day
+    float referencePrice
+    float sourceVolume
+    float today0
+    float today1
+    int publishedDay
+    int fibSets
+    array<Level> fibs
+    array<Level> vwapLevels
+    array<Level> vpLevels
+    array<Level> rbs
+    array<float> profile
+    float profileVolume
+    int baseRow
+    float mean
+    float m2
+    float weight
+    int vwapEpoch
+    bool vwapComplete
+    bool accumulateVwap
+    bool vwapReady
+    bool vpComplete
+    bool vpOverflow
+    bool vpReady
+    int evictedRb
+
 f_day(int t) =>
     timestamp("UTC", year(t, "UTC"), month(t, "UTC"), dayofmonth(t, "UTC"), 0, 0)
 
@@ -138,27 +177,51 @@ int rangeEnd = int(str.tonumber(str.substring(fibWindow, 5, 7))) * 60 + int(str.
 float chartSeconds = timeframe.in_seconds()
 float fibSeconds = timeframe.in_seconds(fibTf)
 if barstate.isfirst
-    if not chart.is_standard or not timeframe.isintraday or (chartSeconds != 60 and chartSeconds != 300)
-        runtime.error("V0.2: use standard 1-minute (recommended) or 5-minute candles. RBs are calculated separately on 5 / 10 / 15 minutes.")
-    if chartSeconds > fibSeconds
-        runtime.error("The chart timeframe must not exceed the Fib construction timeframe.")
+    if not chart.is_standard or not timeframe.isintraday or not array.includes(array.from(60, 300, 600, 900, 1800, 3600, 14400), int(chartSeconds))
+        runtime.error("V0.3: use standard 1m, 5m, 10m, 15m, 30m, 1h or 4h candles.")
     if rangeEnd <= rangeStart or (rangeStart * 60) % int(fibSeconds) != 0 or (rangeEnd * 60) % int(fibSeconds) != 0
         runtime.error("The Fib window must stay within one UTC day and its boundaries must align with the construction timeframe.")
 
-// A source bar must close before its body is used. All output fields are offset by 1.
-// Equal extremes keep their FIRST occurrence; both extremes on the same bar are ambiguous.
-f_range() =>
+f_anchor(string tz, int h, int m) =>
+    int localMinute = hour(time, tz) * 60 + minute(time, tz)
+    int dayOffset = localMinute < h * 60 + m ? -1 : 0
+    timestamp(tz, year(time, tz), month(time, tz), dayofmonth(time, tz) + dayOffset, h, m)
+
+// One invocation per distinct source timeframe. Incomplete source candles are
+// discarded, including truncated history and missing-minute buckets.
+f_aggregate(int minutes) =>
+    int duration = minutes * 60000
+    int bucket = int(math.floor(time / duration)) * duration
+    var Candle current = na
+    var int count = 0
+    var bool startsAtBoundary = false
+    if na(current) or current.start != bucket
+        current := Candle.new(bucket, bucket + duration, open, high, low, close, nz(volume))
+        count := 1
+        startsAtBoundary := time == bucket
+    else
+        current.h := math.max(current.h, high)
+        current.l := math.min(current.l, low)
+        current.c := close
+        current.v += nz(volume)
+        count += 1
+    Candle completed = na
+    if time_close == current.finish and startsAtBoundary and count == minutes
+        completed := current.copy()
+    completed
+
+f_range(Candle completed) =>
     var int day = na
     var float hi = na
     var float lo = na
     var int hiTime = na
     var int loTime = na
     var bool completeStart = false
+    var int completedCandles = 0
     var bool ready = false
     var float p0 = na
     var float p1 = na
     int d = f_day(time)
-    int m = hour(time, "UTC") * 60 + minute(time, "UTC")
     if na(day) or d != day
         day := d
         hi := na
@@ -166,303 +229,366 @@ f_range() =>
         hiTime := na
         loTime := na
         completeStart := false
+        completedCandles := 0
         ready := false
         p0 := na
         p1 := na
-    if m >= rangeStart and m < rangeEnd
-        float bh = math.max(open, close)
-        float bl = math.min(open, close)
-        if na(hi) or bh > hi
-            hi := bh
-            hiTime := time
-        if na(lo) or bl < lo
-            lo := bl
-            loTime := time
-        completeStart := completeStart or m == rangeStart
-        if time_close == d + rangeEnd * 60000 and completeStart and hi > lo and hiTime != loTime
-            p0 := hiTime < loTime ? hi : lo
-            p1 := hiTime < loTime ? lo : hi
-            ready := true
-    [p0[1], p1[1], day[1], ready[1]]
+    if not na(completed)
+        int m = hour(completed.start, "UTC") * 60 + minute(completed.start, "UTC")
+        if m >= rangeStart and m < rangeEnd
+            completedCandles += 1
+            float bh = math.max(completed.o, completed.c)
+            float bl = math.min(completed.o, completed.c)
+            if na(hi) or bh > hi
+                hi := bh
+                hiTime := completed.start
+            if na(lo) or bl < lo
+                lo := bl
+                loTime := completed.start
+            completeStart := completeStart or m == rangeStart
+            if completed.finish == d + rangeEnd * 60000 and completeStart and completedCandles == (rangeEnd - rangeStart) * 60 / fibSeconds and hi > lo and hiTime != loTime
+                p0 := hiTime < loTime ? hi : lo
+                p1 := hiTime < loTime ? lo : hi
+                ready := true
+    [p0, p1, day, ready]
 
-[range0, range1, rangeDay, rangeReady] = request.security(syminfo.tickerid, fibTf, f_range(), gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_on)
+f_copyLevels(array<Level> levels) =>
+    array<Level> copied = array.new<Level>()
+    for level in levels
+        array.push(copied, level.copy())
+    copied
 
-var array<Level> fibs = array.new<Level>()
-var array<int> fibEpochs = array.new_int()
-var array<line> staticLines = array.new<line>()
-var int publishedDay = na
-var float today0 = na
-var float today1 = na
-int utcDay = f_day(time)
-bool newDay = barstate.isfirst or utcDay != utcDay[1]
-// v0.2: retention counts PUBLISHED series, not elapsed calendar days. A calendar
-// purge deletes Friday during the weekend, so Monday opens with no previous set
-// at all — one trading day in five running a concept short.
-bool calendarRetention = fibRetention == "Previous calendar day"
-if newDay
-    today0 := na
-    today1 := na
-    if calendarRetention
-        int i = array.size(fibs) - 1
-        while i >= 0
-            if array.get(fibs, i).epoch < utcDay - DAY_MS
-                array.remove(fibs, i)
-            i -= 1
-        while array.size(fibEpochs) > 0 and array.get(fibEpochs, 0) < utcDay - DAY_MS
-            array.shift(fibEpochs)
+// Rejection candle is history[1], confirmation history[0]. This is the same
+// body / wick / prior-move definition as v0.2, on completed aggregated candles.
+f_updateRbs(Candle completed, array<Candle> history, array<Level> levels, string caption, bool enabled) =>
+    if not na(completed)
+        array.unshift(history, completed)
+        if enabled and array.size(history) >= leadBars + 3
+            Candle confirmation = array.get(history, 0)
+            Candle rejection = array.get(history, 1)
+            Candle before = array.get(history, 2)
+            Candle earlier = array.get(history, 2 + leadBars)
+            bool consecutive = confirmation.start == rejection.finish
+            float bodyHi = math.max(rejection.o, rejection.c)
+            float bodyLo = math.min(rejection.o, rejection.c)
+            float body = math.max(bodyHi - bodyLo, syminfo.mintick)
+            float span = rejection.h - rejection.l
+            float upper = rejection.h - bodyHi
+            float lower = bodyLo - rejection.l
+            bool upMove = before.c > earlier.c
+            bool downMove = before.c < earlier.c
+            bool rejectHigh = span > 0 and upper >= wickBodyRatio * body and upper >= span * wickPercent / 100.0
+            bool rejectLow = span > 0 and lower >= wickBodyRatio * body and lower >= span * wickPercent / 100.0
+            bool reverseDown = confirmation.c < confirmation.o and confirmation.c < (rbConfirm == "Body" ? bodyLo : rejection.l)
+            bool reverseUp = confirmation.c > confirmation.o and confirmation.c > (rbConfirm == "Body" ? bodyHi : rejection.h)
+            bool upperRb = consecutive and upMove and rejectHigh and reverseDown and confirmation.h < rejection.h + invalidation
+            bool lowerRb = consecutive and downMove and rejectLow and reverseUp and confirmation.l > rejection.l - invalidation
+            if upperRb or lowerRb
+                array.push(levels, f_level(upperRb ? bodyHi : rejection.l, upperRb ? rejection.h : bodyLo, 4, caption, confirmation.finish, rejection.start, upperRb ? 1 : -1))
+        while array.size(history) > leadBars + 3
+            array.pop(history)
+    array.size(history)
 
-if rangeReady and rangeDay == utcDay and (na(publishedDay) or publishedDay != rangeDay)
-    today0 := range0
-    today1 := range1
-    publishedDay := rangeDay
-    array<float> multipliers = array.from(2.0, 2.25, 2.5, -2.0, -2.25, -2.5, 3.0, 3.5, 4.0, -3.0, -3.5, -4.0)
-    for multiplier in multipliers
-        float price = range0 + multiplier * (range1 - range0)
-        string signedName = (multiplier > 0 ? "+" : "") + str.tostring(multiplier, "#.##")
-        Level level = f_level(price, price, 1, signedName, utcDay + rangeEnd * 60000, utcDay, f_side(price, open))
-        level.multiplier := multiplier
-        level.p0 := range0
-        level.leg := range1 - range0
-        level.active := math.abs(multiplier) <= 2.5
-        array.push(fibs, level)
-        // Static trace: primaries only. Expansion arms later, so drawing it at
-        // birth would show a level that was not yet available that morning.
-        if persistFib and level.active
-            array.push(staticLines, line.new(level.born, price, utcDay + DAY_MS, price, xloc = xloc.bar_time, color = color.new(fibTodayColor, 35), style = f_style(), width = lineWidth))
-    if not array.includes(fibEpochs, utcDay)
-        array.push(fibEpochs, utcDay)
-    if not calendarRetention
-        while array.size(fibEpochs) > 2
-            int stale = array.shift(fibEpochs)
-            int k = array.size(fibs) - 1
-            while k >= 0
-                if array.get(fibs, k).epoch == stale
-                    array.remove(fibs, k)
-                k -= 1
-    while array.size(staticLines) > persistDays * 6
-        line.delete(array.shift(staticLines))
+// The snapshot is copied BEFORE this minute is updated. It therefore contains
+// completed-minute data on every chart, without relying on barstate.isconfirmed
+// inside request.security(). Collections are exported only on the last source
+// bar, keeping historical request memory bounded. Scalars retain VWAP history.
+f_engine() =>
+    var array<Level> fibs = array.new<Level>()
+    var array<int> fibEpochs = array.new_int()
+    var int publishedDay = na
+    var float today0 = na
+    var float today1 = na
+    var array<Level> vwapLevels = array.new<Level>()
+    var int vwapEpoch = na
+    var float weight = 0.0
+    var float mean = na
+    var float m2 = 0.0
+    var bool vwapComplete = false
+    var bool accumulateVwap = false
+    var bool vwapReady = false
+    var array<float> profile = array.new_float()
+    var int baseRow = na
+    var bool vpOverflow = false
+    var bool vpComplete = false
+    var float profileVolume = 0.0
+    var array<Level> vpLevels = array.new<Level>()
+    var bool vpReady = false
+    var array<Level> rbs = array.new<Level>()
+    var array<Candle> history5 = array.new<Candle>()
+    var array<Candle> history10 = array.new<Candle>()
+    var array<Candle> history15 = array.new<Candle>()
+    var int evictedRb = 0
+    var int asOf = na
+    var int stateDay = na
+    var float referencePrice = na
+    var float sourceVolume = 0.0
+    float closedMean = mean
+    float closedSd = weight > 0 ? math.sqrt(math.max(m2 / weight, 0.0)) : na
+    bool closedComplete = vwapComplete
+    bool closedAccumulating = accumulateVwap
+    int closedEpoch = vwapEpoch
+    float closed0 = today0
+    float closed1 = today1
+    int closedPublished = publishedDay
+    int closedDay = stateDay
+    bool exportSnapshot = barstate.islast
+    EngineState snapshot = na
+    if exportSnapshot and not na(asOf)
+        snapshot := EngineState.new(asOf, stateDay, referencePrice, sourceVolume, today0, today1, publishedDay, array.size(fibEpochs), f_copyLevels(fibs), f_copyLevels(vwapLevels), f_copyLevels(vpLevels), f_copyLevels(rbs), array.copy(profile), profileVolume, baseRow, mean, m2, weight, vwapEpoch, vwapComplete, accumulateVwap, vwapReady, vpComplete, vpOverflow, vpReady, evictedRb)
+    int utcDay = f_day(time)
+    bool newDay = na(stateDay) or utcDay != stateDay
+    bool calendarRetention = fibRetention == "Previous calendar day"
+    [range0, range1, rangeDay, rangeReady] = f_range(f_aggregate(int(fibSeconds / 60)))
+    if newDay
+        today0 := na
+        today1 := na
+        if calendarRetention
+            int i = array.size(fibs) - 1
+            while i >= 0
+                if array.get(fibs, i).epoch < utcDay - DAY_MS
+                    array.remove(fibs, i)
+                i -= 1
+            while array.size(fibEpochs) > 0 and array.get(fibEpochs, 0) < utcDay - DAY_MS
+                array.shift(fibEpochs)
 
-for level in fibs
-    bool justArmed = false
-    if not level.active and not level.dead and barstate.isconfirmed
-        float coordinate = (close - level.p0) / level.leg
-        bool crossed = expansionMode == "Both sides" ? (coordinate > 2.5 or coordinate < -2.5) : (level.multiplier > 0 ? coordinate > 2.5 : coordinate < -2.5)
-        if crossed
-            level.active := true
-            level.side := f_side(level.lo, close)
-            justArmed := true
-    if level.active and not level.dead and not justArmed and f_breached(level)
-        level.dead := true
+    if rangeReady and rangeDay == utcDay and (na(publishedDay) or publishedDay != rangeDay)
+        today0 := range0
+        today1 := range1
+        publishedDay := rangeDay
+        array<float> multipliers = array.from(2.0, 2.25, 2.5, -2.0, -2.25, -2.5, 3.0, 3.5, 4.0, -3.0, -3.5, -4.0)
+        for multiplier in multipliers
+            float price = range0 + multiplier * (range1 - range0)
+            string signedName = (multiplier > 0 ? "+" : "") + str.tostring(multiplier, "#.##")
+            Level level = f_level(price, price, 1, signedName, utcDay + rangeEnd * 60000, utcDay, f_side(price, close))
+            level.multiplier := multiplier
+            level.p0 := range0
+            level.leg := range1 - range0
+            level.active := math.abs(multiplier) <= 2.5
+            array.push(fibs, level)
+        if not array.includes(fibEpochs, utcDay)
+            array.push(fibEpochs, utcDay)
+        if not calendarRetention
+            while array.size(fibEpochs) > 2
+                int stale = array.shift(fibEpochs)
+                int k = array.size(fibs) - 1
+                while k >= 0
+                    if array.get(fibs, k).epoch == stale
+                        array.remove(fibs, k)
+                    k -= 1
 
-// Weighted Welford variance avoids cancellation in E[x²] - E[x]² at NQ price scale.
-f_anchor(string tz, int h, int m) =>
-    int localMinute = hour(time, tz) * 60 + minute(time, tz)
-    int dayOffset = localMinute < h * 60 + m ? -1 : 0
-    timestamp(tz, year(time, tz), month(time, tz), dayofmonth(time, tz) + dayOffset, h, m)
-
-int anchorKey = switch vwapAnchor
-    "Futures CME 18:00 New York" => f_anchor("America/New_York", 18, 0)
-    "RTH New York" => f_anchor("America/New_York", 9, 30)
-    "Daily UTC" => utcDay
-    "Custom UTC time" => f_anchor("UTC", vwapHour, vwapMinute)
-    => f_anchor("UTC", 22, 0)
-bool inRth = not na(time(timeframe.period, "0930-1600:23456", "America/New_York"))
-bool accumulateVwap = vwapAnchor != "RTH New York" or not rthOnly or inRth
-var int vwapEpoch = na
-var float weight = 0.0
-var float mean = na
-var float m2 = 0.0
-var bool vwapComplete = false
-var array<Level> vwapLevels = array.new<Level>()
-if accumulateVwap
-    if na(vwapEpoch) or anchorKey != vwapEpoch
-        vwapEpoch := anchorKey
-        weight := 0.0
-        mean := na
-        m2 := 0.0
-        // An anchor can fall in a legitimate exchange closure (e.g. fixed 22:00
-        // UTC during winter CME maintenance). A loaded bar before the boundary
-        // proves we did not simply start the dataset midway through the session.
-        vwapComplete := time == anchorKey or (not na(time_close[1]) and time_close[1] <= anchorKey)
-        array.clear(vwapLevels)
-    if not na(volume) and volume > 0
-        float newWeight = weight + volume
-        float delta = na(mean) ? 0.0 : hlc3 - mean
-        float newMean = na(mean) ? hlc3 : mean + volume / newWeight * delta
-        m2 += volume * delta * (hlc3 - newMean)
-        mean := newMean
-        weight := newWeight
-float deviation = weight > 0 ? math.sqrt(math.max(m2 / weight, 0.0)) : na
-bool vwapReady = accumulateVwap and vwapComplete and weight > 0 and deviation >= syminfo.mintick and time_close >= vwapEpoch + vwapWarmup * 60000
-array<float> vwapPrices = array.from(mean + 2 * deviation, mean - 2 * deviation, mean + 3 * deviation, mean - 3 * deviation)
-if vwapReady and array.size(vwapLevels) == 0
-    array<string> names = array.from("VWAP +2 SD", "VWAP -2 SD", "VWAP +3 SD", "VWAP -3 SD")
-    for i = 0 to 3
-        float price = array.get(vwapPrices, i)
-        array.push(vwapLevels, f_level(price, price, 2, array.get(names, i), time_close, vwapEpoch, f_side(price, close)))
-else if vwapReady
-    for i = 0 to array.size(vwapLevels) - 1
-        Level level = array.get(vwapLevels, i)
-        if invalidateMoving and f_breached(level)
+    for level in fibs
+        bool justArmed = false
+        if not level.active and not level.dead
+            float coordinate = (close - level.p0) / level.leg
+            bool crossed = expansionMode == "Both sides" ? (coordinate > 2.5 or coordinate < -2.5) : (level.multiplier > 0 ? coordinate > 2.5 : coordinate < -2.5)
+            if crossed
+                level.active := true
+                level.side := f_side(level.lo, close)
+                justArmed := true
+        if level.active and not level.dead and not justArmed and level.born <= time and f_breached(level)
             level.dead := true
-        level.lo := array.get(vwapPrices, i)
-        level.hi := level.lo
-        if not invalidateMoving
-            level.side := f_side(level.lo, close)
 
-// Fixed tick-aligned buckets; no rebucketing errors when the daily range expands.
-// Only the final visible UTC day is profiled, including all its available bars.
-var array<float> profile = array.new_float()
-var int baseRow = na
-var bool vpOverflow = false
-var bool vpComplete = false
-var float profileVolume = 0.0
-var array<Level> vpLevels = array.new<Level>()
-float rowSize = vpTicks * syminfo.mintick
-bool profileDay = utcDay == f_day(last_bar_time)
-if newDay
-    array.clear(profile)
-    array.clear(vpLevels)
-    baseRow := na
-    vpOverflow := false
-    vpComplete := time == utcDay or (not na(time_close[1]) and time_close[1] <= utcDay)
-    profileVolume := 0.0
-if profileDay and not vpOverflow and not na(volume) and volume > 0
-    int bottomRow = int(math.floor(low / rowSize))
-    int topRow = int(math.floor(high / rowSize))
-    int nextBase = na(baseRow) ? bottomRow : math.min(baseRow, bottomRow)
-    int nextTop = na(baseRow) ? topRow : math.max(baseRow + array.size(profile) - 1, topRow)
-    if nextTop - nextBase + 1 > vpMaxRows
-        vpOverflow := true
-        array.clear(vpLevels)
-    else
-        if na(baseRow)
-            baseRow := bottomRow
-        while baseRow > nextBase
-            array.unshift(profile, 0.0)
-            baseRow -= 1
-        while array.size(profile) < nextTop - baseRow + 1
-            array.push(profile, 0.0)
-        for row = bottomRow to topRow
-            float overlap = math.max(0.0, math.min(high, (row + 1) * rowSize) - math.max(low, row * rowSize))
-            float allocated = high == low ? volume : volume * overlap / (high - low)
-            int index = row - baseRow
-            array.set(profile, index, array.get(profile, index) + allocated)
-        profileVolume += volume
-
-bool vpReady = profileDay and vpComplete and not vpOverflow and profileVolume > 0 and time_close >= utcDay + vpWarmup * 60000
-float poc = na
-float vah = na
-float val = na
-if vpReady
-    float peak = -1.0
-    int pocIndex = 0
-    for i = 0 to array.size(profile) - 1
-        float v = array.get(profile, i)
-        if v > peak
-            peak := v
-            pocIndex := i
-    int left = pocIndex
-    int right = pocIndex
-    float captured = peak
-    float target = profileVolume * valueArea / 100.0
-    while captured < target and (left > 0 or right < array.size(profile) - 1)
-        float lv = left > 0 ? array.get(profile, left - 1) : -1.0
-        float rv = right < array.size(profile) - 1 ? array.get(profile, right + 1) : -1.0
-        if lv >= rv and left > 0
-            left -= 1
-            captured += lv
-        if rv >= lv and right < array.size(profile) - 1
-            right += 1
-            captured += rv
-    poc := (baseRow + pocIndex + 0.5) * rowSize
-    vah := (baseRow + right + 1) * rowSize
-    val := (baseRow + left) * rowSize
-    array<float> prices = array.from(vah, val, poc)
-    if array.size(vpLevels) == 0
-        array<string> names = array.from("VAH ~", "VAL ~", "POC ~")
-        for i = 0 to 2
-            float price = array.get(prices, i)
-            array.push(vpLevels, f_level(price, price, 3, array.get(names, i), time_close, utcDay, f_side(price, close)))
-    else
-        for i = 0 to 2
-            Level level = array.get(vpLevels, i)
+    int anchorKey = switch vwapAnchor
+        "Futures CME 18:00 New York" => f_anchor("America/New_York", 18, 0)
+        "RTH New York" => f_anchor("America/New_York", 9, 30)
+        "Daily UTC" => utcDay
+        "Custom UTC time" => f_anchor("UTC", vwapHour, vwapMinute)
+        => f_anchor("UTC", 22, 0)
+    bool inRth = not na(time(timeframe.period, "0930-1600:23456", "America/New_York"))
+    accumulateVwap := vwapAnchor != "RTH New York" or not rthOnly or inRth
+    if accumulateVwap
+        if na(vwapEpoch) or anchorKey != vwapEpoch
+            vwapEpoch := anchorKey
+            weight := 0.0
+            mean := na
+            m2 := 0.0
+            // An anchor can fall in a legitimate exchange closure (e.g. fixed 22:00
+            // UTC during winter CME maintenance). A loaded bar before the boundary
+            // proves we did not simply start the dataset midway through the session.
+            vwapComplete := time == anchorKey or (not na(time_close[1]) and time_close[1] <= anchorKey)
+            array.clear(vwapLevels)
+        if not na(volume) and volume > 0
+            float newWeight = weight + volume
+            float delta = na(mean) ? 0.0 : hlc3 - mean
+            float newMean = na(mean) ? hlc3 : mean + volume / newWeight * delta
+            m2 += volume * delta * (hlc3 - newMean)
+            mean := newMean
+            weight := newWeight
+    float deviation = weight > 0 ? math.sqrt(math.max(m2 / weight, 0.0)) : na
+    vwapReady := accumulateVwap and vwapComplete and weight > 0 and deviation >= syminfo.mintick and time_close >= vwapEpoch + vwapWarmup * 60000
+    array<float> vwapPrices = array.from(mean + 2 * deviation, mean - 2 * deviation, mean + 3 * deviation, mean - 3 * deviation)
+    if vwapReady and array.size(vwapLevels) == 0
+        array<string> names = array.from("VWAP +2 SD", "VWAP -2 SD", "VWAP +3 SD", "VWAP -3 SD")
+        for i = 0 to 3
+            float price = array.get(vwapPrices, i)
+            array.push(vwapLevels, f_level(price, price, 2, array.get(names, i), time_close, vwapEpoch, f_side(price, close)))
+    else if vwapReady
+        for i = 0 to array.size(vwapLevels) - 1
+            Level level = array.get(vwapLevels, i)
             if invalidateMoving and f_breached(level)
                 level.dead := true
-            level.lo := array.get(prices, i)
+            level.lo := array.get(vwapPrices, i)
             level.hi := level.lo
             if not invalidateMoving
                 level.side := f_side(level.lo, close)
 
-// Rejecting candle [2], immediately following reversal [1]. A doji body is floored
-// at one tick for the wick/body test. No pivots and no BOS prerequisite.
-f_rb() =>
-    float bodyHi = math.max(open[2], close[2])
-    float bodyLo = math.min(open[2], close[2])
-    float body = math.max(bodyHi - bodyLo, syminfo.mintick)
-    float span = high[2] - low[2]
-    float upper = high[2] - bodyHi
-    float lower = bodyLo - low[2]
-    bool upMove = close[3] > close[3 + leadBars]
-    bool downMove = close[3] < close[3 + leadBars]
-    bool rejectHigh = span > 0 and upper >= wickBodyRatio * body and upper >= span * wickPercent / 100.0
-    bool rejectLow = span > 0 and lower >= wickBodyRatio * body and lower >= span * wickPercent / 100.0
-    bool reverseDown = close[1] < open[1] and close[1] < (rbConfirm == "Body" ? bodyLo : low[2])
-    bool reverseUp = close[1] > open[1] and close[1] > (rbConfirm == "Body" ? bodyHi : high[2])
-    bool upperRb = upMove and rejectHigh and reverseDown and high[1] < high[2] + invalidation
-    bool lowerRb = downMove and rejectLow and reverseUp and low[1] > low[2] - invalidation
-    float zLo = upperRb ? bodyHi : lowerRb ? low[2] : na
-    float zHi = upperRb ? high[2] : lowerRb ? bodyLo : na
-    int side = upperRb ? 1 : lowerRb ? -1 : 0
-    [zLo, zHi, side, time[2]]
+    float rowSize = vpTicks * syminfo.mintick
+    // Keep the daily state independent of the dataset's final date. Only the
+    // current day's buckets are retained; this also preserves a cold-reload
+    // snapshot at midnight or a market reopening.
+    bool profileDay = true
+    if newDay
+        array.clear(profile)
+        array.clear(vpLevels)
+        baseRow := na
+        vpOverflow := false
+        vpComplete := time == utcDay or (not na(time_close[1]) and time_close[1] <= utcDay)
+        profileVolume := 0.0
+    if profileDay and not vpOverflow and not na(volume) and volume > 0
+        int bottomRow = int(math.floor(low / rowSize))
+        int topRow = int(math.floor(high / rowSize))
+        int nextBase = na(baseRow) ? bottomRow : math.min(baseRow, bottomRow)
+        int nextTop = na(baseRow) ? topRow : math.max(baseRow + array.size(profile) - 1, topRow)
+        if nextTop - nextBase + 1 > vpMaxRows
+            vpOverflow := true
+            array.clear(vpLevels)
+        else
+            if na(baseRow)
+                baseRow := bottomRow
+            while baseRow > nextBase
+                array.unshift(profile, 0.0)
+                baseRow -= 1
+            while array.size(profile) < nextTop - baseRow + 1
+                array.push(profile, 0.0)
+            for row = bottomRow to topRow
+                float overlap = math.max(0.0, math.min(high, (row + 1) * rowSize) - math.max(low, row * rowSize))
+                float allocated = high == low ? volume : volume * overlap / (high - low)
+                int index = row - baseRow
+                array.set(profile, index, array.get(profile, index) + allocated)
+            profileVolume += volume
 
-[rbLo5, rbHi5, rbSide5, rbTime5] = request.security(syminfo.tickerid, "5", f_rb(), gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_on)
-[rbLo10, rbHi10, rbSide10, rbTime10] = request.security(syminfo.tickerid, "10", f_rb(), gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_on)
-[rbLo15, rbHi15, rbSide15, rbTime15] = request.security(syminfo.tickerid, "15", f_rb(), gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_on)
-var array<Level> rbs = array.new<Level>()
-var array<int> seenRb = array.new_int(3, 0)
-var int evictedRb = 0
-array<float> rbLows = array.from(rbLo5, rbLo10, rbLo15)
-array<float> rbHighs = array.from(rbHi5, rbHi10, rbHi15)
-array<int> rbSides = array.from(rbSide5, rbSide10, rbSide15)
-array<int> rbTimes = array.from(rbTime5, rbTime10, rbTime15)
-array<bool> enabledRb = array.from(rb5, rb10, rb15)
-array<string> rbNames = array.from("RB 5m", "RB 10m", "RB 15m")
-for i = 0 to 2
-    int stamp = array.get(rbTimes, i)
-    if array.get(enabledRb, i) and array.get(rbSides, i) != 0 and not na(stamp) and stamp != array.get(seenRb, i)
-        array.set(seenRb, i, stamp)
-        array.push(rbs, f_level(array.get(rbLows, i), array.get(rbHighs, i), 4, array.get(rbNames, i), time, stamp, array.get(rbSides, i)))
-for level in rbs
-    if not level.dead and f_breached(level)
-        level.dead := true
-int rbIndex = array.size(rbs) - 1
-while rbIndex >= 0
-    Level level = array.get(rbs, rbIndex)
-    bool expired = rbMaxDays > 0 and time - level.epoch >= rbMaxDays * DAY_MS
-    if expired or (level.dead and not showDead)
-        array.remove(rbs, rbIndex)
-    rbIndex -= 1
-while array.size(rbs) > rbLimit
-    array.shift(rbs)
-    evictedRb += 1
+    vpReady := profileDay and vpComplete and not vpOverflow and profileVolume > 0 and time_close >= utcDay + vpWarmup * 60000
+    float poc = na
+    float vah = na
+    float val = na
+    if vpReady
+        float peak = -1.0
+        int pocIndex = 0
+        for i = 0 to array.size(profile) - 1
+            float v = array.get(profile, i)
+            if v > peak
+                peak := v
+                pocIndex := i
+        int left = pocIndex
+        int right = pocIndex
+        float captured = peak
+        float target = profileVolume * valueArea / 100.0
+        while captured < target and (left > 0 or right < array.size(profile) - 1)
+            float lv = left > 0 ? array.get(profile, left - 1) : -1.0
+            float rv = right < array.size(profile) - 1 ? array.get(profile, right + 1) : -1.0
+            if lv >= rv and left > 0
+                left -= 1
+                captured += lv
+            if rv >= lv and right < array.size(profile) - 1
+                right += 1
+                captured += rv
+        poc := (baseRow + pocIndex + 0.5) * rowSize
+        vah := (baseRow + right + 1) * rowSize
+        val := (baseRow + left) * rowSize
+        array<float> prices = array.from(vah, val, poc)
+        if array.size(vpLevels) == 0
+            array<string> names = array.from("VAH ~", "VAL ~", "POC ~")
+            for i = 0 to 2
+                float price = array.get(prices, i)
+                array.push(vpLevels, f_level(price, price, 3, array.get(names, i), time_close, utcDay, f_side(price, close)))
+        else
+            for i = 0 to 2
+                Level level = array.get(vpLevels, i)
+                if invalidateMoving and f_breached(level)
+                    level.dead := true
+                level.lo := array.get(prices, i)
+                level.hi := level.lo
+                if not invalidateMoving
+                    level.side := f_side(level.lo, close)
+
+    f_updateRbs(f_aggregate(5), history5, rbs, "RB 5m", rb5)
+    f_updateRbs(f_aggregate(10), history10, rbs, "RB 10m", rb10)
+    f_updateRbs(f_aggregate(15), history15, rbs, "RB 15m", rb15)
+    for level in rbs
+        if not level.dead and level.born <= time and f_breached(level)
+            level.dead := true
+    int rbIndex = array.size(rbs) - 1
+    while rbIndex >= 0
+        Level level = array.get(rbs, rbIndex)
+        bool expired = rbMaxDays > 0 and time_close - level.epoch >= rbMaxDays * DAY_MS
+        if expired or (level.dead and not showDead)
+            array.remove(rbs, rbIndex)
+        rbIndex -= 1
+    while array.size(rbs) > rbLimit
+        array.shift(rbs)
+        evictedRb += 1
+    asOf := time_close
+    stateDay := utcDay
+    referencePrice := close
+    sourceVolume := nz(volume)
+    [snapshot, closedMean, closedSd, closedComplete, closedAccumulating, closedEpoch, closed0, closed1, closedPublished, closedDay]
+
+[snapshot, curveMean, curveSd, curveComplete, curveAccumulating, curveEpoch, trace0, trace1, tracePublished, traceDay] = request.security(syminfo.tickerid, "1", f_engine(), gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off, calc_bars_count = engineBars)
+bool engineAvailable = not na(snapshot)
+array<Level> fibs = engineAvailable ? snapshot.fibs : array.new<Level>()
+array<Level> vwapLevels = engineAvailable ? snapshot.vwapLevels : array.new<Level>()
+array<Level> vpLevels = engineAvailable ? snapshot.vpLevels : array.new<Level>()
+array<Level> rbs = engineAvailable ? snapshot.rbs : array.new<Level>()
+array<float> profile = engineAvailable ? snapshot.profile : array.new_float()
+int utcDay = engineAvailable ? snapshot.day : traceDay
+float referencePrice = engineAvailable ? snapshot.referencePrice : close
+float today0 = engineAvailable ? snapshot.today0 : na
+float today1 = engineAvailable ? snapshot.today1 : na
+int publishedDay = engineAvailable ? snapshot.publishedDay : na
+float mean = engineAvailable ? snapshot.mean : curveMean
+float m2 = engineAvailable ? snapshot.m2 : na
+float weight = engineAvailable ? snapshot.weight : 0.0
+float deviation = engineAvailable and weight > 0 ? math.sqrt(math.max(m2 / weight, 0.0)) : curveSd
+int vwapEpoch = engineAvailable ? snapshot.vwapEpoch : na
+bool vwapComplete = engineAvailable and snapshot.vwapComplete
+bool accumulateVwap = engineAvailable and snapshot.accumulateVwap
+bool vwapReady = engineAvailable and snapshot.vwapReady
+bool vpComplete = engineAvailable and snapshot.vpComplete
+bool vpOverflow = engineAvailable and snapshot.vpOverflow
+bool vpReady = engineAvailable and snapshot.vpReady
+float profileVolume = engineAvailable ? snapshot.profileVolume : 0.0
+int evictedRb = engineAvailable ? snapshot.evictedRb : 0
+bool calendarRetention = fibRetention == "Previous calendar day"
+
+// Historical anchor traces are created on the display chart, never inside a
+// security request. Reserve at least 50 line slots for live levels / geometry.
+var array<line> staticLines = array.new<line>()
+var int lastTraceDay = na
+if persistFib and not na(tracePublished) and tracePublished == traceDay and (na(lastTraceDay) or tracePublished != lastTraceDay)
+    while array.size(staticLines) + 6 > persistDays * 6
+        line.delete(array.shift(staticLines))
+    for multiplier in array.from(2.0, 2.25, 2.5, -2.0, -2.25, -2.5)
+        float price = trace0 + multiplier * (trace1 - trace0)
+        array.push(staticLines, line.new(tracePublished + rangeEnd * 60000, price, tracePublished + DAY_MS, price, xloc = xloc.bar_time, color = color.new(fibTodayColor, 35), style = f_style(), width = lineWidth))
+    lastTraceDay := tracePublished
 
 // Curves are CONTEXT: invalidated bands may remain visible but cannot enter POIs.
-bool curveVisible = showVwap and showVwapCurve and vwapComplete and accumulateVwap
-bool anchorChanged = vwapEpoch != vwapEpoch[1]
-plot(curveVisible and not anchorChanged ? mean : na, "VWAP hlc3", color = vwapColor, linewidth = 2, style = plot.style_linebr)
-plot(curveVisible and not anchorChanged ? mean + 2 * deviation : na, "VWAP +2 SD context", color = sd2Color, style = plot.style_linebr)
-plot(curveVisible and not anchorChanged ? mean - 2 * deviation : na, "VWAP -2 SD context", color = sd2Color, style = plot.style_linebr)
-plot(curveVisible and not anchorChanged ? mean + 3 * deviation : na, "VWAP +3 SD context", color = sd3Color, style = plot.style_linebr)
-plot(curveVisible and not anchorChanged ? mean - 3 * deviation : na, "VWAP -3 SD context", color = sd3Color, style = plot.style_linebr)
-plot(curveVisible and showSd1 and not anchorChanged ? mean + deviation : na, "VWAP +1 SD context only", color = color.new(vwapColor, 65), style = plot.style_linebr)
-plot(curveVisible and showSd1 and not anchorChanged ? mean - deviation : na, "VWAP -1 SD context only", color = color.new(vwapColor, 65), style = plot.style_linebr)
+bool curveVisible = showVwap and showVwapCurve and curveComplete and curveAccumulating
+bool anchorChanged = curveEpoch != curveEpoch[1]
+plot(curveVisible and not anchorChanged ? curveMean : na, "VWAP hlc3", color = vwapColor, linewidth = 2, style = plot.style_linebr)
+plot(curveVisible and not anchorChanged ? curveMean + 2 * curveSd : na, "VWAP +2 SD context", color = sd2Color, style = plot.style_linebr)
+plot(curveVisible and not anchorChanged ? curveMean - 2 * curveSd : na, "VWAP -2 SD context", color = sd2Color, style = plot.style_linebr)
+plot(curveVisible and not anchorChanged ? curveMean + 3 * curveSd : na, "VWAP +3 SD context", color = sd3Color, style = plot.style_linebr)
+plot(curveVisible and not anchorChanged ? curveMean - 3 * curveSd : na, "VWAP -3 SD context", color = sd3Color, style = plot.style_linebr)
+plot(curveVisible and showSd1 and not anchorChanged ? curveMean + curveSd : na, "VWAP +1 SD context only", color = color.new(vwapColor, 65), style = plot.style_linebr)
+plot(curveVisible and showSd1 and not anchorChanged ? curveMean - curveSd : na, "VWAP -1 SD context only", color = color.new(vwapColor, 65), style = plot.style_linebr)
 
 // Render the current state only. No historic POI boxes suggesting retrospective signals.
 var array<line> drawnLines = array.new<line>()
 var array<label> drawnLabels = array.new<label>()
 var array<box> drawnBoxes = array.new<box>()
-var table dashboard = table.new(position.top_right, 2, 11, bgcolor = panelColor, border_width = 1)
+var table dashboard = table.new(position.top_right, 2, 12, bgcolor = panelColor, border_width = 1)
 
 f_priceText(Level level) =>
     level.lo == level.hi ? str.tostring(level.lo, format.mintick) : str.tostring(level.lo, format.mintick) + "–" + str.tostring(level.hi, format.mintick)
@@ -521,7 +647,7 @@ f_countKinds(array<Level> candidates, array<int> sortedIndices, int first, int l
 // Sweep possible minimum upper edges. For points: max(price)-min(price) <=
 // tolerance, never transitive chaining. An RB spanning several separate groups
 // can participate in each. Drop subsets, then retain zones nearest current price.
-f_findPois(array<Level> candidates) =>
+f_findPois(array<Level> candidates, float reference) =>
     array<Poi> zones = array.new<Poi>()
     array<float> highs = array.new_float()
     for level in candidates
@@ -556,7 +682,7 @@ f_findPois(array<Level> candidates) =>
                 array.push(zones, Poi.new(math.min(tightLo, tightHi), math.max(tightLo, tightHi), kinds, array.size(matched), details, matched))
     array<float> distances = array.new_float()
     for zone in zones
-        array.push(distances, math.max(zone.lo - close, math.max(close - zone.hi, 0.0)))
+        array.push(distances, math.max(zone.lo - reference, math.max(reference - zone.hi, 0.0)))
     array<int> nearest = array.sort_indices(distances, order.ascending)
     array<Poi> selected = array.new<Poi>()
     for id in nearest
@@ -574,7 +700,7 @@ if barstate.islast
     array.clear(drawnLines)
     array.clear(drawnLabels)
     array.clear(drawnBoxes)
-    int rightEdge = time_close + int(chartSeconds * 1000) * extendBars
+    int rightEdge = (engineAvailable ? snapshot.asOf : time_close) + int(chartSeconds * 1000) * extendBars
     array<Level> candidates = array.new<Level>()
     int labelsUsed = f_collect(fibs, candidates, useFib, showFib, rightEdge, 0)
     labelsUsed := f_collect(vwapLevels, candidates, useVwap and vwapReady, showVwap and vwapReady, rightEdge, labelsUsed)
@@ -585,26 +711,26 @@ if barstate.islast
             float p = today0 + multiplier * (today1 - today0)
             array.push(drawnLines, line.new(utcDay + rangeEnd * 60000, p, rightEdge, p, xloc = xloc.bar_time, color = color.new(fibTodayColor, 75), style = line.style_dotted))
 
-    array<Poi> zones = f_findPois(candidates)
+    array<Poi> zones = f_findPois(candidates, referencePrice)
     int poiCount = array.size(zones)
     for zone in zones
-        color c = zone.lo > close ? poiAboveColor : zone.hi < close ? poiBelowColor : poiAtPriceColor
-        string positionText = zone.lo > close ? "ABOVE PRICE" : zone.hi < close ? "BELOW PRICE" : "AT PRICE"
-        array.push(drawnBoxes, box.new(left = time, top = zone.hi + poiPadding, right = rightEdge, bottom = zone.lo - poiPadding, xloc = xloc.bar_time, bgcolor = color.new(c, poiOpacity), border_color = c, border_width = 2))
+        color c = zone.lo > referencePrice ? poiAboveColor : zone.hi < referencePrice ? poiBelowColor : poiAtPriceColor
+        string positionText = zone.lo > referencePrice ? "ABOVE PRICE" : zone.hi < referencePrice ? "BELOW PRICE" : "AT PRICE"
+        array.push(drawnBoxes, box.new(left = snapshot.asOf, top = zone.hi + poiPadding, right = rightEdge, bottom = zone.lo - poiPadding, xloc = xloc.bar_time, bgcolor = color.new(c, poiOpacity), border_color = c, border_width = 2))
         if showLabels
             string title = "POI " + str.tostring(zone.kinds) + " types / " + str.tostring(zone.members) + " levels · " + positionText
             array.push(drawnLabels, label.new(x = rightEdge, y = zone.hi + poiPadding, text = title, xloc = xloc.bar_time, style = label.style_label_lower_left, color = color.new(c, 15), textcolor = textColor, size = f_font(), tooltip = zone.details + "\nZone: " + str.tostring(zone.lo, format.mintick) + "–" + str.tostring(zone.hi, format.mintick)))
 
     if showDashboard
-        string fibState = publishedDay == utcDay ? str.tostring(today0, format.mintick) + " → " + str.tostring(today1, format.mintick) : time < utcDay + rangeEnd * 60000 ? "Building UTC range…" : "Missing / incomplete / ambiguous"
+        string fibState = publishedDay == utcDay ? str.tostring(today0, format.mintick) + " → " + str.tostring(today1, format.mintick) : (engineAvailable ? snapshot.asOf : time_close) < utcDay + rangeEnd * 60000 ? "Building UTC range…" : "Missing / incomplete / ambiguous"
         string vwapState = not vwapComplete ? "Incomplete history / anchor" : not accumulateVwap ? "Outside RTH" : weight <= 0 ? "No volume" : not vwapReady ? "Warming up…" : "Weighted hlc3 formula · DRW match unverified"
         string vpState = vpOverflow ? "CAPACITY EXCEEDED: increase row size" : not vpComplete ? "Incomplete UTC day" : not vpReady ? "Warming up / no volume" : "ESTIMATED · " + str.tostring(array.size(profile)) + " rows"
-        string retentionState = (calendarRetention ? "Calendar day" : "Session") + " · " + str.tostring(array.size(fibEpochs)) + " set(s)" + (persistFib ? " · history traces on" : "")
-        array<string> keys = array.from("INDI NQ · v0.2", "Fib " + fibTf + "m", "Retention", "VWAP", "Anchor", "UTC profile", "Retained RBs", "Confluence", "Invalidation", "Data", "Validation")
-        string dataState = (not na(volume) and volume > 0 ? "Volume available" : "Missing / zero volume") + (syminfo.root == "NQ" ? " · NQ" : " · check NQ1!")
-        array<string> values = array.from("Display only", fibState, retentionState, vwapState, vwapAnchor, vpState, str.tostring(array.size(rbs)) + " · removed by capacity: " + str.tostring(evictedRb), str.tostring(poiCount) + " zones · " + str.tostring(array.size(candidates)) + " active levels", str.tostring(invalidation, "#.##") + " pts · high / low", dataState, "V0.2: compare with manually marked chart")
-        for row = 0 to 10
+        string retentionState = (calendarRetention ? "Calendar day" : "Session") + " · " + str.tostring((engineAvailable ? snapshot.fibSets : 0)) + " set(s)" + (persistFib ? " · history traces on" : "")
+        array<string> keys = array.from("INDI NQ · v0.3", "1m engine as of", "Fib " + fibTf + "m", "Retention", "VWAP", "Anchor", "UTC profile", "Retained RBs", "Confluence", "Invalidation", "Data", "Validation")
+        string dataState = (engineAvailable and snapshot.sourceVolume > 0 ? "Volume available" : "Missing / zero volume") + (syminfo.root == "NQ" ? " · NQ" : " · check NQ1!")
+        array<string> values = array.from("Display only", engineAvailable ? str.format_time(snapshot.asOf, "yyyy-MM-dd HH:mm", "UTC") + " UTC" : "1m DATA UNAVAILABLE: check history / feed", fibState, retentionState, vwapState, vwapAnchor, vpState, str.tostring(array.size(rbs)) + " · removed by capacity: " + str.tostring(evictedRb), str.tostring(poiCount) + " zones · " + str.tostring(array.size(candidates)) + " active levels", str.tostring(invalidation, "#.##") + " pts · high / low", dataState, "Completed 1m data · up to one minute delay")
+        for row = 0 to 11
             table.cell(dashboard, 0, row, array.get(keys, row), text_color = textColor, text_size = f_font(), bgcolor = panelColor)
             table.cell(dashboard, 1, row, array.get(values, row), text_color = textColor, text_size = f_font(), bgcolor = panelColor)
     else
-        table.clear(dashboard, 0, 0, 1, 10)
+        table.clear(dashboard, 0, 0, 1, 11)

@@ -1,55 +1,54 @@
-# Décisions de V0.1 — à revoir avec le trader et Claude Code
+# Current implementation decisions — v0.3
 
-Le handoff original est conservé sans modification dans [GPT-HANDOFF.md](GPT-HANDOFF.md). Ce fichier distingue les règles demandées des conventions nécessaires à leur première implémentation. Ces dernières sont proposées, pas présentées comme des réponses déjà données par le trader.
+The original specification is unchanged in [GPT-HANDOFF.md](GPT-HANDOFF.md). Historical v0.2 reasoning is in `REPORT.md`; this document describes the current implementation.
 
-## Règles conservées
+## Preserved strategy
 
-- Aucune direction privilégiée ni condition BOS. L'indicateur affiche des zones de reversal ; il ne produit pas de signaux d'entrée.
-- Fib sur les **corps**, jamais les mèches. Ordre chronologique des extrêmes, formule `p0 + L * (p1 - p0)`, signe relatif à la jambe.
-- ±2 / ±2.25 / ±2.5 actifs ; ±3 / ±3.5 / ±4 dormants avant armement. 0 / 1 / 1.5 de contexte uniquement.
-- VWAP ±2 / ±3 éligibles ; VWAP centrale et ±1 restent du contexte.
-- Deux types de concepts au minimum par défaut. Les Fib des deux jours comptent pour un type ; tous les RB comptent pour un type.
-- Un dépassement de prix invalide sans attendre une clôture. Les RB sont des zones de retour après formation confirmée.
+Candle bodies define Fib anchors; 0 is the earlier extreme. Multipliers follow the leg, not chart direction. ±2 / ±2.25 / ±2.5 are primary, ±3 / ±3.5 / ±4 require arming, and geometry is context only. VWAP ±2 / ±3 can contribute; center / ±1 cannot. RBs are return zones after confirmation. Invalidation is a price penetration, not a close rule. No directional bias, BOS prerequisite or trade signals.
 
-## Conventions explicites et réglables
+The trader explicitly chose **at least two distinct concept types**, not all four, for v0.3 POIs. Today's and the prior set's Fib levels share one type; RBs across source timeframes share one type.
 
-| Question | Choix V0.1 | Pourquoi / point à confirmer |
-| --- | --- | --- |
-| Unité des corps Fib | 5m, choix 1m / 5m / 15m | Le vecteur du prototype est calculé avec du 5m. Des corps 1m ne donnent pas nécessairement les mêmes extrêmes. |
-| Tolérance POI | 15 points, réglable 5–50 | Valeur proposée dans le handoff, à calibrer visuellement. |
-| Deux concepts | Deux **types distincts**, désactivable | Fib + Fib n'est pas suffisant par défaut. |
-| Armement expansion | Tous les signes à la première clôture au-delà de ±2.5 ; option par signe | Le texte ne tranche pas entre activation globale et activation de chaque bande. L'unité de clôture est celle du graphique. |
-| Session VWAP | 22:00 UTC fixe par défaut | Reproduit l'option du handoff. Un autre choix suit 18:00 New York, soit 22:00 UTC l'été et 23:00 UTC l'hiver. |
-| RTH | 09:30–16:00 America/New_York ; accumulation hors séance désactivée | Suit le DST américain. Le tableau de sessions du handoff mentionne aussi 19:50 UTC, contradictoire avec 16:00 New York : pas de filtre de trading ajouté. |
-| Conservation des Fib | Deux dernières **séries publiées** ; option calendaire v0.1 | v0.2. Corrige la disparition du vendredi le lundi. |
-| Fib historiques | Option OFF par défaut, ±2 / ±2.25 / ±2.5 uniquement | v0.2. Débloque la validation sans Bar Replay. Dormants, VWAP, profil et POI restent hors historique : ils se recalculent, les figer suggérerait des signaux rétrospectifs. |
-| Mèche RB | ≥2× corps et ≥60% de high–low | Les deux contraintes doivent passer ; réglables. Corps doji ramené à un tick pour le ratio. |
-| Impulsion précédant un RB | Hausse / baisse nette entre deux clôtures avant la bougie de rejet | « Le côté dominant mène » n'est pas une définition mécanique complète. Recul réglable, 2 bougies par défaut. |
-| Confirmation RB | La bougie immédiatement suivante inverse la couleur et clôture au-delà du corps du rejet | Option plus stricte : au-delà de son extrême. Le RB devient disponible au début de la bougie HTF suivante, après confirmation, jamais sur la bougie de rejet. |
-| Invalidation | 15 points ; comparaison inclusive `>=` / `<=` | Réglable, notamment à 20. Une résistance est invalidée au-dessus de son bord haut et un support sous son bord bas. |
-| Vie des bandes VWAP / VP | Invalidation du **dernier prix connu avant la bougie**, sans renaissance avant reset | Le handoff ne définit pas la vie d'un niveau mobile. Ce comportement évite une résurrection immédiate par recalcul. Peut être désactivé séparément des Fib / RB. |
-| Initialisation | VWAP 5 minutes, VP 15 minutes | Évite d'activer des bandes sans dispersion ou un profil d'une seule bougie. Réglable. |
-| POC dans les POI | Non par défaut ; affiché en contexte | Le handoff le décrit comme cible / absorption, pas comme niveau d'entrée à lui seul. |
+## Configurable conventions
 
-## Conventions d'implémentation
+| Choice | Default |
+| --- | --- |
+| Fib construction | 5m bodies; selectable 1m / 5m / 10m / 15m |
+| Fib range | 00:00–07:30 UTC, configurable within one day with aligned boundaries |
+| POI tolerance | 15 points, adjustable 5–50 |
+| Minimum | Two distinct types; optional loose level-count mode |
+| Expansion arming | Both signs on a close beyond either ±2.5 threshold; optional by-sign mode |
+| Close / invalidation sampling | Completed 1m data on every display chart |
+| Fib retention | Two latest published sets, so Friday survives Monday; optional previous UTC calendar day |
+| VWAP anchor | Fixed 22:00 UTC; options CME 18:00 New York, RTH, daily UTC, custom UTC time |
+| RTH | 09:30–16:00 America/New_York, following DST; accumulation outside RTH off |
+| Moving-level invalidation | Compare against the prior known price, remain dead until reset; configurable |
+| Warmup | VWAP 5 minutes, profile 15 minutes |
+| POC in POIs | Off; context / absorption reference by default |
+| RB wick | At least 2× body and 60% of range, both configurable |
+| RB prior move | Net close change over two prior source candles, configurable |
+| RB confirmation | Immediate next source candle reverses color and closes past the rejection body; optional extreme threshold |
+| RB retention | 40-level capacity, optional expiry off; bounded by available 1m history |
 
-- **Veille = séance précédente** depuis la v0.2, réglable. On conserve les **deux dernières séries réellement publiées**, quel que soit le temps écoulé : le vendredi reste donc visible le lundi. Le comportement v0.1 (purge à plus de 24 h calendaires) reste disponible sous « Jour calendaire précédent ». Motif du changement : la purge calendaire supprimait le vendredi pendant le week-end, et le dimanche ne publie aucune série puisque la fenêtre 00:00–07:30 UTC n'existe pas — le lundi ouvrait donc sans aucune série précédente, soit un jour de bourse sur cinq avec un concept en moins. Voir `REPORT.md`.
-- **Extrêmes égaux** : on garde leur première occurrence. Si haut et bas du corps extrême appartiennent à la même bougie, leur ordre interne est inconnu : aucun Fib n'est publié. Une fenêtre absente ou sans sa première bougie est également refusée.
-- **Pas d'anticipation HTF** : les sorties Fib sont décalées de `[1]`. Les RB utilisent le rejet `[2]`, la confirmation `[1]` et les données antérieures. `lookahead_on` ne consulte donc pas la bougie HTF en formation. Le mode OFF seul, sans décalage, ne garantirait pas la stabilité en temps réel.
-- **Naissance et invalidation** : les Fib principaux naissent à la fin de la fenêtre, par rapport au prix d'ouverture alors connu. Une expansion naît à la clôture qui l'arme ; sa mèche antérieure à cette clôture ne la tue pas rétroactivement. Les RB ne sont pas dessinés dans le passé comme s'ils avaient été disponibles sur la bougie de rejet.
-- **Zones RB et tolérance** : les RB sont des intervalles. Un niveau à l'intérieur d'une mèche peut confluer avec elle sans être près de son milieu. Pour un groupe, `max(bases) - min(sommets) <= tolérance`. Pour des points, cela devient exactement `prix_max - prix_min <= tolérance`. Pas de chaînage 100 → 110 → 120 dans une zone de 15 points.
-- **POI multiples** : une grande mèche peut contribuer à plusieurs groupes séparés. Les groupes inclus dans un groupe déjà trouvé ne sont pas redessinés. S'il existe trop de zones, les plus proches du prix sont retenues. La marge visuelle n'intervient pas dans les calculs.
-- **Profil** : UTC 00:00 à maintenant, uniquement le dernier jour du graphique. Lignes alignées sur une grille fixe en ticks, sans redistribuer l'ancien volume quand le range augmente. Chaque bougie répartit son volume proportionnellement à la longueur de son intersection avec les lignes. Une bougie de range nul donne tout son volume à sa ligne.
-- **Ancrages pendant une fermeture** : pour VWAP / VP, un historique observé avant la borne permet de reconnaître une session complète même si la première bougie vient après la borne (maintenance CME ou week-end). Un historique chargé seulement en milieu de session n'est pas accepté. La fenêtre Fib exige toujours sa première bougie et sa borne finale.
-- **Value area** : POC = ligne de plus fort volume, centre de ligne. Égalité de POC : ligne la plus basse. Expansion vers la ligne voisine la plus chargée jusqu'au pourcentage demandé ; égalité gauche / droite : inclusion des deux, quitte à dépasser légèrement le seuil. VAL / VAH = bords externes des lignes retenues.
-- **Capacité** : le profil devient indisponible s'il dépasse sa limite, plutôt que de publier un profil tronqué. Les RB les plus anciens peuvent être retirés à la limite de conservation ; compteur visible. Pas d'expiration temporelle des RB par défaut.
-- **Graphique 1m recommandé** : le VWAP utilise le hlc3 et le volume de l'unité du graphique. Passer au 5m change cet échantillonnage, ainsi que la précision d'invalidation et la clôture d'armement. Les ancrages Fib restent dans l'unité de construction choisie.
-- **Références évolutives** : les courbes VWAP, le profil et les POI courants changent avec les données. La stabilité promise concerne les ancrages Fib terminés et les RB confirmés, pas des boîtes de confluence figées à jamais.
+These are working calibration defaults. DRW equivalence, discretionary RB matching and the best tolerance still need trader validation.
 
-## En attente d'une validation externe
+## Timing and data
 
-1. Compilation et budgets d'exécution réels dans TradingView.
-2. Comparaison à une matinée annotée par le trader, y compris RB et invalidations intrabar.
-3. Source DRW pour comparer / adapter la variance et l'ancrage exacts.
-4. Choix globaux : veille calendaire ou dernière séance, armement global ou par signe, invalidation des niveaux mobiles, définition de confirmation RB.
-5. Cas de rollover NQ1!, historique ajusté et jours fériés. Les données synthétiques ne valident pas ces comportements de flux.
+A single 1m engine builds complete UTC-aligned construction / RB candles. Incomplete buckets are discarded. The Fib range requires its complete sequence of source candles, and equal extremes keep the first occurrence. If both extremes belong to the same candle or the range is flat, no anchor order is invented.
+
+The engine exports a deep copy of the state **before the forming minute is updated**. This gives the same completed-minute levels and reference price across 1m / 5m / 10m / 15m / 30m / 1h / 4h, with up to one minute of delay. A completed range can become available at its boundary, e.g. 07:30 UTC; the v0.2 report's claimed mandatory extra 5-minute delay does not apply.
+
+New Fib levels and RBs cannot be invalidated by wicks preceding their birth. Expansion is not invalidated retroactively on its arming candle. Rejection and confirmation candles must be consecutive in time; no confirmation across a market closure.
+
+Source history defaults to 20,000 1m candles, configurable within plan/feed limits. The panel reports the actual snapshot time. Identical data and input settings are required to compare charts. VWAP history is sampled at the display timeframe; current references come from the shared engine.
+
+## Profile, clusters and rendering
+
+The daily UTC profile distributes each candle's volume by price-range overlap on a fixed tick grid. Flat candles allocate to one row. POC ties choose the lowest row. Value area expands toward the larger neighboring volume; equal neighbors are both included. VAH / VAL are external row edges. Capacity overflow disables the profile rather than truncating it.
+
+For point levels, cluster width is at most tolerance. For wick intervals, use their common overlap / gap: `max(lower edges) - min(upper edges) <= tolerance`. No transitive chaining. One broad RB can participate in multiple separate groups. Subsets are suppressed; nearest groups are retained up to the display cap. Colors and nearest-zone ranking use the engine reference price.
+
+Historical primary Fib traces are static anchor references only and continue through invalidation. Their maximum is 75 sets × 6 = 450 lines, with pruning before allocation and capacity reserved for live references. They are not an eligibility or trade history. Use Bar Replay for historical confluence.
+
+## Outstanding external checks
+
+TradingView compilation, live rollback behavior, plan-dependent memory / runtime / 1m availability, annotated session comparisons, DRW source, holidays and NQ rollover remain to be verified. The actual-market POI study still requires a CSV export; synthetic software tests do not establish reversal performance.

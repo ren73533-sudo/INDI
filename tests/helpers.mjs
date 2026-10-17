@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { Indicator, PineTS } from 'pinets';
+import { configuredSource } from '../tools/pine-inputs.mjs';
 
 export const source = readFileSync(new URL('../indicators/nq_key_levels.pine', import.meta.url), 'utf8');
 export const DAY = 86_400_000;
@@ -29,9 +30,11 @@ export function handoffDay(day, bullish = true, minutes = 456) {
 }
 
 export function state(context, name) {
-  const key = Object.keys(context.var).find(key => key.endsWith('_' + name));
-  if (!key) throw new Error(`Missing state: ${name}`);
-  return context.var[key].get(0);
+  for (const scope of [context.let, context.var]) {
+    const key = Object.keys(scope).find(key => key.endsWith('_' + name));
+    if (key) return scope[key].get(0);
+  }
+  throw new Error(`Missing state: ${name}`);
 }
 
 export const levels = (context, name) => state(context, name).array;
@@ -65,18 +68,21 @@ export class OfflineProvider {
   }
 }
 
-export async function run(bars, inputs = {}, extra = '') {
-  // PineTS 0.11.1 executes the top-level chart guard in secondary security()
-  // contexts too (e.g. RB 10m). TradingView slices the requested expression.
-  // Shim ONLY this UI guard in the in-memory test source. All trading maths,
-  // lifecycle code, assertions and HTF requests remain unchanged. Production
-  // source is also transpiled without this shim in the syntax test.
-  const runtimeSource = source.replace('if barstate.isfirst\n', 'if false\n') + extra;
-  const indicator = new Indicator(runtimeSource, { 'Anchor': 'Daily UTC', ...inputs });
-  const engine = new PineTS(new OfflineProvider(bars), 'CME_MINI:NQ1!', '1', bars.length);
+export async function run(bars, inputs = {}, extra = '', chartTimeframe = '1', productionDefaults = false) {
+  // v0.3 exports the state BEFORE the currently forming source minute. Add a
+  // flat, zero-volume observation minute so the snapshot includes the final
+  // fixture candle. No production code or calculation is patched in this test.
+  const last = bars.at(-1);
+  const observation = candle(last.closeTime, last.close, last.close, last.close, last.close, 0);
+  const feed = [...bars, observation];
+  const runtimeSource = (productionDefaults ? source : configuredSource(source, { 'Anchor': 'Daily UTC', ...inputs })) + extra;
+  const indicator = new Indicator(runtimeSource);
+  const provider = new OfflineProvider(feed);
+  const engine = new PineTS(provider, 'CME_MINI:NQ1!', chartTimeframe, feed.length);
   const context = await engine.run(indicator);
   if (context.warnings.length) throw new Error(JSON.stringify(context.warnings));
-  if (context.idx + 1 !== bars.length) throw new Error('Not all fixture bars executed');
+  const chartBars = await provider.getMarketData('CME_MINI:NQ1!', chartTimeframe);
+  if (context.idx + 1 !== chartBars.length) throw new Error('Not all fixture chart bars executed');
   return context;
 }
 

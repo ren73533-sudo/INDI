@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { Indicator, PineTS } from 'pinets';
+import { configuredSource } from './pine-inputs.mjs';
 
 const MINUTE = 60_000;
 const DAY = 86_400_000;
@@ -102,19 +103,17 @@ export async function replay(bars, inputs = {}) {
   if (!inputs || typeof inputs !== 'object' || Array.isArray(inputs)) throw new Error('Indicator inputs must be a JSON object');
   const original = readFileSync(sourcePath, 'utf8');
   // In-memory instrumentation only. The indicator itself is never rewritten.
-  // 1) PineTS needs the same secondary-context chart-guard shim as unit tests.
-  // 2) Compute each historical day's profile, as a replay would, instead of
-  //    restricting it to last_bar_time. Calculation formulas remain unchanged.
-  const guard = 'if barstate.isfirst\n';
-  const profile = 'bool profileDay = utcDay == f_day(last_bar_time)';
-  if (!original.includes(guard) || !original.includes(profile)) throw new Error('Indicator changed: review replay instrumentation before proceeding');
-  const instrumented = original.replace(guard, 'if false\n').replace(profile, 'bool profileDay = true') + `
+  // Export each completed-minute snapshot rather than only the latest one.
+  // Mathematics, daily profile and transport remain the production code.
+  const exportGuard = 'bool exportSnapshot = barstate.islast';
+  if (!original.includes(exportGuard)) throw new Error('Indicator changed: review replay instrumentation before proceeding');
+  const instrumented = original.replace(exportGuard, 'bool exportSnapshot = true') + `
 array<Level> auditCandidates = array.new<Level>()
 int auditN = f_collect(fibs, auditCandidates, useFib, false, time_close, 0)
 auditN := f_collect(vwapLevels, auditCandidates, useVwap and vwapReady, false, time_close, auditN)
 auditN := f_collect(vpLevels, auditCandidates, useVp and vpReady, false, time_close, auditN)
 auditN := f_collect(rbs, auditCandidates, useRb, false, time_close, auditN)
-array<Poi> auditZones = f_findPois(auditCandidates)
+array<Poi> auditZones = f_findPois(auditCandidates, referencePrice)
 array<string> auditKeys = array.new_string()
 for auditZone in auditZones
     string auditKey = ""
@@ -123,39 +122,35 @@ for auditZone in auditZones
         auditKey += str.tostring(auditMember.kind) + ":" + str.tostring(auditMember.epoch) + ":" + auditMember.caption + ";"
     array.push(auditKeys, auditKey)
 int auditTime = time
-int auditSets = array.size(fibEpochs)
+int auditAsOf = engineAvailable ? snapshot.asOf : na
+int auditSets = engineAvailable ? snapshot.fibSets : 0
 `;
-  const engine = new PineTS(new NqCsvProvider(bars), 'CME_MINI:NQ1!', '1', bars.length);
-  const indicator = new Indicator(instrumented, {
+  // A flat, zero-volume observation minute exposes the state after the last
+  // supplied candle. Its price/volume are never included in a scored frame.
+  const last = bars.at(-1);
+  const feed = [...bars, { ...last, openTime: last.closeTime, closeTime: last.closeTime + MINUTE,
+    open: last.close, high: last.close, low: last.close, close: last.close, volume: 0 }];
+  const engine = new PineTS(new NqCsvProvider(feed), 'CME_MINI:NQ1!', '1', feed.length);
+  const indicator = new Indicator(configuredSource(instrumented, {
     ...inputs, 'Show labels with prices': false, 'Show status panel': false,
     'Show individual Fib levels': false, 'Show VWAP references': false,
     'Show VAH / VAL / POC': false, 'Show rejection wick zones': false,
     'Show historical primary Fib traces': false,
-  });
-  const metadata = indicator.getInputsMeta();
-  for (const [title, value] of Object.entries(inputs)) {
-    const setting = metadata.find(item => item.title === title);
-    if (!setting) throw new Error(`Unknown indicator setting: ${title}`);
-    if (setting.options && !setting.options.includes(value)) throw new Error(`Invalid option for ${title}`);
-    if (setting.type === 'bool' && typeof value !== 'boolean') throw new Error(`Expected boolean for ${title}`);
-    if (['int', 'float'].includes(setting.type) && (typeof value !== 'number' || !Number.isFinite(value)
-        || (setting.type === 'int' && !Number.isInteger(value))
-        || (setting.minval !== undefined && value < setting.minval)
-        || (setting.maxval !== undefined && value > setting.maxval))) throw new Error(`Invalid numeric value for ${title}`);
-  }
+  }));
   const context = await engine.run(indicator);
   if (context.warnings.length) throw new Error(`PineTS warnings: ${JSON.stringify(context.warnings)}`);
-  if (context.idx + 1 !== bars.length) throw new Error('Replay did not execute every input candle');
+  if (context.idx + 1 !== feed.length) throw new Error('Replay did not execute every input candle');
   const series = name => {
     const key = Object.keys(context.let).find(k => k.endsWith('_' + name));
     if (!key) throw new Error(`Missing replay series: ${name}`);
     return context.let[key].data;
   };
-  const times = series('auditTime'), zones = series('auditZones'), keys = series('auditKeys'), sets = series('auditSets');
+  const times = series('auditTime'), asOf = series('auditAsOf'), zones = series('auditZones'), keys = series('auditKeys'), sets = series('auditSets');
   const frames = bars.map((bar, i) => {
-    if (times[i] !== bar.openTime) throw new Error(`Replay frame alignment failed at row ${i}`);
-    return { time: times[i], sets: sets[i], zones: zones[i].array.map((z, j) => ({
-      lo: z.lo, hi: z.hi, kinds: z.kinds, members: z.members, key: keys[i].array[j], details: z.details,
+    const index = i + 1;
+    if (times[index] !== feed[index].openTime || asOf[index] !== bar.closeTime) throw new Error(`Replay frame alignment failed at row ${i}`);
+    return { time: bar.openTime, sets: sets[index], zones: zones[index].array.map((z, j) => ({
+      lo: z.lo, hi: z.hi, kinds: z.kinds, members: z.members, key: keys[index].array[j], details: z.details,
     })) };
   });
   return { frames, sourceSha256: createHash('sha256').update(original).digest('hex') };

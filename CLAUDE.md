@@ -1,39 +1,46 @@
-# Reprise de INDI avec Claude Code
+# INDI handoff for Claude Code — v0.3
 
-Le trader a demandé une première version itérative des key levels et reversal zones, avec calibrage et couleurs personnalisables. Il prévoit des modifications après essais. Aucun canal automatique ne relie les sessions Claude Code et Codex : la passation passe par ce dépôt et les retours du trader.
+The trader wants an iterative NQ key-level and reversal-zone display, with configurable calibration and colors. All indicator text and new documentation must be in English. Sessions coordinate through this repository and trader feedback; there is no automatic Claude Code / Codex messaging channel.
 
-## Lire d'abord
+## Read first
 
-1. `docs/GPT-HANDOFF.md` : cahier des charges d'origine, conservé sans modification.
-2. `REPORT.md` : revue de la V0.1 et correctifs de la V0.2. À lire avant de toucher au Pine.
-3. `docs/DECISIONS.md` : choix explicites, ambiguïtés et limites.
-4. `docs/TRADINGVIEW-CHECKLIST.md` : recette sur données réelles.
-5. `indicators/nq_key_levels.pine` : source autonome à coller dans TradingView.
+1. `docs/GPT-HANDOFF.md`: unchanged original strategy.
+2. `docs/DECISIONS.md`: current conventions and open choices.
+3. `docs/TIMEFRAMES.md`: architecture, snapshot timing and offline-runtime limits.
+4. `docs/TRADINGVIEW-CHECKLIST.md`: real-chart checks.
+5. `indicators/nq_key_levels.pine`: standalone source.
 
-## Invariants de stratégie
+`REPORT.md` is historical v0.2 feedback. v0.3 no longer uses chart-candle calculations or nested HTF requests. Completed construction ranges become available at their actual completion boundary.
 
-Ne pas remplacer les définitions par ICT/SMC standard. Corps pour les Fib, ordre chronologique 0 / 1, pas de biais directionnel ni de filtre BOS, deux concepts minimum, invalidation par distance sur les extrêmes, RB pour retour après confirmation. Pas d'ordres, flèches ou alertes de trading. Toute modification de ces règles demande une instruction explicite du trader.
+## Invariants
 
-La structure candle-colour du handoff n'est pas utilisée comme précondition. Aucun pivot standard n'est introduit. Le contexte 4H facultatif n'est pas encore implémenté.
+Preserve candle-body Fib extremes, chronological 0 / 1 anchors, no trend filter or BOS prerequisite, at least two concepts, distance-based high / low invalidation, and confirmed RBs for return taps. No orders, trade alerts or entry arrows. Strategy changes require the trader's instruction.
 
-## Développement
+The trader explicitly retained **two distinct types minimum** with the multi-timeframe update. Do not require all four families. Optional 4H structure context is not implemented and must not become a direction filter.
 
-Utiliser le checkout existant ; une tâche cloud est déjà isolée. Ne pas créer de worktree sans demande explicite. Le produit livré est un fichier Pine ; Node sert uniquement à la validation hors ligne.
+## Architecture
 
-```bash
+- Standard 1m / 5m / 10m / 15m / 30m / 1h / 4h display charts.
+- One `request.security` transports a shared 1m engine; no nested requests.
+- `f_aggregate` creates complete UTC-aligned source candles; `f_range` requires the full range window; `f_updateRbs` checks completed rejection / confirmation candles.
+- `f_engine` deep-copies state **before updating the current minute**. The display uses completed data, with up to a one-minute delay, without relying on `barstate.isconfirmed` inside a request.
+- Collections are exported only on the last source bar; scalar returns retain historical VWAP and anchor data.
+- Rendering uses `snapshot.referencePrice`, UTC day and timestamp, not chart-candle prices.
+- Historical lines reserve capacity for live levels. Missing source data is flagged, not replaced with larger candles.
+
+## Validation
+
+Use the existing checkout; cloud tasks are already isolated. Do not create worktrees without the user's request.
+
+```sh
 npm ci --ignore-scripts --no-audit --no-fund --cache /tmp/indi-npm-cache
 npm test
 ```
 
-Les tests exécutent le source avec PineTS 0.11.1 sur un fournisseur OHLC synthétique local, sans requête de cours externe. `tests/helpers.mjs` décrit précisément le seul shim : le contrôle initial de l'unité du graphique est désactivé **dans la copie de test**, car PineTS l'exécute aussi dans ses contextes `request.security`. Le fichier de production est transpillé sans modification dans le premier test.
+The default cross-timeframe test runs unmodified production code with nonempty POIs. Other fixtures use `tools/pine-inputs.mjs` to materialize input defaults because PineTS 0.11.1 drops runtime overrides in secondary request contexts. This changes input literals only, not calculation expressions. The original source is separately transpiled.
 
-La transpilation PineTS ne constitue pas une compilation TradingView. Ne pas déclarer l'indicateur validé en temps réel sans essai dans TradingView. Ne pas déclarer le VWAP équivalent à DRW sans son source ; ne pas présenter le profil estimé comme du volume à prix réel.
+A flat zero-volume observation minute exposes the state after the last fixture candle; it is never scored. The CSV study also exports each historical snapshot; profile calculations remain unchanged. It checks timestamps and historical-prefix consistency.
 
-Conserver les requêtes HTF sur bougies confirmées : `[1]` + `lookahead_on`, ou rejet `[2]` / confirmation `[1]` pour les RB. En cas de changement de règle ou de correction métier, ajouter un cas de régression ciblé et mettre à jour `docs/DECISIONS.md`.
+PineTS is not TradingView. Do not claim official compilation, live behavior, DRW equivalence, actual volume-at-price or profitability without evidence.
 
-## Priorités de revue
-
-- Compiler dans TradingView et corriger les incompatibilités éventuelles avant tout enrichissement.
-- Comparer à une matinée annotée par le trader et obtenir le source DRW si disponible.
-- Confirmer les conventions : veille calendaire, armement global, vie des bandes mobiles, impulsion / confirmation RB.
-- Contrôler le coût de la confluence par intervalles sur des historiques / capacités RB élevés et les limites de l'abonnement TradingView.
+Next: compile v0.3, compare 1m / 10m / 4h at matching engine timestamps, inspect live minute boundaries, market gaps, source availability and execution limits. Real NQ CSV for the requested POI reaction study is still missing.

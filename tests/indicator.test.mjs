@@ -38,7 +38,7 @@ test('incomplete window and same-bar extreme ordering never invent anchors', asy
 });
 
 test('no Fib exists before completion; both expansion modes arm only after a close', async () => {
-  const before = await run(handoffDay(SEPT23, true, 450));
+  const before = await run(handoffDay(SEPT23, true, 449));
   assert.equal(levels(before, 'fibs').length, 0);
   const bars = handoffDay(SEPT23, true, 451);
   bars.push(candle(SEPT23 + 451 * MINUTE, 31040, 31240, 31245, 31039));
@@ -127,7 +127,7 @@ function poiProbe(items) {
   return `
 array<Level> fixtureLevels = array.new<Level>()
 ${items.map(([lo, hi, kind], i) => `array.push(fixtureLevels, f_level(${lo}, ${hi}, ${kind}, "fixture ${i}", time, time, 1))`).join('\n')}
-array<Poi> fixtureZones = f_findPois(fixtureLevels)
+array<Poi> fixtureZones = f_findPois(fixtureLevels, close)
 int largestFixture = 0
 for fixtureZone in fixtureZones
     largestFixture := math.max(largestFixture, fixtureZone.members)
@@ -175,7 +175,7 @@ function rbFixture(minutes = 30) {
 
 test('5m RB appears only after the next candle confirms and is not duplicated each minute', async () => {
   const inputs = { '10 min': false, '15 min': false };
-  const before = await run(rbFixture(25), inputs);
+  const before = await run(rbFixture(24), inputs);
   assert.equal(levels(before, 'rbs').length, 0);
   const after = await run(rbFixture(), inputs);
   const rb = levels(after, 'rbs');
