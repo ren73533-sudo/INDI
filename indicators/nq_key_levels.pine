@@ -5,92 +5,92 @@ indicator("INDI · NQ Key Levels & Reversal Zones [v0.2]", "INDI NQ", overlay = 
 // Display only. No orders, alerts, directional filter or entry signals.
 // Confirmed HTF requests use past candles + lookahead_on, never a developing HTF candle.
 
-const string G_CORE = "01 · Calibrage / confluences"
-const string G_FIB = "02 · Fib STDV · corps uniquement"
-const string G_VWAP = "03 · VWAP / écarts-types"
-const string G_VP = "04 · Profil de volume estimé"
-const string G_RB = "05 · Rejection Blocks confirmés"
-const string G_VIEW = "06 · Affichage"
-const string G_COL = "07 · Couleurs"
+const string G_CORE = "01 · Calibration / confluence"
+const string G_FIB = "02 · Fib STDV · candle bodies only"
+const string G_VWAP = "03 · VWAP / standard deviation"
+const string G_VP = "04 · Estimated volume profile"
+const string G_RB = "05 · Confirmed Rejection Blocks"
+const string G_VIEW = "06 · Display"
+const string G_COL = "07 · Colors"
 const int DAY_MS = 86400000
 
-float tolerance = input.float(15.0, "Tolérance POI (points)", minval = 5, maxval = 50, step = 0.25, group = G_CORE)
-bool distinctKinds = input.bool(true, "Exiger des types de concepts distincts", tooltip = "ON : Fib + VWAP, par exemple. Deux Fib ou deux RB restent un seul type. OFF : deux niveaux suffisent.", group = G_CORE)
-int minimumConcepts = input.int(2, "Minimum de concepts / niveaux", minval = 2, maxval = 4, group = G_CORE)
-float invalidation = input.float(15.0, "Invalidation par dépassement (points)", minval = 0.25, maxval = 100, step = 0.25, tooltip = "Une résistance meurt si high >= son sommet + distance ; un support si low <= sa base - distance. Aucune clôture requise.", group = G_CORE)
-bool invalidateMoving = input.bool(true, "Invalider aussi VWAP / profil jusqu'au prochain ancrage", tooltip = "Test sur le dernier niveau connu avant la bougie. Un niveau mobile invalidé reste exclu des POI jusqu'au reset de sa session / journée. OFF : ces niveaux restent des références mobiles permanentes.", group = G_CORE)
-int maxPoi = input.int(15, "Maximum de zones POI affichées", minval = 1, maxval = 30, group = G_CORE)
-float poiPadding = input.float(0.5, "Marge visuelle des POI (points)", minval = 0, maxval = 10, step = 0.25, tooltip = "Affichage seulement : ne change ni la confluence ni l'invalidation.", group = G_CORE)
+float tolerance = input.float(15.0, "POI tolerance (points)", minval = 5, maxval = 50, step = 0.25, group = G_CORE)
+bool distinctKinds = input.bool(true, "Require distinct concept types", tooltip = "ON: Fib + VWAP, for example. Two Fib levels or two RBs still count as one type. OFF: two levels are sufficient.", group = G_CORE)
+int minimumConcepts = input.int(2, "Minimum concepts / levels", minval = 2, maxval = 4, group = G_CORE)
+float invalidation = input.float(15.0, "Invalidation distance (points)", minval = 0.25, maxval = 100, step = 0.25, tooltip = "Resistance is invalidated when high >= its upper edge + distance; support when low <= its lower edge - distance. No candle close is required.", group = G_CORE)
+bool invalidateMoving = input.bool(true, "Also invalidate VWAP / profile until the next reset", tooltip = "Checks the last level known before the candle. An invalidated moving level stays excluded from POIs until its session / daily reset. OFF: these levels remain continuously available moving references.", group = G_CORE)
+int maxPoi = input.int(15, "Maximum displayed POI zones", minval = 1, maxval = 30, group = G_CORE)
+float poiPadding = input.float(0.5, "POI visual padding (points)", minval = 0, maxval = 10, step = 0.25, tooltip = "Display only: does not change confluence or invalidation.", group = G_CORE)
 
-bool useFib = input.bool(true, "Activer les Fib dans les confluences", group = G_FIB)
-string fibTf = input.timeframe("5", "Bougies de construction", options = ["1", "5", "15"], tooltip = "5 min par défaut, comme le prototype. Le choix change les corps et donc les ancrages. Le graphique doit être en 1 min ou 5 min et ne pas dépasser cette unité.", group = G_FIB)
-string fibWindow = input.session("0000-0730", "Fenêtre fixe UTC", tooltip = "Fenêtre dans une seule journée, sans passage de minuit. Les deux bornes doivent être alignées sur les bougies de construction.", group = G_FIB)
-string expansionMode = input.string("Ensemble", "Armement ±3 / ±3.5 / ±4", options = ["Ensemble", "Par signe"], tooltip = "Ensemble : une clôture hors de [-2.5, +2.5] arme les deux bandes. Par signe : chaque signe s'arme séparément. Clôture de l'unité du graphique.", group = G_FIB)
-bool showFib = input.bool(true, "Afficher les niveaux individuels", group = G_FIB)
-bool showGeometry = input.bool(false, "Afficher 0 / 1 / 1.5 (contexte uniquement)", group = G_FIB)
-bool showDormant = input.bool(false, "Afficher l'expansion dormante en gris", group = G_FIB)
-bool showPrevious = input.bool(true, "Afficher les Fib de la série précédente", tooltip = "Reste actif dans le moteur même si masqué. Seules les deux dernières séries publiées sont conservées.", group = G_FIB)
-string fibRetention = input.string("Séance précédente", "Conservation des Fib", options = ["Séance précédente", "Jour calendaire précédent"], tooltip = "Séance précédente (défaut v0.2) : on garde les deux dernières séries RÉELLEMENT publiées, donc vendredi reste visible le lundi. Jour calendaire précédent : comportement v0.1, une série de plus de 24 h est supprimée même si aucune autre n'a été publiée depuis.", group = G_FIB)
+bool useFib = input.bool(true, "Include Fib in confluence", group = G_FIB)
+string fibTf = input.timeframe("5", "Construction timeframe", options = ["1", "5", "15"], tooltip = "Default: 5 minutes, matching the prototype. Changing this changes candle bodies and anchors. Use a 1-minute or 5-minute chart no higher than this timeframe.", group = G_FIB)
+string fibWindow = input.session("0000-0730", "Fixed UTC range window", tooltip = "The window must stay within one UTC day without crossing midnight. Both boundaries must align with the construction timeframe.", group = G_FIB)
+string expansionMode = input.string("Both sides", "Arm ±3 / ±3.5 / ±4 expansion", options = ["Both sides", "By multiplier sign"], tooltip = "Both sides: a close outside [-2.5, +2.5] arms both bands. By multiplier sign: each sign arms independently. Uses closes on the chart timeframe.", group = G_FIB)
+bool showFib = input.bool(true, "Show individual Fib levels", group = G_FIB)
+bool showGeometry = input.bool(false, "Show 0 / 1 / 1.5 (context only)", group = G_FIB)
+bool showDormant = input.bool(false, "Show dormant expansion in gray", group = G_FIB)
+bool showPrevious = input.bool(true, "Show the previous Fib set", tooltip = "Remains active in the engine when hidden. Only the two most recently published sets are retained.", group = G_FIB)
+string fibRetention = input.string("Previous session", "Fib retention", options = ["Previous session", "Previous calendar day"], tooltip = "Previous session (v0.2 default): keeps the two most recently published sets, so Friday remains available on Monday. Previous calendar day: v0.1 behavior; sets older than the previous UTC date are removed even if no replacement has been published.", group = G_FIB)
 
-bool useVwap = input.bool(true, "Activer VWAP ±2 / ±3 dans les confluences", group = G_VWAP)
-string vwapAnchor = input.string("Futures 22:00 UTC", "Ancrage", options = ["Futures 22:00 UTC", "Futures CME 18:00 New York", "RTH New York", "Jour UTC", "Heure UTC personnalisée"], group = G_VWAP)
-int vwapHour = input.int(22, "Heure UTC personnalisée", minval = 0, maxval = 23, group = G_VWAP, inline = "anchor")
+bool useVwap = input.bool(true, "Include VWAP ±2 / ±3 in confluence", group = G_VWAP)
+string vwapAnchor = input.string("Futures 22:00 UTC", "Anchor", options = ["Futures 22:00 UTC", "Futures CME 18:00 New York", "RTH New York", "Daily UTC", "Custom UTC time"], group = G_VWAP)
+int vwapHour = input.int(22, "Custom UTC time", minval = 0, maxval = 23, group = G_VWAP, inline = "anchor")
 int vwapMinute = input.int(0, "Minute", minval = 0, maxval = 59, group = G_VWAP, inline = "anchor")
-bool rthOnly = input.bool(true, "RTH : accumuler seulement 09:30–16:00 New York", tooltip = "Les heures RTH suivent le DST américain. Les autres ancrages accumulent toutes les bougies disponibles.", group = G_VWAP)
-int vwapWarmup = input.int(5, "Attendre avant d'activer les bandes (minutes)", minval = 1, maxval = 120, group = G_VWAP)
-bool showVwap = input.bool(true, "Afficher les références VWAP", group = G_VWAP)
-bool showVwapCurve = input.bool(true, "Tracer les courbes VWAP / bandes", group = G_VWAP)
-bool showSd1 = input.bool(false, "Afficher ±1 SD (contexte uniquement)", group = G_VWAP)
+bool rthOnly = input.bool(true, "RTH: accumulate only 09:30–16:00 New York", tooltip = "RTH follows US daylight saving time. Other anchor modes accumulate all available candles.", group = G_VWAP)
+int vwapWarmup = input.int(5, "Band warmup (minutes)", minval = 1, maxval = 120, group = G_VWAP)
+bool showVwap = input.bool(true, "Show VWAP references", group = G_VWAP)
+bool showVwapCurve = input.bool(true, "Plot VWAP / band curves", group = G_VWAP)
+bool showSd1 = input.bool(false, "Show ±1 SD (context only)", group = G_VWAP)
 
-bool useVp = input.bool(true, "Activer VAH / VAL dans les confluences", group = G_VP)
-int vpTicks = input.int(20, "Taille d'une ligne (ticks)", minval = 1, maxval = 400, tooltip = "NQ : 20 ticks = 5 points. Volume réparti uniformément sur high–low : estimation, pas volume réel à chaque prix.", group = G_VP)
+bool useVp = input.bool(true, "Include VAH / VAL in confluence", group = G_VP)
+int vpTicks = input.int(20, "Profile row size (ticks)", minval = 1, maxval = 400, tooltip = "NQ: 20 ticks = 5 points. Candle volume is distributed uniformly across high–low: an estimate, not actual volume traded at each price.", group = G_VP)
 float valueArea = input.float(70, "Value area (%)", minval = 50, maxval = 95, step = 1, group = G_VP)
-int vpMaxRows = input.int(600, "Limite de lignes (protection performance)", minval = 50, maxval = 2000, tooltip = "Si la journée dépasse la capacité, le profil est déclaré indisponible. Augmenter la taille de ligne ou la limite ; aucune troncature silencieuse.", group = G_VP)
-int vpWarmup = input.int(15, "Attendre avant d'activer le profil (minutes UTC)", minval = 1, maxval = 240, group = G_VP)
-bool includePoc = input.bool(false, "Compter POC dans les confluences", tooltip = "OFF par défaut : POC est une référence d'absorption / contexte, pas un niveau d'entrée défini par la stratégie.", group = G_VP)
-bool showVp = input.bool(true, "Afficher VAH / VAL / POC", group = G_VP)
+int vpMaxRows = input.int(600, "Maximum profile rows (performance limit)", minval = 50, maxval = 2000, tooltip = "If the daily range exceeds capacity, the profile becomes unavailable. Increase the row size or limit; the profile is never silently truncated.", group = G_VP)
+int vpWarmup = input.int(15, "Profile warmup (minutes after UTC midnight)", minval = 1, maxval = 240, group = G_VP)
+bool includePoc = input.bool(false, "Include POC in confluence", tooltip = "OFF by default: POC is an absorption / context reference, not an entry level defined by the strategy.", group = G_VP)
+bool showVp = input.bool(true, "Show VAH / VAL / POC", group = G_VP)
 
-bool useRb = input.bool(true, "Activer les RB dans les confluences", group = G_RB)
+bool useRb = input.bool(true, "Include RBs in confluence", group = G_RB)
 bool rb5 = input.bool(true, "5 min", group = G_RB, inline = "tf")
 bool rb10 = input.bool(true, "10 min", group = G_RB, inline = "tf")
 bool rb15 = input.bool(true, "15 min", group = G_RB, inline = "tf")
-float wickBodyRatio = input.float(2.0, "Mèche ≥ N × corps", minval = 0.5, maxval = 10, step = 0.1, group = G_RB)
-float wickPercent = input.float(60, "Mèche ≥ % de la bougie", minval = 10, maxval = 95, step = 1, group = G_RB)
-int leadBars = input.int(2, "Impulsion préalable : recul en bougies", minval = 1, maxval = 10, tooltip = "Hausse / baisse nette des clôtures précédant la bougie de rejet. Définition de travail configurable, à comparer à tes RB manuels.", group = G_RB)
-string rbConfirm = input.string("Corps", "Clôture de confirmation au-delà du", options = ["Corps", "Extrême"], tooltip = "La bougie immédiatement suivante doit inverser sa couleur et clôturer au-delà du corps (défaut) ou de l'extrême du rejet. Le RB n'est disponible qu'après cette confirmation.", group = G_RB)
-int rbLimit = input.int(40, "Maximum de RB conservés", minval = 5, maxval = 100, group = G_RB)
-int rbMaxDays = input.int(0, "Expiration en jours (0 = aucune)", minval = 0, maxval = 30, group = G_RB)
-bool showRb = input.bool(true, "Afficher les zones de mèche", group = G_RB)
+float wickBodyRatio = input.float(2.0, "Wick ≥ N × body", minval = 0.5, maxval = 10, step = 0.1, group = G_RB)
+float wickPercent = input.float(60, "Wick ≥ % of candle range", minval = 10, maxval = 95, step = 1, group = G_RB)
+int leadBars = input.int(2, "Prior move: lookback candles", minval = 1, maxval = 10, tooltip = "Net rise / fall in closes preceding the rejection candle. A configurable working definition to compare against your manually marked RBs.", group = G_RB)
+string rbConfirm = input.string("Body", "Confirmation close beyond the", options = ["Body", "Extreme"], tooltip = "The very next candle must reverse color and close beyond the rejection body (default) or extreme. The RB becomes available only after confirmation.", group = G_RB)
+int rbLimit = input.int(40, "Maximum retained RBs", minval = 5, maxval = 100, group = G_RB)
+int rbMaxDays = input.int(0, "Expiration in days (0 = none)", minval = 0, maxval = 30, group = G_RB)
+bool showRb = input.bool(true, "Show rejection wick zones", group = G_RB)
 
-bool showLabels = input.bool(true, "Étiquettes avec prix", group = G_VIEW)
-bool showDashboard = input.bool(true, "Tableau d'état", group = G_VIEW)
-bool persistFib = input.bool(false, "Tracer les Fib principaux dans l'historique", tooltip = "VALIDATION. Tout le reste n'est dessiné que sur la dernière bougie : sans ceci, impossible de remonter à une matinée annotée sans Bar Replay. Trace ±2 / ±2.25 / ±2.5 de chaque jour publié, de leur naissance à la fin de leur journée UTC. Les niveaux dormants, VWAP, profil et POI restent hors historique : ils se recalculent et les figer suggérerait des signaux rétrospectifs.", group = G_VIEW)
-int persistDays = input.int(40, "Jours de Fib historiques conservés", minval = 1, maxval = 80, tooltip = "6 lignes par jour. Au-delà, les plus anciennes sont supprimées pour rester sous la limite d'objets de TradingView.", group = G_VIEW)
-bool showDead = input.bool(false, "Afficher aussi les niveaux invalidés en gris", group = G_VIEW)
-int extendBars = input.int(35, "Projection à droite (bougies)", minval = 5, maxval = 250, group = G_VIEW)
-int labelSpacing = input.int(0, "Décalage entre étiquettes (bougies)", minval = 0, maxval = 3, group = G_VIEW)
-int lineWidth = input.int(1, "Épaisseur des niveaux", minval = 1, maxval = 4, group = G_VIEW)
-string linePattern = input.string("Pointillés", "Style des niveaux", options = ["Continu", "Tirets", "Pointillés"], group = G_VIEW)
-string fontChoice = input.string("Petit", "Taille des textes", options = ["Petit", "Normal", "Grand"], group = G_VIEW)
-int poiOpacity = input.int(82, "Transparence POI (0 = opaque)", minval = 0, maxval = 100, group = G_VIEW)
-int rbOpacity = input.int(91, "Transparence RB", minval = 0, maxval = 100, group = G_VIEW)
+bool showLabels = input.bool(true, "Show labels with prices", group = G_VIEW)
+bool showDashboard = input.bool(true, "Show status panel", group = G_VIEW)
+bool persistFib = input.bool(false, "Show historical primary Fib traces", tooltip = "VALIDATION ONLY. Draws ±2 / ±2.25 / ±2.5 for each published day from publication to UTC day end. These static anchor traces do not track invalidation. Other level objects and POIs show the current state; use Bar Replay to inspect past confluence. Keep this OFF for the first test.", group = G_VIEW)
+int persistDays = input.int(40, "Historical Fib days to retain", minval = 1, maxval = 80, tooltip = "Six lines per day. Older traces are removed beyond this count. Keep at 40 or below to reserve drawing capacity for live levels.", group = G_VIEW)
+bool showDead = input.bool(false, "Show invalidated levels in gray", group = G_VIEW)
+int extendBars = input.int(35, "Right projection (candles)", minval = 5, maxval = 250, group = G_VIEW)
+int labelSpacing = input.int(0, "Label spacing (candles)", minval = 0, maxval = 3, group = G_VIEW)
+int lineWidth = input.int(1, "Level line width", minval = 1, maxval = 4, group = G_VIEW)
+string linePattern = input.string("Dotted", "Level line style", options = ["Solid", "Dashed", "Dotted"], group = G_VIEW)
+string fontChoice = input.string("Small", "Text size", options = ["Small", "Normal", "Large"], group = G_VIEW)
+int poiOpacity = input.int(82, "POI transparency (0 = opaque)", minval = 0, maxval = 100, group = G_VIEW)
+int rbOpacity = input.int(91, "RB transparency", minval = 0, maxval = 100, group = G_VIEW)
 
-color fibTodayColor = input.color(#f5c542, "Fib du jour", group = G_COL)
-color fibPrevColor = input.color(#b896e8, "Fib du jour précédent", group = G_COL)
-color vwapColor = input.color(#d9e1ec, "VWAP centrale / ±1", group = G_COL)
+color fibTodayColor = input.color(#f5c542, "Today Fib", group = G_COL)
+color fibPrevColor = input.color(#b896e8, "Previous Fib set", group = G_COL)
+color vwapColor = input.color(#d9e1ec, "VWAP center / ±1", group = G_COL)
 color sd2Color = input.color(#33bbff, "VWAP ±2", group = G_COL)
 color sd3Color = input.color(#3978ee, "VWAP ±3", group = G_COL)
 color vahColor = input.color(#ff9c52, "VAH", group = G_COL)
 color valColor = input.color(#50c997, "VAL", group = G_COL)
 color pocColor = input.color(#df80bf, "POC", group = G_COL)
-color rbUpperColor = input.color(#d87960, "RB mèche haute", group = G_COL)
-color rbLowerColor = input.color(#70b6a0, "RB mèche basse", group = G_COL)
-color poiAboveColor = input.color(#ef6c76, "POI au-dessus du prix", group = G_COL)
-color poiBelowColor = input.color(#38c5a0, "POI sous le prix", group = G_COL)
-color poiAtPriceColor = input.color(#e3bd54, "POI au prix", group = G_COL)
-color inactiveColor = input.color(#747b88, "Dormant / invalidé", group = G_COL)
-color textColor = input.color(#edf2f7, "Texte", group = G_COL)
-color panelColor = input.color(#18212d, "Fond du tableau", group = G_COL)
+color rbUpperColor = input.color(#d87960, "Upper-wick RB", group = G_COL)
+color rbLowerColor = input.color(#70b6a0, "Lower-wick RB", group = G_COL)
+color poiAboveColor = input.color(#ef6c76, "POI above price", group = G_COL)
+color poiBelowColor = input.color(#38c5a0, "POI below price", group = G_COL)
+color poiAtPriceColor = input.color(#e3bd54, "POI at price", group = G_COL)
+color inactiveColor = input.color(#747b88, "Dormant / invalidated", group = G_COL)
+color textColor = input.color(#edf2f7, "Text", group = G_COL)
+color panelColor = input.color(#18212d, "Panel background", group = G_COL)
 
 // kind: 1 Fib, 2 VWAP, 3 volume profile, 4 RB. side: +1 resistance, -1 support.
 type Level
@@ -128,10 +128,10 @@ f_breached(Level level) =>
     level.side == 1 ? high >= level.hi + invalidation : low <= level.lo - invalidation
 
 f_font() =>
-    fontChoice == "Grand" ? size.large : fontChoice == "Normal" ? size.normal : size.small
+    fontChoice == "Large" ? size.large : fontChoice == "Normal" ? size.normal : size.small
 
 f_style() =>
-    linePattern == "Continu" ? line.style_solid : linePattern == "Tirets" ? line.style_dashed : line.style_dotted
+    linePattern == "Solid" ? line.style_solid : linePattern == "Dashed" ? line.style_dashed : line.style_dotted
 
 int rangeStart = int(str.tonumber(str.substring(fibWindow, 0, 2))) * 60 + int(str.tonumber(str.substring(fibWindow, 2, 4)))
 int rangeEnd = int(str.tonumber(str.substring(fibWindow, 5, 7))) * 60 + int(str.tonumber(str.substring(fibWindow, 7, 9)))
@@ -139,11 +139,11 @@ float chartSeconds = timeframe.in_seconds()
 float fibSeconds = timeframe.in_seconds(fibTf)
 if barstate.isfirst
     if not chart.is_standard or not timeframe.isintraday or (chartSeconds != 60 and chartSeconds != 300)
-        runtime.error("V0.1 : utiliser des bougies standard en 1 min (recommandé) ou 5 min. Les RB sont calculés séparément en 5 / 10 / 15 min.")
+        runtime.error("V0.2: use standard 1-minute (recommended) or 5-minute candles. RBs are calculated separately on 5 / 10 / 15 minutes.")
     if chartSeconds > fibSeconds
-        runtime.error("L'unité du graphique doit être inférieure ou égale à l'unité de construction Fib.")
+        runtime.error("The chart timeframe must not exceed the Fib construction timeframe.")
     if rangeEnd <= rangeStart or (rangeStart * 60) % int(fibSeconds) != 0 or (rangeEnd * 60) % int(fibSeconds) != 0
-        runtime.error("La fenêtre Fib doit rester dans une journée UTC et ses bornes doivent s'aligner sur l'unité de construction.")
+        runtime.error("The Fib window must stay within one UTC day and its boundaries must align with the construction timeframe.")
 
 // A source bar must close before its body is used. All output fields are offset by 1.
 // Equal extremes keep their FIRST occurrence; both extremes on the same bar are ambiguous.
@@ -198,7 +198,7 @@ bool newDay = barstate.isfirst or utcDay != utcDay[1]
 // v0.2: retention counts PUBLISHED series, not elapsed calendar days. A calendar
 // purge deletes Friday during the weekend, so Monday opens with no previous set
 // at all — one trading day in five running a concept short.
-bool calendarRetention = fibRetention == "Jour calendaire précédent"
+bool calendarRetention = fibRetention == "Previous calendar day"
 if newDay
     today0 := na
     today1 := na
@@ -246,7 +246,7 @@ for level in fibs
     bool justArmed = false
     if not level.active and not level.dead and barstate.isconfirmed
         float coordinate = (close - level.p0) / level.leg
-        bool crossed = expansionMode == "Ensemble" ? (coordinate > 2.5 or coordinate < -2.5) : (level.multiplier > 0 ? coordinate > 2.5 : coordinate < -2.5)
+        bool crossed = expansionMode == "Both sides" ? (coordinate > 2.5 or coordinate < -2.5) : (level.multiplier > 0 ? coordinate > 2.5 : coordinate < -2.5)
         if crossed
             level.active := true
             level.side := f_side(level.lo, close)
@@ -263,8 +263,8 @@ f_anchor(string tz, int h, int m) =>
 int anchorKey = switch vwapAnchor
     "Futures CME 18:00 New York" => f_anchor("America/New_York", 18, 0)
     "RTH New York" => f_anchor("America/New_York", 9, 30)
-    "Jour UTC" => utcDay
-    "Heure UTC personnalisée" => f_anchor("UTC", vwapHour, vwapMinute)
+    "Daily UTC" => utcDay
+    "Custom UTC time" => f_anchor("UTC", vwapHour, vwapMinute)
     => f_anchor("UTC", 22, 0)
 bool inRth = not na(time(timeframe.period, "0930-1600:23456", "America/New_York"))
 bool accumulateVwap = vwapAnchor != "RTH New York" or not rthOnly or inRth
@@ -407,8 +407,8 @@ f_rb() =>
     bool downMove = close[3] < close[3 + leadBars]
     bool rejectHigh = span > 0 and upper >= wickBodyRatio * body and upper >= span * wickPercent / 100.0
     bool rejectLow = span > 0 and lower >= wickBodyRatio * body and lower >= span * wickPercent / 100.0
-    bool reverseDown = close[1] < open[1] and close[1] < (rbConfirm == "Corps" ? bodyLo : low[2])
-    bool reverseUp = close[1] > open[1] and close[1] > (rbConfirm == "Corps" ? bodyHi : high[2])
+    bool reverseDown = close[1] < open[1] and close[1] < (rbConfirm == "Body" ? bodyLo : low[2])
+    bool reverseUp = close[1] > open[1] and close[1] > (rbConfirm == "Body" ? bodyHi : high[2])
     bool upperRb = upMove and rejectHigh and reverseDown and high[1] < high[2] + invalidation
     bool lowerRb = downMove and rejectLow and reverseUp and low[1] > low[2] - invalidation
     float zLo = upperRb ? bodyHi : lowerRb ? low[2] : na
@@ -451,12 +451,12 @@ while array.size(rbs) > rbLimit
 bool curveVisible = showVwap and showVwapCurve and vwapComplete and accumulateVwap
 bool anchorChanged = vwapEpoch != vwapEpoch[1]
 plot(curveVisible and not anchorChanged ? mean : na, "VWAP hlc3", color = vwapColor, linewidth = 2, style = plot.style_linebr)
-plot(curveVisible and not anchorChanged ? mean + 2 * deviation : na, "VWAP +2 SD contexte", color = sd2Color, style = plot.style_linebr)
-plot(curveVisible and not anchorChanged ? mean - 2 * deviation : na, "VWAP -2 SD contexte", color = sd2Color, style = plot.style_linebr)
-plot(curveVisible and not anchorChanged ? mean + 3 * deviation : na, "VWAP +3 SD contexte", color = sd3Color, style = plot.style_linebr)
-plot(curveVisible and not anchorChanged ? mean - 3 * deviation : na, "VWAP -3 SD contexte", color = sd3Color, style = plot.style_linebr)
-plot(curveVisible and showSd1 and not anchorChanged ? mean + deviation : na, "VWAP +1 SD non tradé", color = color.new(vwapColor, 65), style = plot.style_linebr)
-plot(curveVisible and showSd1 and not anchorChanged ? mean - deviation : na, "VWAP -1 SD non tradé", color = color.new(vwapColor, 65), style = plot.style_linebr)
+plot(curveVisible and not anchorChanged ? mean + 2 * deviation : na, "VWAP +2 SD context", color = sd2Color, style = plot.style_linebr)
+plot(curveVisible and not anchorChanged ? mean - 2 * deviation : na, "VWAP -2 SD context", color = sd2Color, style = plot.style_linebr)
+plot(curveVisible and not anchorChanged ? mean + 3 * deviation : na, "VWAP +3 SD context", color = sd3Color, style = plot.style_linebr)
+plot(curveVisible and not anchorChanged ? mean - 3 * deviation : na, "VWAP -3 SD context", color = sd3Color, style = plot.style_linebr)
+plot(curveVisible and showSd1 and not anchorChanged ? mean + deviation : na, "VWAP +1 SD context only", color = color.new(vwapColor, 65), style = plot.style_linebr)
+plot(curveVisible and showSd1 and not anchorChanged ? mean - deviation : na, "VWAP -1 SD context only", color = color.new(vwapColor, 65), style = plot.style_linebr)
 
 // Render the current state only. No historic POI boxes suggesting retrospective signals.
 var array<line> drawnLines = array.new<line>()
@@ -467,10 +467,10 @@ var table dashboard = table.new(position.top_right, 2, 11, bgcolor = panelColor,
 f_priceText(Level level) =>
     level.lo == level.hi ? str.tostring(level.lo, format.mintick) : str.tostring(level.lo, format.mintick) + "–" + str.tostring(level.hi, format.mintick)
 
-// "J-1" lies once retention follows sessions: on a Monday the previous series is
+// "Yesterday" is misleading with session retention: on Monday the previous set is
 // Friday's. The actual UTC date removes the ambiguity.
 f_name(Level level) =>
-    level.kind == 1 ? (level.epoch == utcDay ? "Fib J " : "Fib " + str.format_time(level.epoch, "dd/MM", "UTC") + " ") + level.caption : level.caption
+    level.kind == 1 ? (level.epoch == utcDay ? "Fib Today " : "Fib " + str.format_time(level.epoch, "dd/MM", "UTC") + " ") + level.caption : level.caption
 
 f_color(Level level) =>
     color c = switch level.kind
@@ -487,7 +487,7 @@ f_draw(Level level, int rightEdge, int labelOrder) =>
     else
         array.push(drawnLines, line.new(x1 = level.born, y1 = level.lo, x2 = rightEdge, y2 = level.hi, xloc = xloc.bar_time, color = c, style = f_style(), width = lineWidth))
     if showLabels
-        string suffix = level.dead ? " [invalidé]" : not level.active ? " [dormant]" : ""
+        string suffix = level.dead ? " [invalidated]" : not level.active ? " [dormant]" : ""
         int labelTime = rightEdge + int(chartSeconds * 1000) * labelSpacing * labelOrder
         array.push(drawnLabels, label.new(x = labelTime, y = (level.lo + level.hi) / 2, text = f_name(level) + " · " + f_priceText(level) + suffix, xloc = xloc.bar_time, style = label.style_label_left, color = color.new(c, 85), textcolor = c, size = f_font()))
 
@@ -589,20 +589,20 @@ if barstate.islast
     int poiCount = array.size(zones)
     for zone in zones
         color c = zone.lo > close ? poiAboveColor : zone.hi < close ? poiBelowColor : poiAtPriceColor
-        string positionText = zone.lo > close ? "AU-DESSUS" : zone.hi < close ? "EN DESSOUS" : "AU PRIX"
+        string positionText = zone.lo > close ? "ABOVE PRICE" : zone.hi < close ? "BELOW PRICE" : "AT PRICE"
         array.push(drawnBoxes, box.new(left = time, top = zone.hi + poiPadding, right = rightEdge, bottom = zone.lo - poiPadding, xloc = xloc.bar_time, bgcolor = color.new(c, poiOpacity), border_color = c, border_width = 2))
         if showLabels
-            string title = "POI " + str.tostring(zone.kinds) + " types / " + str.tostring(zone.members) + " niveaux · " + positionText
-            array.push(drawnLabels, label.new(x = rightEdge, y = zone.hi + poiPadding, text = title, xloc = xloc.bar_time, style = label.style_label_lower_left, color = color.new(c, 15), textcolor = textColor, size = f_font(), tooltip = zone.details + "\nZone : " + str.tostring(zone.lo, format.mintick) + "–" + str.tostring(zone.hi, format.mintick)))
+            string title = "POI " + str.tostring(zone.kinds) + " types / " + str.tostring(zone.members) + " levels · " + positionText
+            array.push(drawnLabels, label.new(x = rightEdge, y = zone.hi + poiPadding, text = title, xloc = xloc.bar_time, style = label.style_label_lower_left, color = color.new(c, 15), textcolor = textColor, size = f_font(), tooltip = zone.details + "\nZone: " + str.tostring(zone.lo, format.mintick) + "–" + str.tostring(zone.hi, format.mintick)))
 
     if showDashboard
-        string fibState = publishedDay == utcDay ? str.tostring(today0, format.mintick) + " → " + str.tostring(today1, format.mintick) : time < utcDay + rangeEnd * 60000 ? "Construction UTC…" : "Absente / incomplète / ambiguë"
-        string vwapState = not vwapComplete ? "Historique / ancrage incomplet" : not accumulateVwap ? "Hors RTH" : weight <= 0 ? "Volume absent" : not vwapReady ? "Initialisation…" : "Formule hlc3 pondérée · ≠ DRW vérifié"
-        string vpState = vpOverflow ? "CAPACITÉ DÉPASSÉE : élargir les lignes" : not vpComplete ? "Journée incomplète" : not vpReady ? "Initialisation / volume absent" : "ESTIMÉ · " + str.tostring(array.size(profile)) + " lignes"
-        string retentionState = (calendarRetention ? "Jour calendaire" : "Séance") + " · " + str.tostring(array.size(fibEpochs)) + " série(s)" + (persistFib ? " · historique tracé" : "")
-        array<string> keys = array.from("INDI NQ · v0.2", "Fib " + fibTf + "m", "Conservation", "VWAP", "Ancrage", "Profil UTC", "RB conservés", "Confluences", "Invalidation", "Données", "Validation")
-        string dataState = (not na(volume) and volume > 0 ? "Volume disponible" : "Volume absent / nul") + (syminfo.root == "NQ" ? " · NQ" : " · vérifier NQ1!")
-        array<string> values = array.from("Affichage uniquement", fibState, retentionState, vwapState, vwapAnchor, vpState, str.tostring(array.size(rbs)) + " · retirés par limite : " + str.tostring(evictedRb), str.tostring(poiCount) + " zones · " + str.tostring(array.size(candidates)) + " niveaux actifs", str.tostring(invalidation, "#.##") + " pts · extrêmes", dataState, "V1 : à comparer au graphique manuel")
+        string fibState = publishedDay == utcDay ? str.tostring(today0, format.mintick) + " → " + str.tostring(today1, format.mintick) : time < utcDay + rangeEnd * 60000 ? "Building UTC range…" : "Missing / incomplete / ambiguous"
+        string vwapState = not vwapComplete ? "Incomplete history / anchor" : not accumulateVwap ? "Outside RTH" : weight <= 0 ? "No volume" : not vwapReady ? "Warming up…" : "Weighted hlc3 formula · DRW match unverified"
+        string vpState = vpOverflow ? "CAPACITY EXCEEDED: increase row size" : not vpComplete ? "Incomplete UTC day" : not vpReady ? "Warming up / no volume" : "ESTIMATED · " + str.tostring(array.size(profile)) + " rows"
+        string retentionState = (calendarRetention ? "Calendar day" : "Session") + " · " + str.tostring(array.size(fibEpochs)) + " set(s)" + (persistFib ? " · history traces on" : "")
+        array<string> keys = array.from("INDI NQ · v0.2", "Fib " + fibTf + "m", "Retention", "VWAP", "Anchor", "UTC profile", "Retained RBs", "Confluence", "Invalidation", "Data", "Validation")
+        string dataState = (not na(volume) and volume > 0 ? "Volume available" : "Missing / zero volume") + (syminfo.root == "NQ" ? " · NQ" : " · check NQ1!")
+        array<string> values = array.from("Display only", fibState, retentionState, vwapState, vwapAnchor, vpState, str.tostring(array.size(rbs)) + " · removed by capacity: " + str.tostring(evictedRb), str.tostring(poiCount) + " zones · " + str.tostring(array.size(candidates)) + " active levels", str.tostring(invalidation, "#.##") + " pts · high / low", dataState, "V0.2: compare with manually marked chart")
         for row = 0 to 10
             table.cell(dashboard, 0, row, array.get(keys, row), text_color = textColor, text_size = f_font(), bgcolor = panelColor)
             table.cell(dashboard, 1, row, array.get(values, row), text_color = textColor, text_size = f_font(), bgcolor = panelColor)

@@ -72,7 +72,7 @@ export async function run(bars, inputs = {}, extra = '') {
   // lifecycle code, assertions and HTF requests remain unchanged. Production
   // source is also transpiled without this shim in the syntax test.
   const runtimeSource = source.replace('if barstate.isfirst\n', 'if false\n') + extra;
-  const indicator = new Indicator(runtimeSource, { 'Ancrage': 'Jour UTC', ...inputs });
+  const indicator = new Indicator(runtimeSource, { 'Anchor': 'Daily UTC', ...inputs });
   const engine = new PineTS(new OfflineProvider(bars), 'CME_MINI:NQ1!', '1', bars.length);
   const context = await engine.run(indicator);
   if (context.warnings.length) throw new Error(JSON.stringify(context.warnings));

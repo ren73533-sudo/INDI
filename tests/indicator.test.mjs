@@ -42,11 +42,11 @@ test('no Fib exists before completion; both expansion modes arm only after a clo
   assert.equal(levels(before, 'fibs').length, 0);
   const bars = handoffDay(SEPT23, true, 451);
   bars.push(candle(SEPT23 + 451 * MINUTE, 31040, 31240, 31245, 31039));
-  for (const mode of ['Ensemble', 'Par signe']) {
-    const result = await run(bars, { 'Armement ±3 / ±3.5 / ±4': mode });
+  for (const mode of ['Both sides', 'By multiplier sign']) {
+    const result = await run(bars, { 'Arm ±3 / ±3.5 / ±4 expansion': mode });
     const expansion = levels(result, 'fibs').filter(level => Math.abs(level.multiplier) > 2.5);
-    assert.equal(expansion.filter(level => level.active).length, mode === 'Ensemble' ? 6 : 3);
-    if (mode === 'Par signe') assert.ok(expansion.filter(level => level.active).every(level => level.multiplier > 0));
+    assert.equal(expansion.filter(level => level.active).length, mode === 'Both sides' ? 6 : 3);
+    if (mode === 'By multiplier sign') assert.ok(expansion.filter(level => level.active).every(level => level.multiplier > 0));
   }
 });
 
@@ -62,7 +62,7 @@ test('a wick invalidates at the distance boundary, even if the candle closes bac
 test('a two-calendar-day gap removes old Fib sets', async () => {
   const old = handoffDay(SEPT23 - 2 * DAY, false);
   const today = handoffDay(SEPT23, true, 5);
-  const result = await run([...old, ...today]);
+  const result = await run([...old, ...today], { 'Fib retention': 'Previous calendar day' });
   assert.equal(levels(result, 'fibs').length, 0);
 });
 
@@ -91,7 +91,7 @@ test('volume buckets conserve volume including flat bars; 70% value area expands
 
 test('bucket overflow and absent volume disable the profile rather than fabricate levels', async () => {
   const broad = Array.from({ length: 16 }, (_, i) => candle(SEPT23 + i * MINUTE, 100, 100, 500, 0));
-  const overflow = await run(broad, { 'Limite de lignes (protection performance)': 50 });
+  const overflow = await run(broad, { 'Maximum profile rows (performance limit)': 50 });
   assert.equal(state(overflow, 'vpOverflow'), true);
   assert.equal(levels(overflow, 'vpLevels').length, 0);
   const empty = await run(broad.map(b => ({ ...b, volume: 0 })));
@@ -103,10 +103,10 @@ test('RTH anchors shift with New York DST; fixed UTC futures anchor does not', a
   for (const [date, hour] of [[Date.UTC(2026, 6, 6), 13], [Date.UTC(2026, 11, 7), 14]]) {
     const start = date + (hour * 60 + 29) * MINUTE;
     const bars = Array.from({ length: 8 }, (_, i) => candle(start + i * MINUTE, 100 + i));
-    const rth = await run(bars, { 'Ancrage': 'RTH New York' });
+    const rth = await run(bars, { 'Anchor': 'RTH New York' });
     assert.equal(state(rth, 'vwapEpoch'), date + (hour * 60 + 30) * MINUTE);
     assert.equal(state(rth, 'vwapComplete'), true);
-    const fixed = await run(bars, { 'Ancrage': 'Futures 22:00 UTC' });
+    const fixed = await run(bars, { 'Anchor': 'Futures 22:00 UTC' });
     assert.equal(state(fixed, 'vwapEpoch'), date - DAY + 22 * 60 * MINUTE);
   }
 });
@@ -116,7 +116,7 @@ test('an anchor in the CME maintenance gap is complete when preceding history is
   const bars = [candle(day + (21 * 60 + 59) * MINUTE, 100, 100, 101, 99, 10),
     candle(day + 23 * 60 * MINUTE, 105, 105, 106, 104, 10),
     candle(day + (23 * 60 + 1) * MINUTE, 107, 107, 108, 106, 10)];
-  const result = await run(bars, { 'Ancrage': 'Futures 22:00 UTC' });
+  const result = await run(bars, { 'Anchor': 'Futures 22:00 UTC' });
   assert.equal(state(result, 'vwapEpoch'), day + 22 * 60 * MINUTE);
   assert.equal(state(result, 'vwapComplete'), true);
   closeTo(state(result, 'weight'), 20);
@@ -143,7 +143,7 @@ test('strict concepts reject Fib + Fib; loose mode accepts the same two levels',
   const probe = poiProbe([[100, 100, 1], [105, 105, 1]]);
   const strict = await run(shortBars(), {}, probe);
   assert.equal(plotValue(strict, 'TEST zones'), 0);
-  const loose = await run(shortBars(), { 'Exiger des types de concepts distincts': false }, probe);
+  const loose = await run(shortBars(), { 'Require distinct concept types': false }, probe);
   assert.equal(plotValue(loose, 'TEST zones'), 1);
 });
 
@@ -156,7 +156,7 @@ test('POI tolerance constrains the entire cluster, without chaining distant poin
 });
 
 test('an earlier same-type group cannot hide a later valid confluence', async () => {
-  const result = await run(shortBars(), { 'Tolérance POI (points)': 10 }, poiProbe([[100, 100, 1], [105, 105, 1], [115, 115, 2]]));
+  const result = await run(shortBars(), { 'POI tolerance (points)': 10 }, poiProbe([[100, 100, 1], [105, 105, 1], [115, 115, 2]]));
   assert.equal(plotValue(result, 'TEST zones'), 1);
   assert.equal(plotValue(result, 'TEST first low'), 105);
 });
@@ -189,7 +189,7 @@ test('5m RB appears only after the next candle confirms and is not duplicated ea
 test('a confirmed RB remains a return zone until a wick exceeds its invalidation distance', async () => {
   const bars = rbFixture();
   bars[29] = candle(SEPT23 + 29 * MINUTE, 102, 102, 130, 101);
-  const result = await run(bars, { '10 min': false, '15 min': false, 'Afficher aussi les niveaux invalidés en gris': true });
+  const result = await run(bars, { '10 min': false, '15 min': false, 'Show invalidated levels in gray': true });
   const rb = levels(result, 'rbs');
   assert.equal(rb.length, 1);
   assert.equal(rb[0].dead, true);
