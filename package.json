@@ -6,7 +6,8 @@
   "type": "module",
   "engines": { "node": ">=22" },
   "scripts": {
-    "test": "node --test --test-concurrency=1 tests/*.test.mjs"
+    "test": "node --test --test-concurrency=1 tests/*.test.mjs",
+    "study": "node tools/poi-study.mjs"
   },
   "devDependencies": {
     "pinets": "0.11.1"

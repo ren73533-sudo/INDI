@@ -57,6 +57,8 @@ Les conventions qui demandent une validation avec le trader sont détaillées da
 
 Le fichier Pine est autonome : aucun serveur, clé API ou dépendance JavaScript n'est nécessaire pour l'utiliser dans TradingView. **Node.js 22+** sert uniquement aux tests locaux.
 
+For the English historical POI reversal-study workflow, see [docs/POI-STUDY.md](docs/POI-STUDY.md). It accepts real NQ1! 1-minute CSV data and reports price reactions, not trading profitability.
+
 ```bash
 cd /workspace/INDI
 npm ci --ignore-scripts --no-audit --no-fund --cache /tmp/indi-npm-cache
