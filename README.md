@@ -2,6 +2,8 @@
 
 A customizable **TradingView Pine Script v6** indicator for the trader's key levels and confluence zones. Original requirements: [docs/GPT-HANDOFF.md](docs/GPT-HANDOFF.md). No orders, entry arrows, trade alerts or directional bias filter.
 
+**New separate indicator: [幽玄 — Ethereal](indicators/ethereal.pine)** draws only green boxes for two or more distinct confluences and yellow boxes for full qualification, with no text. Box size, tolerance and colors are configurable; timestamp / price anchors stay fixed across chart timeframes. [Rules and setup](docs/ETHEREAL.md) · [Download folder](https://github.com/ren73533-sudo/INDI/raw/refs/heads/main/downloads/Ethereal-v1.0.0.zip). The full-display indicator below remains available.
+
 **Full download: [INDI-v0.3.1.zip](https://github.com/ren73533-sudo/INDI/blob/main/downloads/INDI-v0.3.1.zip).** Open the ZIP on GitHub and use its download button. After extraction, read `START_HERE.md`. The source and tests are also available directly in this repository.
 
 ## Use in TradingView

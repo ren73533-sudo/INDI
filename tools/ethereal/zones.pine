@@ -1,0 +1,97 @@
+f_copyZones(array<ZoneRecord> records) =>
+    array<ZoneRecord> copied = array.new<ZoneRecord>()
+    for record in records
+        array.push(copied, record.copy())
+    copied
+
+// Use the profile known BEFORE this candle; never invent a rejection of a
+// profile edge reconstructed from that same candle's volume.
+f_updateReaction(Reaction reaction, array<Level> levels, int day) =>
+    if na(reaction.day) or reaction.day != day
+        reaction.day := day
+        reaction.upperAt := na
+        reaction.lowerAt := na
+        reaction.upperPrice := na
+        reaction.lowerPrice := na
+    for level in levels
+        if level.epoch == day and level.active and not level.dead
+            bool touch = high >= level.lo - reactionTolerance and low <= level.hi + reactionTolerance
+            bool fromVah = level.caption == "VAH ~" and touch and close < level.lo and (not directionalReaction or close < open)
+            bool fromVal = level.caption == "VAL ~" and touch and close > level.hi and (not directionalReaction or close > open)
+            if fromVah
+                reaction.upperAt := time_close
+                reaction.upperPrice := level.lo
+            if fromVal
+                reaction.lowerAt := time_close
+                reaction.lowerPrice := level.hi
+    reaction
+
+f_hasReaction(Level level, Reaction reaction, int now) =>
+    int stamp = level.caption == "VAH ~" ? reaction.upperAt : reaction.lowerAt
+    float price = level.caption == "VAH ~" ? reaction.upperPrice : reaction.lowerPrice
+    level.kind == 3 and level.epoch == reaction.day and not na(stamp) and now >= stamp and now - stamp <= reactionMinutes * 60000 and math.abs(level.lo - price) <= tolerance
+
+f_yellow(Poi zone, array<Level> candidates, Reaction reaction, int now) =>
+    bool higherRb = false
+    bool reversal = not requireReaction
+    for id in zone.memberIds
+        Level member = array.get(candidates, id)
+        if member.kind == 4
+            int seconds = member.caption == "RB 15m" ? 900 : member.caption == "RB 10m" ? 600 : member.caption == "RB 5m" ? 300 : 0
+            higherRb := higherRb or seconds >= timeframe.in_seconds(yellowRbTf)
+        if member.kind == 3
+            reversal := reversal or f_hasReaction(member, reaction, now)
+    zone.kinds == 4 and higherRb and reversal
+
+f_candidates(array<Level> source, array<Level> candidates, bool enabled) =>
+    if enabled
+        for level in source
+            if level.active and not level.dead and (level.kind != 3 or level.caption == "VAH ~" or level.caption == "VAL ~")
+                array.push(candidates, level)
+    array.size(candidates)
+
+// Starts and price bounds never move. A change of qualification ends the old
+// rectangle and begins a new one; yellow is never painted onto earlier history.
+f_updateZones(array<ZoneRecord> records, array<Level> candidates, Reaction reaction, int now, float reference) =>
+    array<Poi> current = f_findPois(candidates, reference)
+    for record in records
+        if record.live and now >= record.finish
+            record.live := false
+    for zone in current
+        float middle = (zone.lo + zone.hi) / 2
+        bool yellow = f_yellow(zone, candidates, reaction, now)
+        int found = -1
+        float closest = na
+        if array.size(records) > 0
+            for i = 0 to array.size(records) - 1
+                ZoneRecord record = array.get(records, i)
+                float distance = math.abs(middle - (record.lo + record.hi) / 2)
+                if record.live and record.lastSeen != now and middle >= record.lo and middle <= record.hi and (na(closest) or distance < closest)
+                    found := i
+                    closest := distance
+        if found >= 0
+            ZoneRecord record = array.get(records, found)
+            if record.yellow != yellow
+                record.finish := math.min(record.finish, now)
+                record.live := false
+                found := -1
+            else
+                record.lastSeen := now
+                record.kinds := zone.kinds
+        if found < 0
+            float height = math.max(minimumHeight, zone.hi - zone.lo)
+            float bottom = math.floor((middle - height / 2 - boxPadding) / syminfo.mintick) * syminfo.mintick
+            float top = math.ceil((middle + height / 2 + boxPadding) / syminfo.mintick) * syminfo.mintick
+            array.push(records, ZoneRecord.new(now, now + boxMinutes * 60000, bottom, top, zone.kinds, yellow, true, now))
+    for record in records
+        if record.live and record.lastSeen != now
+            record.finish := math.min(record.finish, now)
+            record.live := false
+    int index = array.size(records) - 1
+    while index >= 0
+        if array.get(records, index).finish < now - zoneDays * DAY_MS
+            array.remove(records, index)
+        index -= 1
+    while array.size(records) > zoneLimit
+        array.shift(records)
+    array.size(records)

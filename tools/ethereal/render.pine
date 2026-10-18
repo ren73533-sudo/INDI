@@ -1,0 +1,16 @@
+[snapshot] = request.security(syminfo.tickerid, "1", [f_engine()], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off, calc_bars_count = engineBars)
+
+// The chart only draws recorded events. Zoom and chart-bar width are never
+// inputs to box coordinates. There are no individual levels, labels or panels.
+var array<box> drawnBoxes = array.new<box>()
+if barstate.islast
+    for item in drawnBoxes
+        box.delete(item)
+    array.clear(drawnBoxes)
+    if not na(snapshot)
+        // Yellow is drawn last so a weaker overlapping zone cannot cover it.
+        for layer = 0 to 1
+            for record in snapshot.zones
+                if (layer == 0 and not record.yellow) or (layer == 1 and record.yellow)
+                    color c = record.yellow ? yellowColor : greenColor
+                    array.push(drawnBoxes, box.new(left = record.start, top = record.hi, right = record.finish, bottom = record.lo, xloc = xloc.bar_time, bgcolor = color.new(c, boxOpacity), border_color = c, border_width = borderWidth))

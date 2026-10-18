@@ -1,0 +1,70 @@
+//@version=6
+indicator("幽玄", "幽玄", overlay = true, max_boxes_count = 300, max_bars_back = 500, dynamic_requests = true)
+
+// Ethereal / Yugen v1.0.0. Standalone build: node tools/build-ethereal.mjs.
+// Same strategy calculations as nq_key_levels.pine; only confluence boxes are drawn.
+// Fixed timestamp / price anchors. Completed 1-minute data; up to one minute delay.
+
+const string G_CORE = "01 · Confluence"
+const string G_BOX = "02 · Boxes"
+const string G_GOLD = "03 · Yellow qualification"
+const string G_FIB = "04 · Fib STDV"
+const string G_VWAP = "05 · VWAP"
+const string G_VP = "06 · Estimated volume profile"
+const string G_RB = "07 · Rejection Blocks"
+const int DAY_MS = 86400000
+const bool distinctKinds = true
+const int minimumConcepts = 2
+const bool showDead = false
+
+float tolerance = input.float(15.0, "Confluence tolerance (points)", minval = 0.25, maxval = 100, step = 0.25, tooltip = "At least two distinct types: Fib, VWAP, VAH/VAL or RB. Two Fib levels or two RB timeframes count as one type. Alignment order does not matter.", group = G_CORE)
+float invalidation = input.float(15.0, "Invalidation distance (points)", minval = 0.25, maxval = 100, step = 0.25, group = G_CORE)
+bool invalidateMoving = input.bool(true, "Also invalidate VWAP / profile until the next reset", group = G_CORE)
+int engineBars = input.int(6000, "Engine history (1-minute candles)", minval = 3000, maxval = 100000, tooltip = "Must cover the overnight range, VWAP anchor and prior session. Actual availability depends on your TradingView plan and feed.", group = G_CORE)
+int maxPoi = input.int(15, "Maximum simultaneous zones", minval = 1, maxval = 30, group = G_CORE)
+
+float minimumHeight = input.float(5.0, "Minimum box height (points)", minval = 0.25, maxval = 200, step = 0.25, tooltip = "Boxes cover the confluence interval, expanded to at least this height. Their price bounds are fixed at creation.", group = G_BOX)
+float boxPadding = input.float(0.5, "Box padding per side (points)", minval = 0, maxval = 50, step = 0.25, group = G_BOX)
+int boxMinutes = input.int(120, "Maximum box duration (minutes)", minval = 1, maxval = 1440, tooltip = "Fixed time width on every chart timeframe. A box ends earlier if alignment breaks or its green/yellow qualification changes.", group = G_BOX)
+int zoneDays = input.int(2, "Box history (calendar days)", minval = 1, maxval = 30, group = G_BOX)
+int zoneLimit = input.int(150, "Maximum retained boxes", minval = 15, maxval = 300, group = G_BOX)
+color greenColor = input.color(#27ae60, "Standard alignment color (green)", group = G_BOX)
+color yellowColor = input.color(#f1c40f, "Full qualification color (yellow)", group = G_BOX)
+int boxOpacity = input.int(82, "Fill transparency (0 = opaque)", minval = 0, maxval = 100, group = G_BOX)
+int borderWidth = input.int(1, "Border width", minval = 0, maxval = 4, group = G_BOX)
+
+string yellowRbTf = input.timeframe("5", "Yellow RB reference timeframe", options = ["1", "5", "10", "15"], tooltip = "User choice: reference timeframe, not display timeframe. Yellow needs an aligned RB from this timeframe or higher. Colors remain consistent when switching charts.", group = G_GOLD)
+bool requireReaction = input.bool(true, "Yellow requires a VAH / VAL reversal", tooltip = "All four types must align. With this ON, a recent candle must also touch a previously known VAH/VAL and close back inside the value area. Otherwise the box stays green.", group = G_GOLD)
+int reactionMinutes = input.int(15, "Reversal memory (minutes)", minval = 1, maxval = 240, group = G_GOLD)
+float reactionTolerance = input.float(1.0, "VAH / VAL touch tolerance (points)", minval = 0, maxval = 20, step = 0.25, group = G_GOLD)
+bool directionalReaction = input.bool(true, "Reversal candle must close in the reversal direction", tooltip = "VAH: bearish candle closing below VAH. VAL: bullish candle closing above VAL. OFF: only a close back inside is required. No sequencing of the four confluences is required.", group = G_GOLD)
+
+bool useFib = input.bool(true, "Include Fib STDV", group = G_FIB)
+string fibTf = input.timeframe("5", "Construction timeframe", options = ["1", "5", "10", "15"], group = G_FIB)
+string fibWindow = input.session("0000-0730", "Fixed UTC range window", group = G_FIB)
+string expansionMode = input.string("Both sides", "Arm ±3 / ±3.5 / ±4 expansion", options = ["Both sides", "By multiplier sign"], group = G_FIB)
+string fibRetention = input.string("Previous session", "Fib retention", options = ["Previous session", "Previous calendar day"], group = G_FIB)
+
+bool useVwap = input.bool(true, "Include VWAP ±2 / ±3", group = G_VWAP)
+string vwapAnchor = input.string("Futures 22:00 UTC", "Anchor", options = ["Futures 22:00 UTC", "Futures CME 18:00 New York", "RTH New York", "Daily UTC", "Custom UTC time"], group = G_VWAP)
+int vwapHour = input.int(22, "Custom UTC hour", minval = 0, maxval = 23, group = G_VWAP)
+int vwapMinute = input.int(0, "Custom UTC minute", minval = 0, maxval = 59, group = G_VWAP)
+bool rthOnly = input.bool(true, "RTH: accumulate only 09:30–16:00 New York", group = G_VWAP)
+int vwapWarmup = input.int(5, "Band warmup (minutes)", minval = 1, maxval = 120, group = G_VWAP)
+
+bool useVp = input.bool(true, "Include VAH / VAL", group = G_VP)
+int vpTicks = input.int(20, "Profile row size (ticks)", minval = 1, maxval = 400, tooltip = "Estimated from 1m high-low volume distribution, not actual volume traded at each price. NQ: 20 ticks = 5 points. POC never qualifies in this indicator.", group = G_VP)
+float valueArea = input.float(70, "Value area (%)", minval = 50, maxval = 95, step = 1, group = G_VP)
+int vpMaxRows = input.int(600, "Maximum profile rows", minval = 50, maxval = 2000, group = G_VP)
+int vpWarmup = input.int(15, "Profile warmup (minutes after UTC midnight)", minval = 1, maxval = 240, group = G_VP)
+
+bool useRb = input.bool(true, "Include RBs", group = G_RB)
+bool rb5 = input.bool(true, "5 min", group = G_RB, inline = "rb")
+bool rb10 = input.bool(true, "10 min", group = G_RB, inline = "rb")
+bool rb15 = input.bool(true, "15 min", group = G_RB, inline = "rb")
+float wickBodyRatio = input.float(2.0, "Wick ≥ N × body", minval = 0.5, maxval = 10, step = 0.1, group = G_RB)
+float wickPercent = input.float(60, "Wick ≥ % of candle range", minval = 10, maxval = 95, step = 1, group = G_RB)
+int leadBars = input.int(2, "Prior move: lookback candles", minval = 1, maxval = 10, group = G_RB)
+string rbConfirm = input.string("Body", "Confirmation close beyond the", options = ["Body", "Extreme"], group = G_RB)
+int rbLimit = input.int(40, "Maximum retained RBs", minval = 5, maxval = 100, group = G_RB)
+int rbMaxDays = input.int(0, "RB expiration in days (0 = none)", minval = 0, maxval = 30, group = G_RB)

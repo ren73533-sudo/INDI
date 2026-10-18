@@ -20,6 +20,17 @@ The trader explicitly retained **two distinct types minimum** with the multi-tim
 
 The trader explicitly rejected reducing or redesigning the indicator. Preserve the full v0.2 visual feature set and existing calibration / color controls. RB wick boxes and individual references must remain visible independently of POI qualification. Make targeted corrections; do not replace the full display with POI-only output. Keep the original input order and IDs; append future controls after the original 71 declarations.
 
+## Separate Ethereal indicator — requested October 18, 2026
+
+The trader subsequently explicitly requested a **new boxes-only indicator**, named in Japanese: `indicators/ethereal.pine` (幽玄 / Yūgen). This new request applies to that separate file; keep the original full-display indicator intact. Read `docs/ETHEREAL.md` for exact rules and defaults.
+
+- Green: any two distinct concept types, in any order. Yellow: all four plus a qualifying RB and the configurable VAH/VAL reversal.
+- The trader explicitly selected **reference timeframe, default 5m**, for the same/higher RB rule. Do not silently use the display timeframe.
+- No text, labels, individual levels, curves or dashboard in the new indicator. Price/time anchors must stay fixed; use absolute timestamps, point-based height and minute-based duration, never viewport coordinates.
+- Build the standalone source with `node tools/build-ethereal.mjs`; templates are in `tools/ethereal/`, and calculation code is sourced from the original indicator. Update templates, then regenerate. `--check` detects drift.
+- Preserve past green history when yellow qualifies later. Start the yellow rectangle at its confirmation timestamp rather than retrospectively recoloring the earlier green box.
+- The VAH/VAL reaction's explicit working definition is documented and adjustable; do not imply measured reversal probability or a real NQ backtest.
+
 ## Architecture
 
 - Standard 1m / 5m / 10m / 15m / 30m / 1h / 4h display charts.
