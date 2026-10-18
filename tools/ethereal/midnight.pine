@@ -1,0 +1,42 @@
+// Trader-defined option: Fib 0 = the complete midnight construction candle's
+// OPEN, Fib 1 = the first confirmed body swing after 00:00 UTC. No later swing
+// moves these anchors. Swing bodies follow the original three-color definition.
+f_midnightRange(Candle completed) =>
+    var int day = na
+    var float p0 = na
+    var float p1 = na
+    var int confirmedAt = na
+    var bool locked = false
+    var int lastFinish = na
+    var array<Candle> recent = array.new<Candle>()
+    int currentDay = f_day(time)
+    if na(day) or day != currentDay
+        day := currentDay
+        p0 := na
+        p1 := na
+        confirmedAt := na
+        locked := false
+        lastFinish := na
+        array.clear(recent)
+    if not na(completed) and f_day(completed.start) == day and not locked
+        if completed.start == day
+            p0 := completed.o
+        if not na(p0)
+            if not na(lastFinish) and completed.start != lastFinish
+                array.clear(recent)
+            array.push(recent, completed)
+            lastFinish := completed.finish
+            while array.size(recent) > 3
+                array.shift(recent)
+            if array.size(recent) == 3
+                Candle first = array.get(recent, 0)
+                Candle second = array.get(recent, 1)
+                Candle third = array.get(recent, 2)
+                bool swingHigh = first.c > first.o and second.c > second.o and third.c < third.o
+                bool swingLow = first.c < first.o and second.c < second.o and third.c > third.o
+                if swingHigh or swingLow
+                    p1 := swingHigh ? math.max(math.max(first.o, first.c), math.max(second.o, second.c), math.max(third.o, third.c)) : math.min(math.min(first.o, first.c), math.min(second.o, second.c), math.min(third.o, third.c))
+                    confirmedAt := completed.finish
+                    locked := true
+    // A zero leg is unusable. Do not substitute a different later swing.
+    [p0, p1, day, locked and not na(p0) and p1 != p0, confirmedAt]

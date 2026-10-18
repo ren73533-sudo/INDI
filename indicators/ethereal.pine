@@ -1,7 +1,7 @@
 //@version=6
 indicator("幽玄", "幽玄", overlay = true, max_boxes_count = 300, max_bars_back = 500, dynamic_requests = true)
 
-// Ethereal / Yugen v1.3.0. Standalone build: node tools/build-ethereal.mjs.
+// Ethereal / Yugen v1.4.0. Standalone build: node tools/build-ethereal.mjs.
 // Same strategy calculations as nq_key_levels.pine; confluence boxes with optional text.
 // Fixed timestamp / price anchors. Completed 1-minute data; up to one minute delay.
 
@@ -46,7 +46,7 @@ string expansionMode = input.string("Both sides", "Arm ±3 / ±3.5 / ±4 expansi
 string fibRetention = input.string("Previous session", "Fib retention", options = ["Previous session", "Previous calendar day"], group = G_FIB)
 
 bool useVwap = input.bool(true, "Include VWAP ±2 / ±3", group = G_VWAP)
-string vwapAnchor = input.string("Futures 22:00 UTC", "Anchor", options = ["Futures 22:00 UTC", "Futures CME 18:00 New York", "RTH New York", "Daily UTC", "Custom UTC time"], group = G_VWAP)
+string vwapAnchor = input.string("Futures CME 18:00 New York", "Anchor", options = ["Futures 22:00 UTC", "Futures CME 18:00 New York", "RTH New York", "Daily UTC", "Custom UTC time"], group = G_VWAP)
 int vwapHour = input.int(22, "Custom UTC hour", minval = 0, maxval = 23, group = G_VWAP)
 int vwapMinute = input.int(0, "Custom UTC minute", minval = 0, maxval = 59, group = G_VWAP)
 bool rthOnly = input.bool(true, "RTH: accumulate only 09:30–16:00 New York", group = G_VWAP)
@@ -82,6 +82,8 @@ bool showConfluenceText = input.bool(true, "Show confluence text", tooltip = "Sh
 color confluenceTextColor = input.color(#ffffff, "Confluence text color", group = G_BOX)
 string confluenceTextSize = input.string("Small", "Confluence text size", options = ["Tiny", "Small", "Normal", "Large"], group = G_BOX)
 bool showDirectionSymbol = input.bool(true, "Show reversal side symbol (β / ρ)", tooltip = "β = support / buy-reversal area. ρ = resistance / sell-reversal area. Uses the zone's frozen source-anchor side, not a new trade signal. Independent of Show confluence text; text color and size apply to both.", group = G_BOX)
+bool requireFibInZone = input.bool(true, "Require active Fib STDV inside box", tooltip = "Default per trader request: a contributing active Fib STDV level must lie inside the actual visible price band, plus at least one other concept type. Include Fib STDV must also be enabled. OFF preserves any two distinct types. This does not establish reversal accuracy.", group = G_CORE)
+string fibAnchoring = input.string("Range body extremes", "Fib anchoring", options = ["Range body extremes", "Midnight open / first body swing"], tooltip = "Midnight mode: 0 = the 00:00 UTC construction candle's open. 1 = the first confirmed body swing: bullish/bullish/bearish → highest body, bearish/bearish/bullish → lowest body. Freeze at confirmation. Missing midnight data or a zero leg produces no new set. The range-window setting applies to Range body extremes only.", group = G_FIB)
 
 type Level
     float lo
@@ -188,7 +190,7 @@ float fibSeconds = timeframe.in_seconds(fibTf)
 if barstate.isfirst
     if not chart.is_standard or not timeframe.isintraday or not array.includes(array.from(60, 300, 600, 900, 1800, 3600, 14400), int(chartSeconds))
         runtime.error("Use standard 1m, 5m, 10m, 15m, 30m, 1h or 4h candles.")
-    if rangeEnd <= rangeStart or (rangeStart * 60) % int(fibSeconds) != 0 or (rangeEnd * 60) % int(fibSeconds) != 0
+    if fibAnchoring == "Range body extremes" and (rangeEnd <= rangeStart or (rangeStart * 60) % int(fibSeconds) != 0 or (rangeEnd * 60) % int(fibSeconds) != 0)
         runtime.error("The Fib window must stay within one UTC day and its boundaries must align with the construction timeframe.")
 
 f_anchor(string tz, int h, int m) =>
@@ -308,6 +310,49 @@ f_updateRbs(Candle completed, array<Candle> history, array<Level> levels, string
 // inside request.security(). A compact immutable zone snapshot is available
 // on every source bar, including historical replay bars.
 
+// Trader-defined option: Fib 0 = the complete midnight construction candle's
+// OPEN, Fib 1 = the first confirmed body swing after 00:00 UTC. No later swing
+// moves these anchors. Swing bodies follow the original three-color definition.
+f_midnightRange(Candle completed) =>
+    var int day = na
+    var float p0 = na
+    var float p1 = na
+    var int confirmedAt = na
+    var bool locked = false
+    var int lastFinish = na
+    var array<Candle> recent = array.new<Candle>()
+    int currentDay = f_day(time)
+    if na(day) or day != currentDay
+        day := currentDay
+        p0 := na
+        p1 := na
+        confirmedAt := na
+        locked := false
+        lastFinish := na
+        array.clear(recent)
+    if not na(completed) and f_day(completed.start) == day and not locked
+        if completed.start == day
+            p0 := completed.o
+        if not na(p0)
+            if not na(lastFinish) and completed.start != lastFinish
+                array.clear(recent)
+            array.push(recent, completed)
+            lastFinish := completed.finish
+            while array.size(recent) > 3
+                array.shift(recent)
+            if array.size(recent) == 3
+                Candle first = array.get(recent, 0)
+                Candle second = array.get(recent, 1)
+                Candle third = array.get(recent, 2)
+                bool swingHigh = first.c > first.o and second.c > second.o and third.c < third.o
+                bool swingLow = first.c < first.o and second.c < second.o and third.c > third.o
+                if swingHigh or swingLow
+                    p1 := swingHigh ? math.max(math.max(first.o, first.c), math.max(second.o, second.c), math.max(third.o, third.c)) : math.min(math.min(first.o, first.c), math.min(second.o, second.c), math.min(third.o, third.c))
+                    confirmedAt := completed.finish
+                    locked := true
+    // A zero leg is unusable. Do not substitute a different later swing.
+    [p0, p1, day, locked and not na(p0) and p1 != p0, confirmedAt]
+
 f_countKinds(array<Level> candidates, array<int> sortedIndices, int first, int last) =>
     bool a = false
     bool b = false
@@ -360,8 +405,7 @@ f_findPois(array<Level> candidates, float reference) =>
     array<int> nearest = array.sort_indices(distances, order.ascending)
     array<Poi> selected = array.new<Poi>()
     for id in nearest
-        if array.size(selected) < maxPoi
-            array.push(selected, array.get(zones, id))
+        array.push(selected, array.get(zones, id))
     selected
 
 f_copyZones(array<ZoneRecord> records) =>
@@ -500,6 +544,13 @@ f_zoneAnchor(Poi zone, array<Level> candidates) =>
         valid := not hasRb or not na(gap)
     [anchor, price, valid]
 
+f_fibInside(Poi zone, array<Level> candidates, float bottom, float top) =>
+    bool found = false
+    for id in zone.memberIds
+        Level member = array.get(candidates, id)
+        found := found or (member.kind == 1 and member.active and not member.dead and member.lo >= bottom and member.hi <= top)
+    found
+
 // Confluence CREATES a resting price area. It does not have to keep following
 // VWAP / profile to stay on the chart. Only a price breach (or optional expiry)
 // retires it. Each anchor is consumed once, including after invalidation.
@@ -545,6 +596,8 @@ f_updateZones(array<ZoneRecord> records, array<Level> candidates, Reaction react
                     closest := sameAnchor ? -1.0 : distance
         if found >= 0
             ZoneRecord record = array.get(records, found)
+            if requireFibInZone and not f_fibInside(zone, candidates, record.lo, record.hi)
+                continue
             if not str.contains(record.anchors, key)
                 record.anchors += key
             bool nearby = anchorPrice >= record.lo - mergeDistance and anchorPrice <= record.hi + mergeDistance
@@ -559,7 +612,8 @@ f_updateZones(array<ZoneRecord> records, array<Level> candidates, Reaction react
                     record.yellowText := f_confluenceText(zone, candidates)
                     changed := true
         bool awaitingReturn = anchor.side == 1 ? high < bottom : low > top
-        if found < 0 and not consumed and (not freshOnly or awaitingReturn)
+        bool fibAllowed = not requireFibInZone or f_fibInside(zone, candidates, bottom, top)
+        if found < 0 and not consumed and fibAllowed and (not freshOnly or awaitingReturn)
             int side = anchor.side
             ZoneRecord created = ZoneRecord.new(now, now, bottom, top, zone.kinds, yellow, true, now, side, key, anchor.lo - invalidation, anchor.hi + invalidation, yellow ? now : na)
             created.sourceText := f_confluenceText(zone, candidates)
@@ -650,7 +704,15 @@ f_engine(bool audit = false) =>
     int utcDay = f_day(time)
     bool newDay = na(stateDay) or utcDay != stateDay
     bool calendarRetention = fibRetention == "Previous calendar day"
-    [range0, range1, rangeDay, rangeReady] = f_range(f_aggregate(int(fibSeconds / 60), true))
+    Candle construction = f_aggregate(int(fibSeconds / 60), true)
+    [window0, window1, windowDay, windowReady] = f_range(construction)
+    [midnight0, midnight1, midnightDay, midnightReady, midnightAt] = f_midnightRange(construction)
+    bool midnightMode = fibAnchoring == "Midnight open / first body swing"
+    float range0 = midnightMode ? midnight0 : window0
+    float range1 = midnightMode ? midnight1 : window1
+    int rangeDay = midnightMode ? midnightDay : windowDay
+    bool rangeReady = midnightMode ? midnightReady : windowReady
+    int fibPublishedAt = midnightMode ? midnightAt : utcDay + rangeEnd * 60000
     if newDay
         today0 := na
         today1 := na
@@ -671,7 +733,7 @@ f_engine(bool audit = false) =>
         for multiplier in multipliers
             float price = range0 + multiplier * (range1 - range0)
             string signedName = (multiplier > 0 ? "+" : "") + str.tostring(multiplier, "#.##")
-            Level level = f_level(price, price, 1, signedName, utcDay + rangeEnd * 60000, utcDay, f_side(price, close))
+            Level level = f_level(price, price, 1, signedName, fibPublishedAt, utcDay, f_side(price, close))
             level.multiplier := multiplier
             level.p0 := range0
             level.leg := range1 - range0

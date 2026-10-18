@@ -43,14 +43,28 @@ type Reaction
 type EngineState
 `);
   types = replaceOnce(types, '    int evictedRb\n', '    int evictedRb\n    array<ZoneRecord> zones\n    string zoneData\n');
-  const calculations = between(legacy, 'int rangeStart =', 'f_engine() =>')
+  let calculations = between(legacy, 'int rangeStart =', 'f_engine() =>')
     .replace('V0.3: use standard', 'Use standard')
     .replace('// inside request.security(). Collections are exported only on the last source\n// bar, keeping historical request memory bounded. Scalars retain VWAP history.', '// inside request.security(). A compact immutable zone snapshot is available\n// on every source bar, including historical replay bars.');
+  calculations = replaceOnce(calculations, '    if rangeEnd <= rangeStart or (rangeStart * 60) % int(fibSeconds) != 0 or (rangeEnd * 60) % int(fibSeconds) != 0', '    if fibAnchoring == "Range body extremes" and (rangeEnd <= rangeStart or (rangeStart * 60) % int(fibSeconds) != 0 or (rangeEnd * 60) % int(fibSeconds) != 0)');
   let clusters = between(legacy, 'f_countKinds(', '\nif barstate.islast');
   const details = between(clusters, '                string details = ""', '                array.push(zones, Poi.new');
   clusters = replaceOnce(clusters, details, '                string details = ""\n');
+  // The display cap must never suppress formation/updates of retained areas.
+  // Keep the original full-display indicator's implementation unchanged.
+  clusters = replaceOnce(clusters, '        if array.size(selected) < maxPoi\n            array.push(selected, array.get(zones, id))', '        array.push(selected, array.get(zones, id))');
   let engine = between(legacy, 'f_engine() =>', '\n[snapshot, curveMean,');
   engine = replaceOnce(engine, 'f_engine() =>', 'f_engine(bool audit = false) =>');
+  engine = replaceOnce(engine, '    [range0, range1, rangeDay, rangeReady] = f_range(f_aggregate(int(fibSeconds / 60), true))', `    Candle construction = f_aggregate(int(fibSeconds / 60), true)
+    [window0, window1, windowDay, windowReady] = f_range(construction)
+    [midnight0, midnight1, midnightDay, midnightReady, midnightAt] = f_midnightRange(construction)
+    bool midnightMode = fibAnchoring == "Midnight open / first body swing"
+    float range0 = midnightMode ? midnight0 : window0
+    float range1 = midnightMode ? midnight1 : window1
+    int rangeDay = midnightMode ? midnightDay : windowDay
+    bool rangeReady = midnightMode ? midnightReady : windowReady
+    int fibPublishedAt = midnightMode ? midnightAt : utcDay + rangeEnd * 60000`);
+  engine = replaceOnce(engine, '1, signedName, utcDay + rangeEnd * 60000, utcDay', '1, signedName, fibPublishedAt, utcDay');
   engine = replaceOnce(engine, between(engine, '    float closedMean = mean', '    bool exportSnapshot'), '');
   engine = replaceOnce(engine, '    var int asOf = na', '    var array<ZoneRecord> records = array.new<ZoneRecord>()\n    var Reaction reaction = Reaction.new(na, na, na, na, na)\n    var string zoneData = ""\n    var int asOf = na');
   engine = replaceOnce(engine, '    bool exportSnapshot = barstate.islast', '    bool exportSnapshot = true');
@@ -69,7 +83,7 @@ type EngineState
         zoneData := f_packZones(records)
     asOf := time_close`);
   engine = replaceOnce(engine, '    [snapshot, closedMean, closedSd, closedComplete, closedAccumulating, closedEpoch, closed0, closed1, closedPublished, closedDay]', '    snapshot');
-  return [read('./ethereal/inputs.pine'), types, calculations, clusters, read('./ethereal/zones.pine'), read('./ethereal/transport.pine'), engine, read('./ethereal/render.pine')].map(part => part.trimEnd()).join('\n\n') + '\n';
+  return [read('./ethereal/inputs.pine'), types, calculations, read('./ethereal/midnight.pine'), clusters, read('./ethereal/zones.pine'), read('./ethereal/transport.pine'), engine, read('./ethereal/render.pine')].map(part => part.trimEnd()).join('\n\n') + '\n';
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

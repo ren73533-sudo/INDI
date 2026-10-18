@@ -134,6 +134,13 @@ f_zoneAnchor(Poi zone, array<Level> candidates) =>
         valid := not hasRb or not na(gap)
     [anchor, price, valid]
 
+f_fibInside(Poi zone, array<Level> candidates, float bottom, float top) =>
+    bool found = false
+    for id in zone.memberIds
+        Level member = array.get(candidates, id)
+        found := found or (member.kind == 1 and member.active and not member.dead and member.lo >= bottom and member.hi <= top)
+    found
+
 // Confluence CREATES a resting price area. It does not have to keep following
 // VWAP / profile to stay on the chart. Only a price breach (or optional expiry)
 // retires it. Each anchor is consumed once, including after invalidation.
@@ -179,6 +186,8 @@ f_updateZones(array<ZoneRecord> records, array<Level> candidates, Reaction react
                     closest := sameAnchor ? -1.0 : distance
         if found >= 0
             ZoneRecord record = array.get(records, found)
+            if requireFibInZone and not f_fibInside(zone, candidates, record.lo, record.hi)
+                continue
             if not str.contains(record.anchors, key)
                 record.anchors += key
             bool nearby = anchorPrice >= record.lo - mergeDistance and anchorPrice <= record.hi + mergeDistance
@@ -193,7 +202,8 @@ f_updateZones(array<ZoneRecord> records, array<Level> candidates, Reaction react
                     record.yellowText := f_confluenceText(zone, candidates)
                     changed := true
         bool awaitingReturn = anchor.side == 1 ? high < bottom : low > top
-        if found < 0 and not consumed and (not freshOnly or awaitingReturn)
+        bool fibAllowed = not requireFibInZone or f_fibInside(zone, candidates, bottom, top)
+        if found < 0 and not consumed and fibAllowed and (not freshOnly or awaitingReturn)
             int side = anchor.side
             ZoneRecord created = ZoneRecord.new(now, now, bottom, top, zone.kinds, yellow, true, now, side, key, anchor.lo - invalidation, anchor.hi + invalidation, yellow ? now : na)
             created.sourceText := f_confluenceText(zone, candidates)

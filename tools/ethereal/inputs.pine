@@ -1,7 +1,7 @@
 //@version=6
 indicator("幽玄", "幽玄", overlay = true, max_boxes_count = 300, max_bars_back = 500, dynamic_requests = true)
 
-// Ethereal / Yugen v1.3.0. Standalone build: node tools/build-ethereal.mjs.
+// Ethereal / Yugen v1.4.0. Standalone build: node tools/build-ethereal.mjs.
 // Same strategy calculations as nq_key_levels.pine; confluence boxes with optional text.
 // Fixed timestamp / price anchors. Completed 1-minute data; up to one minute delay.
 
@@ -46,7 +46,7 @@ string expansionMode = input.string("Both sides", "Arm ±3 / ±3.5 / ±4 expansi
 string fibRetention = input.string("Previous session", "Fib retention", options = ["Previous session", "Previous calendar day"], group = G_FIB)
 
 bool useVwap = input.bool(true, "Include VWAP ±2 / ±3", group = G_VWAP)
-string vwapAnchor = input.string("Futures 22:00 UTC", "Anchor", options = ["Futures 22:00 UTC", "Futures CME 18:00 New York", "RTH New York", "Daily UTC", "Custom UTC time"], group = G_VWAP)
+string vwapAnchor = input.string("Futures CME 18:00 New York", "Anchor", options = ["Futures 22:00 UTC", "Futures CME 18:00 New York", "RTH New York", "Daily UTC", "Custom UTC time"], group = G_VWAP)
 int vwapHour = input.int(22, "Custom UTC hour", minval = 0, maxval = 23, group = G_VWAP)
 int vwapMinute = input.int(0, "Custom UTC minute", minval = 0, maxval = 59, group = G_VWAP)
 bool rthOnly = input.bool(true, "RTH: accumulate only 09:30–16:00 New York", group = G_VWAP)
@@ -82,3 +82,5 @@ bool showConfluenceText = input.bool(true, "Show confluence text", tooltip = "Sh
 color confluenceTextColor = input.color(#ffffff, "Confluence text color", group = G_BOX)
 string confluenceTextSize = input.string("Small", "Confluence text size", options = ["Tiny", "Small", "Normal", "Large"], group = G_BOX)
 bool showDirectionSymbol = input.bool(true, "Show reversal side symbol (β / ρ)", tooltip = "β = support / buy-reversal area. ρ = resistance / sell-reversal area. Uses the zone's frozen source-anchor side, not a new trade signal. Independent of Show confluence text; text color and size apply to both.", group = G_BOX)
+bool requireFibInZone = input.bool(true, "Require active Fib STDV inside box", tooltip = "Default per trader request: a contributing active Fib STDV level must lie inside the actual visible price band, plus at least one other concept type. Include Fib STDV must also be enabled. OFF preserves any two distinct types. This does not establish reversal accuracy.", group = G_CORE)
+string fibAnchoring = input.string("Range body extremes", "Fib anchoring", options = ["Range body extremes", "Midnight open / first body swing"], tooltip = "Midnight mode: 0 = the 00:00 UTC construction candle's open. 1 = the first confirmed body swing: bullish/bullish/bearish → highest body, bearish/bearish/bullish → lowest body. Freeze at confirmation. Missing midnight data or a zero leg produces no new set. The range-window setting applies to Range body extremes only.", group = G_FIB)

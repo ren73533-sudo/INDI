@@ -83,7 +83,7 @@ test('Japanese standalone build stays synchronized and contains only box renderi
   new Indicator(source).prepare();
 });
 
-test('all six pairs of distinct types qualify, in either order; a single type does not', async () => {
+test('cluster finder recognizes all distinct pairs before the optional mandatory-Fib zone filter', async () => {
   const probe = `
 f_pair(int first, int second, bool reversed) =>
     array<Level> candidates = array.new<Level>()
@@ -119,7 +119,9 @@ test('production defaults draw annotated green and yellow boxes with identical t
     const summary = records(result).map(recordSummary);
     assert.ok(summary.some(r => !r.yellow && r.kinds >= 2), `no green stack on ${tf}`);
     assert.ok(summary.some(r => r.yellow && r.kinds === 4), `no actual yellow full stack on ${tf}`);
-    const visible = summary.filter(r => r.live);
+    const reference = state(result, 'snapshot').referencePrice;
+    const distance = r => Math.max(r.lo - reference, reference - r.hi, 0);
+    const visible = summary.filter(r => r.live).sort((a, b) => distance(a) - distance(b)).slice(0, 8);
     const asOf = state(result, 'snapshot').asOf;
     assert.equal(boxes(result).length, visible.reduce((count, r) => count + (r.yellow && r.yellowAt > r.start ? 2 : 1), 0));
     for (const record of visible) {
@@ -259,7 +261,7 @@ float edge = 100 + bar_index * 0.5
 array<Level> probeCandidates = array.from(f_level(edge, edge, 3, "VAH ~", time, f_day(time), 1), f_level(edge + 1, edge + 1, 2, "VWAP +2 SD", time, f_day(time), 1))
 f_updateZones(probeRecords, probeCandidates, probeMemory, time_close, close)
 `;
-  const result = await run(feed, {}, extra);
+  const result = await run(feed, { 'Require active Fib STDV inside box': false }, extra);
   const areas = state(result, 'probeRecords').array;
   assert.equal(areas.length, 1);
   assert.equal(areas[0].start, SEPT23 + MINUTE);
@@ -377,11 +379,12 @@ plot(errors, "transport errors")
 });
 
 test('quiet replay steps advance the right edge while keeping the cached zone history and start/price anchors unchanged', async () => {
-  const feed = fullStack().filter(bar => bar.openTime < SEPT23 + 330 * MINUTE);
+  // The default now requires Fib; test quiet steps after its publication.
+  const feed = [...fullStack(), ...Array.from({ length: 60 }, (_, i) => candle(SEPT23 + (480 + i) * MINUTE, 99, 99, 99.25, 98.75, 0))];
   const context = await rawReplay(feed);
   const frames = context.plots['replay clock'].data;
   let payload, view;
-  for (const minute of [300, 305, 310, 315, 320]) {
+  for (const minute of [500, 505, 510, 515, 520]) {
     const index = frames.findIndex(frame => frame.time === SEPT23 + minute * MINUTE);
     assert.ok(context.plots['replay count'].data[index].value > 0);
     const snapshot = atBar(context, 'snapshot', index);
@@ -440,7 +443,7 @@ f_updateZones(sweepRecords, sweepMembers, sweepMemory, time_close, close)
 
 test('a beyond-wick resting band freezes the known outside price instead of drifting or covering the old wick', async () => {
   const feed = Array.from({ length: 4 }, (_, i) => candle(SEPT23 + i * MINUTE, 90));
-  const settings = { 'RB zone placement': 'Beyond wick confluence' };
+  const settings = { 'RB zone placement': 'Beyond wick confluence', 'Require active Fib STDV inside box': false };
   for (const sizing of ['Fixed height', 'Cover confluence span']) {
     const result = await run(feed, { ...settings, 'Zone sizing': sizing }, sweepAreaProbe);
     const areas = state(result, 'sweepRecords').array;
@@ -518,4 +521,104 @@ string yellowCaption = f_boxCaption(buy, true)
   const neither = await run(short(), { 'Show confluence text': false, 'Show reversal side symbol (β / ρ)': false }, extra);
   assert.equal(state(neither, 'buyCaption'), '');
   assert.equal(state(neither, 'sellCaption'), '');
+});
+
+test('display capacity cannot suppress a farther qualified yellow zone or its retained history', async () => {
+  const extra = `
+var array<ZoneRecord> capacityRecords = array.new<ZoneRecord>()
+Reaction capacityMemory = Reaction.new(f_day(time), time_close, 202, na, na)
+array<Level> capacityMembers = array.from(f_level(100, 100, 1, "+2", time, f_day(time), 1), f_level(101, 101, 2, "VWAP +2 SD", time, f_day(time), 1), f_level(200, 200, 1, "+2.5", time, f_day(time), 1), f_level(201, 201, 2, "VWAP +3 SD", time, f_day(time), 1), f_level(202, 202, 3, "VAH ~", time, f_day(time), 1), f_level(200, 205, 4, "RB 10m", time, f_day(time), 1))
+f_updateZones(capacityRecords, capacityMembers, capacityMemory, time_close, close)
+`;
+  const feed = [candle(SEPT23, 90), candle(SEPT23 + MINUTE, 90)];
+  const limited = await run(feed, { 'Maximum displayed active zones': 1 }, extra);
+  const standard = await run(feed, {}, extra);
+  const narrow = state(limited, 'capacityRecords').array;
+  assert.ok(narrow.some(record => record.yellow && record.kinds === 4 && record.lo > 190));
+  assert.deepEqual(narrow.map(recordSummary), state(standard, 'capacityRecords').array.map(recordSummary));
+  const live = await run(fullStack(), { 'Maximum displayed active zones': 1 });
+  const full = await run(fullStack());
+  assert.deepEqual(records(live).map(recordSummary), records(full).map(recordSummary));
+  assert.equal(new Set(boxes(live).map(box => `${box.bottom}:${box.top}`)).size, 1, 'rendering still honors the display cap');
+});
+
+test('optional Fib requirement rejects non-Fib pairs and Fib references outside the frozen visible band', async () => {
+  const extra = `
+var array<ZoneRecord> fibRequiredRecords = array.new<ZoneRecord>()
+var Reaction fibRequiredMemory = Reaction.new(na, na, na, na, na)
+array<Level> fibRequiredMembers = array.from(f_level(100, 105, 4, "RB 10m", time, f_day(time), 1), f_level(110, 110, 2, "VWAP +2 SD", time, f_day(time), 1))
+if bar_index > 0
+    float fibPrice = bar_index < 3 ? 103 : 110
+    array.push(fibRequiredMembers, f_level(fibPrice, fibPrice, 1, "+2.5", time, f_day(time), 1))
+f_updateZones(fibRequiredRecords, fibRequiredMembers, fibRequiredMemory, time_close, close)
+plot(array.size(fibRequiredRecords), "Fib required count")
+`;
+  const feed = Array.from({ length: 4 }, (_, i) => candle(SEPT23 + i * MINUTE, 90));
+  const original = await run(feed, { 'RB zone placement': 'Beyond wick confluence', 'Require active Fib STDV inside box': false }, extra);
+  assert.equal(original.plots['Fib required count'].data[0].value, 1, 'legacy any-two mode allows RB + VWAP');
+  const required = await run(feed, { 'RB zone placement': 'Beyond wick confluence', 'Require active Fib STDV inside box': true }, extra);
+  const counts = required.plots['Fib required count'].data;
+  assert.equal(counts[0].value, 0, 'a non-Fib pair must fail the optional requirement');
+  assert.equal(counts[1].value, 0, 'Fib inside the old wick is not inside the new beyond-wick band');
+  assert.equal(counts[2].value, 0);
+  assert.equal(counts[3].value, 1, 'a Fib inside the actual band permits the pair');
+  const area = state(required, 'fibRequiredRecords').array[0];
+  assert.equal(area.start, SEPT23 + 4 * MINUTE, 'cannot backdate a Fib-qualified zone');
+  assert.equal(area.lo, 107);
+  assert.equal(area.hi, 113);
+});
+
+function midnightFeed(side = 1, timeframe = 5) {
+  const groups = side === 1 ? [[100, 102], [102, 105], [105, 103], [103, 108], [108, 115], [115, 110]]
+    : [[100, 98], [98, 95], [95, 97], [97, 92], [92, 85], [85, 90]];
+  return groups.flatMap(([open, close], index) => Array.from({ length: timeframe }, (_, minute) => candle(SEPT23 + (index * timeframe + minute) * MINUTE,
+    minute === 0 ? open : close, close, Math.max(open, close) + 50, Math.min(open, close) - 50)));
+}
+
+test('midnight mode uses UTC open and first confirmed body swing, freezes both directions and publishes only at confirmation', async () => {
+  const settings = { 'Fib anchoring': 'Midnight open / first body swing' };
+  for (const side of [1, -1]) {
+    const feed = midnightFeed(side);
+    const early = state(await run(feed.slice(0, 14), settings, '', '1', true), 'snapshot');
+    assert.equal(early.fibs.array.length, 0, 'cannot publish before the third construction candle completes');
+    const confirmed = state(await run(feed.slice(0, 15), settings, '', '1', true), 'snapshot');
+    assert.equal(confirmed.today0, 100);
+    assert.equal(confirmed.today1, side === 1 ? 105 : 95, 'body extreme, not wick tip');
+    assert.equal(confirmed.fibs.array.length, 12);
+    assert.ok(confirmed.fibs.array.every(level => level.born === SEPT23 + 15 * MINUTE));
+    const two = confirmed.fibs.array.find(level => level.multiplier === 2);
+    assert.equal(two.lo, side === 1 ? 110 : 90);
+    const later = state(await run(feed, settings, '', '1', true), 'snapshot');
+    assert.equal(later.today0, confirmed.today0);
+    assert.equal(later.today1, confirmed.today1, 'a larger later swing cannot reanchor the published set');
+  }
+});
+
+test('midnight mode needs the actual midnight candle and keeps the same anchors across all seven displays', async () => {
+  const settings = { 'Fib anchoring': 'Midnight open / first body swing' };
+  const feed = midnightFeed();
+  for (const tf of displays) {
+    const snapshot = state(await run(feed.slice(0, 15), settings, '', tf, true), 'snapshot');
+    assert.equal(snapshot.today0, 100, tf);
+    assert.equal(snapshot.today1, 105, tf);
+  }
+  const missing = state(await run(feed.filter((_, index) => index !== 0), settings, '', '1', true), 'snapshot');
+  assert.equal(missing.fibs.array.length, 0, 'cannot substitute the first loaded candle for midnight');
+  const different = state(await run(midnightFeed(1, 10).slice(0, 30), { ...settings, 'Construction timeframe': '10' }, '', '1', true), 'snapshot');
+  assert.equal(different.today0, 100);
+  assert.equal(different.today1, 105);
+  assert.ok(different.fibs.array.every(level => level.born === SEPT23 + 30 * MINUTE));
+});
+
+test('midnight mode never substitutes a later swing for a zero leg and resets cleanly on the next UTC day', async () => {
+  const settings = { 'Fib anchoring': 'Midnight open / first body swing' };
+  const pairs = [[100,100],[100,100],[98,99],[99,100],[100,99],[99,100],[100,101],[101,100]];
+  const zero = pairs.flatMap(([open, close], index) => Array.from({ length: 5 }, (_, minute) => candle(SEPT23 + (index * 5 + minute) * MINUTE, minute === 0 ? open : close, close)));
+  const invalid = state(await run(zero, settings, '', '1', true), 'snapshot');
+  assert.equal(invalid.fibs.array.length, 0, 'zero first leg must not become a different later leg');
+  const next = midnightFeed(-1).slice(0, 15).map(bar => ({ ...bar, openTime: bar.openTime + DAY, closeTime: bar.closeTime + DAY }));
+  const restarted = state(await run([...zero, ...next], settings, '', '1', true), 'snapshot');
+  assert.equal(restarted.today0, 100);
+  assert.equal(restarted.today1, 95);
+  assert.ok(restarted.fibs.array.every(level => level.epoch === SEPT23 + DAY && level.born === SEPT23 + DAY + 15 * MINUTE));
 });
