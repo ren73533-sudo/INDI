@@ -24,6 +24,11 @@ export function buildEthereal() {
     bool yellow
     bool live
     int lastSeen
+    int side
+    string anchors
+    float killLo
+    float killHi
+    int yellowAt
 
 type Reaction
     int day

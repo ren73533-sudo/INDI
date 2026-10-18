@@ -26,9 +26,10 @@ The trader subsequently explicitly requested a **new boxes-only indicator**, nam
 
 - Green: any two distinct concept types, in any order. Yellow: all four plus a qualifying RB and the configurable VAH/VAL reversal.
 - The trader explicitly selected **reference timeframe, default 5m**, for the same/higher RB rule. Do not silently use the display timeframe.
-- No text, labels, individual levels, curves or dashboard in the new indicator. Price/time anchors must stay fixed; use absolute timestamps, point-based height and minute-based duration, never viewport coordinates.
+- No text, labels, individual levels, curves or dashboard in the new indicator. Price/time anchors must stay fixed; use absolute timestamps, point-based height and minute-based right projection, never viewport coordinates.
 - Build the standalone source with `node tools/build-ethereal.mjs`; templates are in `tools/ethereal/`, and calculation code is sourced from the original indicator. Update templates, then regenerate. `--check` detects drift.
-- Preserve past green history when yellow qualifies later. Start the yellow rectangle at its confirmation timestamp rather than retrospectively recoloring the earlier green box.
+- The trader rejected the v1.0 stair-step fragments and supplied examples of long horizontal resting price areas. In v1.1, confluence establishes an area once. Do not retire or recreate it when VWAP/profile drift or alignment disappears. Keep it for return taps until its frozen source-anchor price invalidation, optional expiry or retention limits. Hide broken zones by default. Consume anchor identities to prevent instant respawning; merge nearby anchors without moving existing bounds.
+- Preserve past green history when yellow qualifies later. Keep the same resting area and price bounds, with its yellow portion beginning at the confirmation timestamp. Never relocate it or downgrade its earned grade as the moving references change.
 - The VAH/VAL reaction's explicit working definition is documented and adjustable; do not imply measured reversal probability or a real NQ backtest.
 
 ## Architecture

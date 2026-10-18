@@ -1,8 +1,10 @@
-# 幽玄 — Ethereal v1.0.0
+# 幽玄 — Ethereal v1.1.0
 
 **幽玄 (Yūgen)** is the separate, boxes-only indicator requested by the trader. Paste the complete [ethereal.pine](../indicators/ethereal.pine) into a new TradingView Pine Editor indicator, save and add it to NQ1!. All settings are English; the indicator name is Japanese.
 
-[Download the folder](https://github.com/ren73533-sudo/INDI/raw/refs/heads/main/downloads/Ethereal-v1.0.0.zip).
+[Download the folder](https://github.com/ren73533-sudo/INDI/raw/refs/heads/main/downloads/Ethereal-v1.1.0.zip).
+
+Version 1.1 corrects the earlier stair-step display. Confluence now establishes a **resting horizontal price area for a later return tap**. The area stays at its original prices while VWAP / profile move, and projects to the right until price invalidates it.
 
 ## What appears
 
@@ -36,19 +38,31 @@ The candle-direction requirement, touch tolerance and memory are adjustable. Tur
 | Setting | Default |
 | --- | --- |
 | Confluence tolerance | 15 points, adjustable 0.25–100 |
-| Minimum box height | 5 points |
+| Zone sizing / height | Fixed height / 5 points before padding |
 | Padding on each price edge | 0.5 point |
-| Maximum duration | 120 minutes |
+| Right projection | 240 minutes beyond the latest completed source minute |
+| Automatic zone expiration | Off; retain until price invalidation |
+| Active zones shown | Nearest 8; configurable |
+| Merge distance | 0 points; anchors inside an existing band share it |
 | Colors | Green / yellow, independently customizable |
-| Fill transparency | 82%; adjustable 0–100% |
+| Fill transparency | 78%; adjustable 0–100% |
 | Border width | 1; adjustable 0–4 |
-| History retained | 2 calendar days, up to 150 boxes |
+| Invalidated zones | Hidden by default; optional history for 2 calendar days |
+| Total storage | Up to 150 zones |
 
-Tolerance decides whether concepts align. Height and padding decide how their rectangle looks. Each rectangle covers the common confluence interval / gap, expanded to the minimum height and padding, with edges rounded outward to the symbol's tick size. A broad RB does not force a box to span the entire wick if the other concepts align within only part of it.
+Tolerance decides whether concepts align **when a zone is established**. A fixed Fib anchor is preferred, followed by an already formed RB wick, then the profile edge for a VP + VWAP pairing. With **Fixed height** (default), the band is centered on the qualifying Fib / profile price or on the RB wick location where the concepts stack. Its height is the requested number of points plus per-side padding, rounded outward to the symbol's tick size. Confluence tolerance is independent of the visible height: a nearby reference can qualify within tolerance without sitting inside the narrower rectangle.
 
-Boxes use **absolute timestamps and price coordinates**, with `xloc.bar_time` and no viewport coordinates or right extension. Duration is in minutes, not chart candles. Their start and price bounds stay fixed. Zooming does not enter the calculations. Keep the indicator pinned to the same price scale as NQ.
+Choose **Cover confluence span** to include the qualifying interval and source anchor in the rectangle; Zone height then sets its minimum thickness. Both sizing modes freeze their price bounds at creation.
 
-A live rectangle ends early when its alignment breaks or its green/yellow qualification changes. A color change starts a new rectangle at that confirmation time; it never paints yellow onto earlier green history. If alignment continues past the duration cap, a new rectangle begins. Historical rectangles remain until their age or capacity limit removes them. They show past qualification, not current eligibility. Yellow rectangles draw above overlapping green ones.
+After creation, its **start and price bounds never move**. VWAP/profile drift, disappearance of the original instantaneous alignment, a normal return tap, or expiration of the yellow reaction window do not delete or restart it. Repeated alignment with the same anchor does not draw another box. Nearby anchors inside the band share it; the merge-distance setting can widen that association without changing the existing bounds.
+
+The band's side and invalidation thresholds are frozen from its source anchor. A resistance area is invalidated by a wick at the original anchor's upper edge plus the configured distance; support by a wick at its lower edge minus the distance. A close beyond the level is not required. Padding / zone height are visual and do not change those thresholds. An invalidated anchor does not immediately respawn merely because the references align again.
+
+Active bands project to **the latest completed source timestamp + Right projection**, independently of chart candles and viewport zoom. Only the right edge advances with market time. Set an optional expiration in days if wanted. Storage capacity and available source history also bound retention. Broken areas are hidden by default; enabling their history shows them ending at invalidation / expiry time.
+
+When a green area earns yellow qualification later, it keeps the same price band and original formation timestamp. Its earlier green part remains green, and the yellow part starts at the qualification timestamp and continues forward. A qualified yellow area's grade does not flicker back to green as moving references change. Yellow rectangles draw above overlapping green ones.
+
+Boxes use **absolute timestamps and price coordinates**, with `xloc.bar_time` and no viewport coordinates. Keep the indicator pinned to the same price scale as NQ. The active display limit selects the nearest retained areas; other stored areas can become visible as price approaches, at their original anchors.
 
 ## Strategy calculations and data
 
@@ -70,7 +84,7 @@ node tools/build-ethereal.mjs --check
 npm test
 ```
 
-Tests cover every distinct pair, order independence, yellow requirements, reference-timeframe filtering, actual green/yellow boxes across all seven displays, point/time calibration, VAH/VAL reactions, frozen source snapshots, preserved anchors and equality with the original engine calculations. Production-default timeframe checks use the unchanged standalone source. Custom offline fixtures only materialize input default literals to work around PineTS input forwarding.
+Tests cover every distinct pair, order independence, yellow requirements, reference-timeframe filtering, actual green/yellow boxes across all seven displays, point/time calibration, persistence after lost alignment, normal return taps, wick invalidation, prevention of duplicate staircases / respawning, display filtering, VAH/VAL reactions, frozen source snapshots, preserved anchors and equality with the original engine calculations. Production-default timeframe checks use the unchanged standalone source. Custom offline fixtures only materialize input default literals to work around PineTS input forwarding.
 
 TradingView compilation, actual chart zoom / scale interaction, live source-context rollback, NQ feed behavior and account runtime / memory limits still require TradingView testing. Synthetic software checks are not a real-market backtest.
 

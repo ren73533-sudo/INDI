@@ -1,7 +1,7 @@
 //@version=6
 indicator("幽玄", "幽玄", overlay = true, max_boxes_count = 300, max_bars_back = 500, dynamic_requests = true)
 
-// Ethereal / Yugen v1.0.0. Standalone build: node tools/build-ethereal.mjs.
+// Ethereal / Yugen v1.1.0. Standalone build: node tools/build-ethereal.mjs.
 // Same strategy calculations as nq_key_levels.pine; only confluence boxes are drawn.
 // Fixed timestamp / price anchors. Completed 1-minute data; up to one minute delay.
 
@@ -21,16 +21,16 @@ float tolerance = input.float(15.0, "Confluence tolerance (points)", minval = 0.
 float invalidation = input.float(15.0, "Invalidation distance (points)", minval = 0.25, maxval = 100, step = 0.25, group = G_CORE)
 bool invalidateMoving = input.bool(true, "Also invalidate VWAP / profile until the next reset", group = G_CORE)
 int engineBars = input.int(6000, "Engine history (1-minute candles)", minval = 3000, maxval = 100000, tooltip = "Must cover the overnight range, VWAP anchor and prior session. Actual availability depends on your TradingView plan and feed.", group = G_CORE)
-int maxPoi = input.int(15, "Maximum simultaneous zones", minval = 1, maxval = 30, group = G_CORE)
+int maxPoi = input.int(8, "Maximum displayed active zones", minval = 1, maxval = 30, tooltip = "Show the nearest resting areas. Other retained zones keep their original anchors and can become visible as price approaches.", group = G_CORE)
 
-float minimumHeight = input.float(5.0, "Minimum box height (points)", minval = 0.25, maxval = 200, step = 0.25, tooltip = "Boxes cover the confluence interval, expanded to at least this height. Their price bounds are fixed at creation.", group = G_BOX)
+float minimumHeight = input.float(5.0, "Zone height (points)", minval = 0.25, maxval = 200, step = 0.25, tooltip = "Fixed height: exact height before padding. Cover confluence span: minimum height. Prices are frozen at creation.", group = G_BOX)
 float boxPadding = input.float(0.5, "Box padding per side (points)", minval = 0, maxval = 50, step = 0.25, group = G_BOX)
-int boxMinutes = input.int(120, "Maximum box duration (minutes)", minval = 1, maxval = 1440, tooltip = "Fixed time width on every chart timeframe. A box ends earlier if alignment breaks or its green/yellow qualification changes.", group = G_BOX)
-int zoneDays = input.int(2, "Box history (calendar days)", minval = 1, maxval = 30, group = G_BOX)
-int zoneLimit = input.int(150, "Maximum retained boxes", minval = 15, maxval = 300, group = G_BOX)
+int boxMinutes = input.int(240, "Right projection (minutes)", minval = 15, maxval = 1440, tooltip = "Active zones stretch across the chart toward future time. Only the right edge advances with market time; zoom never changes the zone's start or price bounds.", group = G_BOX)
+int zoneDays = input.int(2, "Invalidated zone history (calendar days)", minval = 1, maxval = 30, group = G_BOX)
+int zoneLimit = input.int(150, "Maximum retained zones", minval = 15, maxval = 150, group = G_BOX)
 color greenColor = input.color(#27ae60, "Standard alignment color (green)", group = G_BOX)
 color yellowColor = input.color(#f1c40f, "Full qualification color (yellow)", group = G_BOX)
-int boxOpacity = input.int(82, "Fill transparency (0 = opaque)", minval = 0, maxval = 100, group = G_BOX)
+int boxOpacity = input.int(78, "Fill transparency (0 = opaque)", minval = 0, maxval = 100, group = G_BOX)
 int borderWidth = input.int(1, "Border width", minval = 0, maxval = 4, group = G_BOX)
 
 string yellowRbTf = input.timeframe("5", "Yellow RB reference timeframe", options = ["1", "5", "10", "15"], tooltip = "User choice: reference timeframe, not display timeframe. Yellow needs an aligned RB from this timeframe or higher. Colors remain consistent when switching charts.", group = G_GOLD)
@@ -68,3 +68,9 @@ int leadBars = input.int(2, "Prior move: lookback candles", minval = 1, maxval =
 string rbConfirm = input.string("Body", "Confirmation close beyond the", options = ["Body", "Extreme"], group = G_RB)
 int rbLimit = input.int(40, "Maximum retained RBs", minval = 5, maxval = 100, group = G_RB)
 int rbMaxDays = input.int(0, "RB expiration in days (0 = none)", minval = 0, maxval = 30, group = G_RB)
+
+// Append new controls to preserve the original calibration / color input IDs.
+string zoneSizing = input.string("Fixed height", "Zone sizing", options = ["Fixed height", "Cover confluence span"], tooltip = "Fixed height makes narrow resting price bands. Cover confluence span expands the height to contain the qualifying interval. Tolerance controls qualification separately.", group = G_BOX)
+float mergeDistance = input.float(0.0, "Nearby zone merge distance (points)", minval = 0, maxval = 50, step = 0.25, tooltip = "An anchor already inside a resting band shares it. Increase to include nearby anchors. Existing price bounds never expand or move.", group = G_BOX)
+int zoneMaxDays = input.int(0, "Zone expiration in days (0 = until invalidation)", minval = 0, maxval = 30, group = G_BOX)
+bool showBroken = input.bool(false, "Show invalidated / expired zones", group = G_BOX)

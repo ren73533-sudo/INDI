@@ -1,16 +1,37 @@
 [snapshot] = request.security(syminfo.tickerid, "1", [f_engine()], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off, calc_bars_count = engineBars)
 
-// The chart only draws recorded events. Zoom and chart-bar width are never
-// inputs to box coordinates. There are no individual levels, labels or panels.
+// Wide resting bands, projected into future time. Zoom and chart-bar width
+// never enter their coordinates. Broken zones are hidden by default.
 var array<box> drawnBoxes = array.new<box>()
 if barstate.islast
     for item in drawnBoxes
         box.delete(item)
     array.clear(drawnBoxes)
     if not na(snapshot)
+        array<ZoneRecord> active = array.new<ZoneRecord>()
+        array<float> distances = array.new_float()
+        for record in snapshot.zones
+            if record.live
+                array.push(active, record)
+                array.push(distances, math.max(record.lo - snapshot.referencePrice, math.max(snapshot.referencePrice - record.hi, 0.0)))
+        array<ZoneRecord> visible = array.new<ZoneRecord>()
+        for id in array.sort_indices(distances, order.ascending)
+            if array.size(visible) < maxPoi
+                array.push(visible, array.get(active, id))
+        if showBroken
+            int index = array.size(snapshot.zones) - 1
+            while index >= 0 and array.size(visible) < 150
+                ZoneRecord record = array.get(snapshot.zones, index)
+                if not record.live
+                    array.push(visible, record)
+                index -= 1
         // Yellow is drawn last so a weaker overlapping zone cannot cover it.
         for layer = 0 to 1
-            for record in snapshot.zones
-                if (layer == 0 and not record.yellow) or (layer == 1 and record.yellow)
-                    color c = record.yellow ? yellowColor : greenColor
-                    array.push(drawnBoxes, box.new(left = record.start, top = record.hi, right = record.finish, bottom = record.lo, xloc = xloc.bar_time, bgcolor = color.new(c, boxOpacity), border_color = c, border_width = borderWidth))
+            for record in visible
+                if record.live or showBroken
+                    int rightEdge = record.live ? snapshot.asOf + boxMinutes * 60000 : record.finish
+                    if layer == 0 and (not record.yellow or record.yellowAt > record.start)
+                        int greenEnd = record.yellow ? record.yellowAt : rightEdge
+                        array.push(drawnBoxes, box.new(left = record.start, top = record.hi, right = greenEnd, bottom = record.lo, xloc = xloc.bar_time, bgcolor = color.new(greenColor, boxOpacity), border_color = greenColor, border_width = borderWidth))
+                    if layer == 1 and record.yellow
+                        array.push(drawnBoxes, box.new(left = record.yellowAt, top = record.hi, right = rightEdge, bottom = record.lo, xloc = xloc.bar_time, bgcolor = color.new(yellowColor, boxOpacity), border_color = yellowColor, border_width = borderWidth))

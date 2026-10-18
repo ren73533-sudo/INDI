@@ -11,7 +11,7 @@ const displays = ['1', '5', '10', '15', '30', '60', '240'];
 const short = () => [candle(SEPT23, 100), candle(SEPT23 + MINUTE, 100)];
 const plot = (context, title) => context.plots[title].data.at(-1).value;
 const records = context => state(context, 'snapshot').zones.array;
-const recordSummary = r => ({ start: r.start, finish: r.finish, lo: r.lo, hi: r.hi, kinds: r.kinds, yellow: r.yellow, live: r.live, lastSeen: r.lastSeen });
+const recordSummary = r => ({ start: r.start, finish: r.finish, lo: r.lo, hi: r.hi, kinds: r.kinds, yellow: r.yellow, live: r.live, lastSeen: r.lastSeen, side: r.side, anchors: r.anchors, killLo: r.killLo, killHi: r.killHi, yellowAt: r.yellowAt });
 const boxes = context => context.plots.__boxes__?.data.at(-1).value ?? [];
 
 async function run(bars, inputs = {}, extra = '', timeframe = '1') {
@@ -112,13 +112,18 @@ test('production defaults draw text-free green and yellow boxes with identical t
     const summary = records(result).map(recordSummary);
     assert.ok(summary.some(r => !r.yellow && r.kinds >= 2), `no green stack on ${tf}`);
     assert.ok(summary.some(r => r.yellow && r.kinds === 4), `no actual yellow full stack on ${tf}`);
-    assert.equal(boxes(result).length, summary.length);
-    for (const record of summary) {
-      const box = boxes(result).find(b => b.left === record.start && b.right === record.finish && b.bottom === record.lo && b.top === record.hi && b.border_color.toLowerCase() === (record.yellow ? '#f1c40f' : '#27ae60'));
+    const visible = summary.filter(r => r.live);
+    const asOf = state(result, 'snapshot').asOf;
+    assert.equal(boxes(result).length, visible.reduce((count, r) => count + (r.yellow && r.yellowAt > r.start ? 2 : 1), 0));
+    for (const record of visible) {
+      const left = record.yellow ? record.yellowAt : record.start;
+      const right = asOf + 240 * MINUTE;
+      const box = boxes(result).find(b => b.left === left && b.right === right && b.bottom === record.lo && b.top === record.hi && b.border_color.toLowerCase() === (record.yellow ? '#f1c40f' : '#27ae60'));
       assert.ok(box, `record not drawn on ${tf}`);
       assert.equal(box.text, '', tf);
-      assert.equal(box.left, record.start);
-      assert.equal(box.right, record.finish);
+      assert.equal(box.left, left);
+      assert.equal(box.right, right);
+      assert.ok(box.right - box.left >= 240 * MINUTE, 'resting zones must be long horizontal bands, not minute fragments');
       assert.equal(box.bottom, record.lo);
       assert.equal(box.top, record.hi);
       assert.equal(box.border_color.toLowerCase(), record.yellow ? '#f1c40f' : '#27ae60');
@@ -133,37 +138,35 @@ test('production defaults draw text-free green and yellow boxes with identical t
   }
 });
 
-test('a later VAH rejection begins yellow at confirmation time and preserves the earlier green rectangle', async () => {
+test('a later VAH rejection upgrades the same resting area without moving it or recoloring earlier green history', async () => {
   const feed = fullStack();
   const before = await run(feed.slice(0, -1));
   const after = await run(feed);
   assert.ok(records(before).some(r => r.live && r.kinds === 4 && !r.yellow));
   assert.ok(records(before).every(r => !r.yellow));
-  const gold = records(after).find(r => r.yellow);
-  assert.equal(gold.start, SEPT23 + 480 * MINUTE);
-  const preserved = records(after).find(r => !r.yellow && !r.live && r.finish === gold.start && records(before).some(b => b.live && b.kinds === 4 && b.start === r.start && b.lo === r.lo && b.hi === r.hi));
-  assert.ok(preserved, 'the previous green box should end where yellow begins');
-  const earlier = records(before).find(r => r.start === preserved.start && r.lo === preserved.lo && r.hi === preserved.hi);
-  assert.equal(preserved.yellow, false);
-  assert.equal(preserved.lo, earlier.lo);
-  assert.equal(preserved.hi, earlier.hi);
-  assert.equal(preserved.finish, gold.start);
+  const gold = records(after).find(r => r.yellow && records(before).some(b => !b.yellow && b.start === r.start && b.lo === r.lo && b.hi === r.hi));
+  assert.ok(gold);
+  assert.equal(gold.yellowAt, SEPT23 + 480 * MINUTE);
+  assert.ok(gold.start < gold.yellowAt);
+  assert.ok(boxes(after).some(b => b.left === gold.start && b.right === gold.yellowAt && b.bottom === gold.lo && b.top === gold.hi && b.border_color === '#27ae60'));
+  assert.ok(boxes(after).some(b => b.left === gold.yellowAt && b.right > gold.yellowAt && b.bottom === gold.lo && b.top === gold.hi && b.border_color === '#f1c40f'));
 });
 
-test('box height, padding, duration and both colors are configurable in point/time coordinates', async () => {
+test('zone height, padding, forward projection and both colors are configurable in point/time coordinates', async () => {
   const result = await run(fullStack(), {
-    'Minimum box height (points)': 20, 'Box padding per side (points)': 2,
-    'Maximum box duration (minutes)': 45, 'Standard alignment color (green)': '#123456', 'Full qualification color (yellow)': '#abcdef',
+    'Zone height (points)': 20, 'Box padding per side (points)': 2,
+    'Right projection (minutes)': 45, 'Standard alignment color (green)': '#123456', 'Full qualification color (yellow)': '#abcdef',
     'Fill transparency (0 = opaque)': 50, 'Border width': 3,
   }, '', '240');
   assert.ok(records(result).some(r => r.yellow));
   for (const box of boxes(result)) {
-    assert.ok(box.top - box.bottom >= 24);
-    assert.ok(box.right - box.left <= 45 * MINUTE);
+    assert.equal(box.top - box.bottom, 24, 'fixed point height must be independent of confluence tolerance');
+    assert.ok(box.right <= state(result, 'snapshot').asOf + 45 * MINUTE);
     assert.ok(['#123456','#abcdef'].includes(box.border_color.toLowerCase()));
     assert.equal(box.border_width, 3);
     assert.equal(box.text, '');
   }
+  assert.ok(boxes(result).some(b => b.right === state(result, 'snapshot').asOf + 45 * MINUTE));
 });
 
 test('new box presentation preserves the original Fib, VWAP, profile and RB calculations', async () => {
@@ -177,6 +180,12 @@ test('new box presentation preserves the original Fib, VWAP, profile and RB calc
     assert.deepEqual(current[family].array.map(summarize), previous[family].array.map(summarize), family);
   }
   assert.deepEqual(current.profile.array, previous.profile.array);
+});
+
+test('cover-span sizing can contain a wider confluence without changing which strategy levels qualify', async () => {
+  const result = await run(fullStack(), { 'Zone sizing': 'Cover confluence span', 'Zone height (points)': 1 });
+  assert.ok(records(result).some(r => r.live && r.hi - r.lo > 2), 'cover mode must be able to exceed the requested minimum');
+  assert.ok(records(result).some(r => r.live && r.yellow && r.kinds === 4));
 });
 
 test('VAL reversal is symmetric to VAH and reaction memory resets at the UTC day boundary', async () => {
@@ -205,4 +214,81 @@ test('forming-minute moves cannot change boxes and later candles cannot move exi
   const confirmed = await observe([...feed, candle(now, 99, 130, 140, 98), candle(now + MINUTE, 130)]);
   for (const old of records(stable))
     assert.ok(records(confirmed).some(record => record.start === old.start && record.lo === old.lo && record.hi === old.hi && record.yellow === old.yellow));
+});
+
+const restingProbe = `
+var array<ZoneRecord> probeRecords = array.new<ZoneRecord>()
+var Reaction probeMemory = Reaction.new(na, na, na, na, na)
+array<Level> probeCandidates = array.new<Level>()
+if bar_index < 5 or bar_index >= 32
+    array.push(probeCandidates, f_level(100, 100, 1, "+2", time, f_day(time), 1))
+    array.push(probeCandidates, f_level(101, 101, 2, "VWAP +2 SD", time, f_day(time), 1))
+f_updateZones(probeRecords, probeCandidates, probeMemory, time_close, close)
+`;
+
+test('a resting zone survives lost alignment and a return tap, then dies on the configured wick breach without respawning', async () => {
+  const feed = Array.from({ length: 31 }, (_, i) => candle(SEPT23 + i * MINUTE, 90));
+  feed[20] = candle(SEPT23 + 20 * MINUTE, 99, 100, 102, 98);
+  const result = await run(feed, { 'Right projection (minutes)': 15 }, restingProbe);
+  const areas = state(result, 'probeRecords').array;
+  assert.equal(areas.length, 1, 'no repeated boxes after alignment moves away');
+  assert.equal(areas[0].start, SEPT23 + MINUTE);
+  assert.equal(areas[0].live, true, 'a tap does not invalidate the resting area');
+  assert.equal(areas[0].killHi, 115);
+  const after = await run([...feed, candle(SEPT23 + 31 * MINUTE, 90, 90, 115, 89)], {}, restingProbe);
+  const retired = state(after, 'probeRecords').array;
+  assert.equal(retired.length, 1, 'reappearing same confluence must not resurrect its broken anchor');
+  assert.equal(retired[0].live, false);
+  assert.equal(retired[0].finish, SEPT23 + 32 * MINUTE, 'wick invalidation does not need a close beyond the zone');
+});
+
+test('moving VWAP / profile alignment creates one frozen area instead of a descending staircase', async () => {
+  const feed = Array.from({ length: 40 }, (_, i) => candle(SEPT23 + i * MINUTE, 90));
+  const extra = `
+var array<ZoneRecord> probeRecords = array.new<ZoneRecord>()
+var Reaction probeMemory = Reaction.new(na, na, na, na, na)
+float edge = 100 + bar_index * 0.5
+array<Level> probeCandidates = array.from(f_level(edge, edge, 3, "VAH ~", time, f_day(time), 1), f_level(edge + 1, edge + 1, 2, "VWAP +2 SD", time, f_day(time), 1))
+f_updateZones(probeRecords, probeCandidates, probeMemory, time_close, close)
+`;
+  const result = await run(feed, {}, extra);
+  const areas = state(result, 'probeRecords').array;
+  assert.equal(areas.length, 1);
+  assert.equal(areas[0].start, SEPT23 + MINUTE);
+  assert.equal(areas[0].lo, 97);
+  assert.equal(areas[0].hi, 103);
+  assert.equal(areas[0].live, true);
+});
+
+test('nearby different static anchors share one resting band without enlarging its price bounds', async () => {
+  const feed = Array.from({ length: 12 }, (_, i) => candle(SEPT23 + i * MINUTE, 90));
+  const extra = `
+var array<ZoneRecord> probeRecords = array.new<ZoneRecord>()
+var Reaction probeMemory = Reaction.new(na, na, na, na, na)
+float step = math.min(2, math.floor(bar_index / 4))
+float price = 100 + step * 0.5
+string name = step == 0 ? "+2" : step == 1 ? "+2.25" : "+2.5"
+array<Level> probeCandidates = array.from(f_level(price, price, 1, name, time, f_day(time), 1), f_level(price + 1, price + 1, 2, "VWAP +2 SD", time, f_day(time), 1))
+f_updateZones(probeRecords, probeCandidates, probeMemory, time_close, close)
+`;
+  const areas = state(await run(feed, {}, extra), 'probeRecords').array;
+  assert.equal(areas.length, 1);
+  assert.equal(areas[0].lo, 97);
+  assert.equal(areas[0].hi, 103);
+  assert.ok(areas[0].anchors.includes('+2.25') && areas[0].anchors.includes('+2.5'));
+});
+
+test('display limits select resting areas and invalidated areas are hidden unless explicitly requested', async () => {
+  const feed = fullStack();
+  const limited = await run(feed, { 'Maximum displayed active zones': 1 });
+  assert.ok(records(limited).filter(r => r.live).length > 1, 'other resting areas should remain in engine storage');
+  assert.equal(new Set(boxes(limited).map(b => `${b.bottom}:${b.top}`)).size, 1);
+  const broken = [...feed, candle(feed.at(-1).closeTime, 99, 99, 200, 0)];
+  const hidden = await run(broken);
+  assert.ok(records(hidden).length > 0);
+  assert.ok(records(hidden).every(r => !r.live));
+  assert.equal(boxes(hidden).length, 0);
+  const history = await run(broken, { 'Show invalidated / expired zones': true });
+  assert.ok(boxes(history).length > 0);
+  assert.ok(boxes(history).every(b => b.right <= state(history, 'snapshot').asOf));
 });
