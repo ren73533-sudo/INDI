@@ -1,7 +1,7 @@
 //@version=6
 indicator("幽玄", "幽玄", overlay = true, max_boxes_count = 300, max_bars_back = 500, dynamic_requests = true)
 
-// Ethereal / Yugen v1.1.0. Standalone build: node tools/build-ethereal.mjs.
+// Ethereal / Yugen v1.2.0. Standalone build: node tools/build-ethereal.mjs.
 // Same strategy calculations as nq_key_levels.pine; only confluence boxes are drawn.
 // Fixed timestamp / price anchors. Completed 1-minute data; up to one minute delay.
 
@@ -156,6 +156,7 @@ type EngineState
     bool vpReady
     int evictedRb
     array<ZoneRecord> zones
+    string zoneData
 
 f_day(int t) =>
     timestamp("UTC", year(t, "UTC"), month(t, "UTC"), dayofmonth(t, "UTC"), 0, 0)
@@ -293,8 +294,8 @@ f_updateRbs(Candle completed, array<Candle> history, array<Level> levels, string
 
 // The snapshot is copied BEFORE this minute is updated. It therefore contains
 // completed-minute data on every chart, without relying on barstate.isconfirmed
-// inside request.security(). Collections are exported only on the last source
-// bar, keeping historical request memory bounded.
+// inside request.security(). A compact immutable zone snapshot is available
+// on every source bar, including historical replay bars.
 
 f_countKinds(array<Level> candidates, array<int> sortedIndices, int first, int last) =>
     bool a = false
@@ -429,6 +430,7 @@ f_anchorKey(Level anchor) =>
 // VWAP / profile to stay on the chart. Only a price breach (or optional expiry)
 // retires it. Each anchor is consumed once, including after invalidation.
 f_updateZones(array<ZoneRecord> records, array<Level> candidates, Reaction reaction, int now, float reference) =>
+    bool changed = false
     array<Poi> current = f_findPois(candidates, reference)
     for record in records
         bool expired = zoneMaxDays > 0 and now - record.start >= zoneMaxDays * DAY_MS
@@ -436,6 +438,7 @@ f_updateZones(array<ZoneRecord> records, array<Level> candidates, Reaction react
         if record.live and record.start < now and (breached or expired)
             record.live := false
             record.finish := now
+            changed := true
     for zone in current
         Level anchor = f_anchorMember(zone, candidates)
         string key = f_anchorKey(anchor)
@@ -467,24 +470,59 @@ f_updateZones(array<ZoneRecord> records, array<Level> candidates, Reaction react
             bool nearby = anchorPrice >= record.lo - mergeDistance and anchorPrice <= record.hi + mergeDistance
             if nearby
                 record.lastSeen := now
-                record.kinds := math.max(record.kinds, zone.kinds)
+                if zone.kinds > record.kinds
+                    record.kinds := zone.kinds
+                    changed := true
                 if yellow and not record.yellow
                     record.yellow := true
                     record.yellowAt := now
+                    changed := true
         if found < 0 and not consumed
             int side = anchor.side
             array.push(records, ZoneRecord.new(now, now, bottom, top, zone.kinds, yellow, true, now, side, key, anchor.lo - invalidation, anchor.hi + invalidation, yellow ? now : na))
+            changed := true
     int index = array.size(records) - 1
     while index >= 0
         ZoneRecord record = array.get(records, index)
         if not record.live and record.finish < now - zoneDays * DAY_MS
             array.remove(records, index)
+            changed := true
         index -= 1
     while array.size(records) > zoneLimit
         array.shift(records)
-    array.size(records)
+        changed := true
+    changed
 
-f_engine() =>
+// Primitive, cached history for Bar Replay. Large mutable level/profile
+// collections stay inside the 1m engine. Anchor ledgers are internal only.
+f_packZones(array<ZoneRecord> records) =>
+    string packed = ""
+    for record in records
+        packed += str.tostring(record.start) + ";" + str.tostring(record.finish) + ";" + str.tostring(record.lo, "#.########") + ";" + str.tostring(record.hi, "#.########") + ";" + str.tostring(record.kinds) + ";" + (record.yellow ? "1" : "0") + ";" + (record.live ? "1" : "0") + ";" + str.tostring(record.side) + ";" + str.tostring(record.killLo, "#.########") + ";" + str.tostring(record.killHi, "#.########") + ";" + str.tostring(record.yellowAt) + "\n"
+    packed
+
+f_unpackZones(string packed) =>
+    array<ZoneRecord> records = array.new<ZoneRecord>()
+    for row in str.split(packed, "\n")
+        if row != ""
+            array<string> fields = str.split(row, ";")
+            if array.size(fields) != 11
+                runtime.error("Invalid internal replay snapshot.")
+            int start = int(str.tonumber(array.get(fields, 0)))
+            int finish = int(str.tonumber(array.get(fields, 1)))
+            float bottom = str.tonumber(array.get(fields, 2))
+            float top = str.tonumber(array.get(fields, 3))
+            int kinds = int(str.tonumber(array.get(fields, 4)))
+            bool yellow = array.get(fields, 5) == "1"
+            bool live = array.get(fields, 6) == "1"
+            int side = int(str.tonumber(array.get(fields, 7)))
+            float killLo = str.tonumber(array.get(fields, 8))
+            float killHi = str.tonumber(array.get(fields, 9))
+            int yellowAt = int(str.tonumber(array.get(fields, 10)))
+            array.push(records, ZoneRecord.new(start, finish, bottom, top, kinds, yellow, live, na, side, "", killLo, killHi, yellowAt))
+    records
+
+f_engine(bool audit = false) =>
     var array<Level> fibs = array.new<Level>()
     var array<int> fibEpochs = array.new_int()
     var int publishedDay = na
@@ -512,14 +550,15 @@ f_engine() =>
     var int evictedRb = 0
     var array<ZoneRecord> records = array.new<ZoneRecord>()
     var Reaction reaction = Reaction.new(na, na, na, na, na)
+    var string zoneData = ""
     var int asOf = na
     var int stateDay = na
     var float referencePrice = na
     var float sourceVolume = 0.0
-    bool exportSnapshot = barstate.islast
+    bool exportSnapshot = true
     EngineState snapshot = na
     if exportSnapshot and not na(asOf)
-        snapshot := EngineState.new(asOf, stateDay, referencePrice, sourceVolume, today0, today1, publishedDay, array.size(fibEpochs), f_copyLevels(fibs), f_copyLevels(vwapLevels), f_copyLevels(vpLevels), f_copyLevels(rbs), array.copy(profile), profileVolume, baseRow, mean, m2, weight, vwapEpoch, vwapComplete, accumulateVwap, vwapReady, vpComplete, vpOverflow, vpReady, evictedRb, f_copyZones(records))
+        snapshot := EngineState.new(asOf, stateDay, referencePrice, sourceVolume, today0, today1, publishedDay, array.size(fibEpochs), audit ? f_copyLevels(fibs) : na, audit ? f_copyLevels(vwapLevels) : na, audit ? f_copyLevels(vpLevels) : na, audit ? f_copyLevels(rbs) : na, audit ? array.copy(profile) : na, profileVolume, baseRow, mean, m2, weight, vwapEpoch, vwapComplete, accumulateVwap, vwapReady, vpComplete, vpOverflow, vpReady, evictedRb, audit ? f_copyZones(records) : na, zoneData)
     int utcDay = f_day(time)
     bool newDay = na(stateDay) or utcDay != stateDay
     bool calendarRetention = fibRetention == "Previous calendar day"
@@ -719,7 +758,9 @@ f_engine() =>
     f_candidates(vwapLevels, candidates, useVwap and vwapReady)
     f_candidates(vpLevels, candidates, useVp and vpReady)
     f_candidates(rbs, candidates, useRb)
-    f_updateZones(records, candidates, reaction, time_close, close)
+    bool changed = f_updateZones(records, candidates, reaction, time_close, close)
+    if changed
+        zoneData := f_packZones(records)
     asOf := time_close
     stateDay := utcDay
     referencePrice := close
@@ -728,38 +769,56 @@ f_engine() =>
 
 [snapshot] = request.security(syminfo.tickerid, "1", [f_engine()], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off, calc_bars_count = engineBars)
 
-// Wide resting bands, projected into future time. Zoom and chart-bar width
-// never enter their coordinates. Broken zones are hidden by default.
+// Process every available chart bar, including historical replay cursors.
+// Rebuild objects only when visible zones change; otherwise move their right
+// edges with completed source time. Start and price bounds remain frozen.
+var array<ZoneRecord> zoneState = array.new<ZoneRecord>()
+var string appliedData = na
+var string drawingSignature = na
 var array<box> drawnBoxes = array.new<box>()
-if barstate.islast
-    for item in drawnBoxes
-        box.delete(item)
-    array.clear(drawnBoxes)
-    if not na(snapshot)
-        array<ZoneRecord> active = array.new<ZoneRecord>()
-        array<float> distances = array.new_float()
-        for record in snapshot.zones
-            if record.live
-                array.push(active, record)
-                array.push(distances, math.max(record.lo - snapshot.referencePrice, math.max(snapshot.referencePrice - record.hi, 0.0)))
-        array<ZoneRecord> visible = array.new<ZoneRecord>()
-        for id in array.sort_indices(distances, order.ascending)
-            if array.size(visible) < maxPoi
-                array.push(visible, array.get(active, id))
-        if showBroken
-            int index = array.size(snapshot.zones) - 1
-            while index >= 0 and array.size(visible) < 150
-                ZoneRecord record = array.get(snapshot.zones, index)
-                if not record.live
-                    array.push(visible, record)
-                index -= 1
-        // Yellow is drawn last so a weaker overlapping zone cannot cover it.
+var array<box> projectedBoxes = array.new<box>()
+if not na(snapshot)
+    if na(appliedData) or snapshot.zoneData != appliedData
+        zoneState := f_unpackZones(snapshot.zoneData)
+        appliedData := snapshot.zoneData
+    array<ZoneRecord> active = array.new<ZoneRecord>()
+    array<float> distances = array.new_float()
+    for record in zoneState
+        if record.live
+            array.push(active, record)
+            array.push(distances, math.max(record.lo - snapshot.referencePrice, math.max(snapshot.referencePrice - record.hi, 0.0)))
+    array<ZoneRecord> visible = array.new<ZoneRecord>()
+    for id in array.sort_indices(distances, order.ascending)
+        if array.size(visible) < maxPoi
+            array.push(visible, array.get(active, id))
+    if showBroken
+        int index = array.size(zoneState) - 1
+        while index >= 0 and array.size(visible) < 150
+            ZoneRecord record = array.get(zoneState, index)
+            if not record.live
+                array.push(visible, record)
+            index -= 1
+    string signature = f_packZones(visible)
+    if na(drawingSignature) or signature != drawingSignature
+        for item in drawnBoxes
+            box.delete(item)
+        array.clear(drawnBoxes)
+        array.clear(projectedBoxes)
+        // Yellow is drawn last so weaker overlapping zones cannot cover it.
         for layer = 0 to 1
             for record in visible
-                if record.live or showBroken
-                    int rightEdge = record.live ? snapshot.asOf + boxMinutes * 60000 : record.finish
-                    if layer == 0 and (not record.yellow or record.yellowAt > record.start)
-                        int greenEnd = record.yellow ? record.yellowAt : rightEdge
-                        array.push(drawnBoxes, box.new(left = record.start, top = record.hi, right = greenEnd, bottom = record.lo, xloc = xloc.bar_time, bgcolor = color.new(greenColor, boxOpacity), border_color = greenColor, border_width = borderWidth))
-                    if layer == 1 and record.yellow
-                        array.push(drawnBoxes, box.new(left = record.yellowAt, top = record.hi, right = rightEdge, bottom = record.lo, xloc = xloc.bar_time, bgcolor = color.new(yellowColor, boxOpacity), border_color = yellowColor, border_width = borderWidth))
+                int rightEdge = record.live ? snapshot.asOf + boxMinutes * 60000 : record.finish
+                if layer == 0 and (not record.yellow or record.yellowAt > record.start)
+                    int greenEnd = record.yellow ? record.yellowAt : rightEdge
+                    box item = box.new(left = record.start, top = record.hi, right = greenEnd, bottom = record.lo, xloc = xloc.bar_time, bgcolor = color.new(greenColor, boxOpacity), border_color = greenColor, border_width = borderWidth)
+                    array.push(drawnBoxes, item)
+                    if record.live and not record.yellow
+                        array.push(projectedBoxes, item)
+                if layer == 1 and record.yellow
+                    box item = box.new(left = record.yellowAt, top = record.hi, right = rightEdge, bottom = record.lo, xloc = xloc.bar_time, bgcolor = color.new(yellowColor, boxOpacity), border_color = yellowColor, border_width = borderWidth)
+                    array.push(drawnBoxes, item)
+                    if record.live
+                        array.push(projectedBoxes, item)
+        drawingSignature := signature
+    for item in projectedBoxes
+        box.set_right(item, snapshot.asOf + boxMinutes * 60000)

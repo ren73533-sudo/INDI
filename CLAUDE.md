@@ -30,6 +30,7 @@ The trader subsequently explicitly requested a **new boxes-only indicator**, nam
 - Build the standalone source with `node tools/build-ethereal.mjs`; templates are in `tools/ethereal/`, and calculation code is sourced from the original indicator. Update templates, then regenerate. `--check` detects drift.
 - The trader rejected the v1.0 stair-step fragments and supplied examples of long horizontal resting price areas. In v1.1, confluence establishes an area once. Do not retire or recreate it when VWAP/profile drift or alignment disappears. Keep it for return taps until its frozen source-anchor price invalidation, optional expiry or retention limits. Hide broken zones by default. Consume anchor identities to prevent instant respawning; merge nearby anchors without moving existing bounds.
 - Preserve past green history when yellow qualifies later. Keep the same resting area and price bounds, with its yellow portion beginning at the confirmation timestamp. Never relocate it or downgrade its earned grade as the moving references change.
+- The trader reported missing zones in Bar Replay. Ethereal v1.2 removes both last-bar-only gates: compact immutable zone state is exported on every source bar, and rendering processes every available chart bar. Cache the transport until visible/structural zone state changes, and rebuild drawing objects only when the selected view changes. Quiet steps only advance active right edges. Do not reintroduce `barstate.islast` as a prerequisite for Ethereal export or drawing.
 - The VAH/VAL reaction's explicit working definition is documented and adjustable; do not imply measured reversal probability or a real NQ backtest.
 
 ## Architecture
@@ -37,8 +38,8 @@ The trader subsequently explicitly requested a **new boxes-only indicator**, nam
 - Standard 1m / 5m / 10m / 15m / 30m / 1h / 4h display charts.
 - One `request.security` transports a shared 1m engine; no nested requests.
 - `f_aggregate` requires complete candles for Fib construction, but aggregates available data for RBs, matching the original native-candle behavior. `f_range` requires the full range window. `f_updateRbs` checks the next available source candle, without an extra wall-clock adjacency filter. Missing trailing minutes are finalized at the next available source bar, once only.
-- `f_engine` deep-copies state **before updating the current minute**. The display uses completed data, with up to a one-minute delay, without relying on `barstate.isconfirmed` inside a request.
-- Collections are exported only on the last source bar; scalar returns retain historical VWAP and anchor data.
+- Both engines snapshot state **before updating the current minute**. The display uses completed data, with up to a one-minute delay, without relying on `barstate.isconfirmed` inside a request.
+- In the original full-display indicator, collections are exported only on the last source bar; scalar returns retain historical VWAP and anchor data. Ethereal v1.2 instead exports scalars and a cached compact zone string on every source bar, leaving calculation collections inside the engine. Its optional `f_engine(true)` argument exports raw collections for numerical audits only; the production request calls `f_engine()`.
 - Rendering uses `snapshot.referencePrice`, UTC day and timestamp, not chart-candle prices.
 - Historical lines reserve capacity for live levels. Missing source data is flagged, not replaced with larger candles.
 
@@ -52,6 +53,8 @@ npm test
 ```
 
 The default cross-timeframe test runs unmodified production code with nonempty POIs. Other fixtures use `tools/pine-inputs.mjs` to materialize input defaults because PineTS 0.11.1 drops runtime overrides in secondary request contexts. This changes input literals only, not calculation expressions. The original source is separately transpiled.
+
+Ethereal replay regressions inspect historical cursor snapshots and drawing counts across all seven timeframes, compare with independent prefix-only runs, and ensure later invalidations cannot erase an earlier cursor's areas. The raw calculation parity check enables the optional audit argument; production replay tests retain the compact transport. PineTS drawing output only retains its final object snapshot, so historical checks also use test-only numeric drawing probes and immutable zone signatures.
 
 A flat zero-volume observation minute exposes the state after the last fixture candle; it is never scored. The CSV study also exports each historical snapshot; profile calculations remain unchanged. It checks timestamps and historical-prefix consistency.
 

@@ -1,7 +1,7 @@
 //@version=6
 indicator("幽玄", "幽玄", overlay = true, max_boxes_count = 300, max_bars_back = 500, dynamic_requests = true)
 
-// Ethereal / Yugen v1.1.0. Standalone build: node tools/build-ethereal.mjs.
+// Ethereal / Yugen v1.2.0. Standalone build: node tools/build-ethereal.mjs.
 // Same strategy calculations as nq_key_levels.pine; only confluence boxes are drawn.
 // Fixed timestamp / price anchors. Completed 1-minute data; up to one minute delay.
 

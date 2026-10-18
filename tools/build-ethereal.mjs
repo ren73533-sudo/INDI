@@ -39,27 +39,34 @@ type Reaction
 
 type EngineState
 `);
-  types = replaceOnce(types, '    int evictedRb\n', '    int evictedRb\n    array<ZoneRecord> zones\n');
+  types = replaceOnce(types, '    int evictedRb\n', '    int evictedRb\n    array<ZoneRecord> zones\n    string zoneData\n');
   const calculations = between(legacy, 'int rangeStart =', 'f_engine() =>')
     .replace('V0.3: use standard', 'Use standard')
-    .replace(' Scalars retain VWAP history.', '');
+    .replace('// inside request.security(). Collections are exported only on the last source\n// bar, keeping historical request memory bounded. Scalars retain VWAP history.', '// inside request.security(). A compact immutable zone snapshot is available\n// on every source bar, including historical replay bars.');
   let clusters = between(legacy, 'f_countKinds(', '\nif barstate.islast');
   const details = between(clusters, '                string details = ""', '                array.push(zones, Poi.new');
   clusters = replaceOnce(clusters, details, '                string details = ""\n');
   let engine = between(legacy, 'f_engine() =>', '\n[snapshot, curveMean,');
+  engine = replaceOnce(engine, 'f_engine() =>', 'f_engine(bool audit = false) =>');
   engine = replaceOnce(engine, between(engine, '    float closedMean = mean', '    bool exportSnapshot'), '');
-  engine = replaceOnce(engine, '    var int asOf = na', '    var array<ZoneRecord> records = array.new<ZoneRecord>()\n    var Reaction reaction = Reaction.new(na, na, na, na, na)\n    var int asOf = na');
-  engine = replaceOnce(engine, 'vpReady, evictedRb)', 'vpReady, evictedRb, f_copyZones(records))');
+  engine = replaceOnce(engine, '    var int asOf = na', '    var array<ZoneRecord> records = array.new<ZoneRecord>()\n    var Reaction reaction = Reaction.new(na, na, na, na, na)\n    var string zoneData = ""\n    var int asOf = na');
+  engine = replaceOnce(engine, '    bool exportSnapshot = barstate.islast', '    bool exportSnapshot = true');
+  for (const name of ['fibs', 'vwapLevels', 'vpLevels', 'rbs'])
+    engine = replaceOnce(engine, `f_copyLevels(${name})`, `audit ? f_copyLevels(${name}) : na`);
+  engine = replaceOnce(engine, 'array.copy(profile)', 'audit ? array.copy(profile) : na');
+  engine = replaceOnce(engine, 'vpReady, evictedRb)', 'vpReady, evictedRb, audit ? f_copyZones(records) : na, zoneData)');
   engine = replaceOnce(engine, '    float rowSize =', '    f_updateReaction(reaction, vpLevels, utcDay)\n\n    float rowSize =');
   engine = replaceOnce(engine, '    asOf := time_close', `    array<Level> candidates = array.new<Level>()
     f_candidates(fibs, candidates, useFib)
     f_candidates(vwapLevels, candidates, useVwap and vwapReady)
     f_candidates(vpLevels, candidates, useVp and vpReady)
     f_candidates(rbs, candidates, useRb)
-    f_updateZones(records, candidates, reaction, time_close, close)
+    bool changed = f_updateZones(records, candidates, reaction, time_close, close)
+    if changed
+        zoneData := f_packZones(records)
     asOf := time_close`);
   engine = replaceOnce(engine, '    [snapshot, closedMean, closedSd, closedComplete, closedAccumulating, closedEpoch, closed0, closed1, closedPublished, closedDay]', '    snapshot');
-  return [read('./ethereal/inputs.pine'), types, calculations, clusters, read('./ethereal/zones.pine'), engine, read('./ethereal/render.pine')].map(part => part.trimEnd()).join('\n\n') + '\n';
+  return [read('./ethereal/inputs.pine'), types, calculations, clusters, read('./ethereal/zones.pine'), read('./ethereal/transport.pine'), engine, read('./ethereal/render.pine')].map(part => part.trimEnd()).join('\n\n') + '\n';
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

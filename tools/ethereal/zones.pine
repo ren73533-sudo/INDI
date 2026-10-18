@@ -75,6 +75,7 @@ f_anchorKey(Level anchor) =>
 // VWAP / profile to stay on the chart. Only a price breach (or optional expiry)
 // retires it. Each anchor is consumed once, including after invalidation.
 f_updateZones(array<ZoneRecord> records, array<Level> candidates, Reaction reaction, int now, float reference) =>
+    bool changed = false
     array<Poi> current = f_findPois(candidates, reference)
     for record in records
         bool expired = zoneMaxDays > 0 and now - record.start >= zoneMaxDays * DAY_MS
@@ -82,6 +83,7 @@ f_updateZones(array<ZoneRecord> records, array<Level> candidates, Reaction react
         if record.live and record.start < now and (breached or expired)
             record.live := false
             record.finish := now
+            changed := true
     for zone in current
         Level anchor = f_anchorMember(zone, candidates)
         string key = f_anchorKey(anchor)
@@ -113,19 +115,25 @@ f_updateZones(array<ZoneRecord> records, array<Level> candidates, Reaction react
             bool nearby = anchorPrice >= record.lo - mergeDistance and anchorPrice <= record.hi + mergeDistance
             if nearby
                 record.lastSeen := now
-                record.kinds := math.max(record.kinds, zone.kinds)
+                if zone.kinds > record.kinds
+                    record.kinds := zone.kinds
+                    changed := true
                 if yellow and not record.yellow
                     record.yellow := true
                     record.yellowAt := now
+                    changed := true
         if found < 0 and not consumed
             int side = anchor.side
             array.push(records, ZoneRecord.new(now, now, bottom, top, zone.kinds, yellow, true, now, side, key, anchor.lo - invalidation, anchor.hi + invalidation, yellow ? now : na))
+            changed := true
     int index = array.size(records) - 1
     while index >= 0
         ZoneRecord record = array.get(records, index)
         if not record.live and record.finish < now - zoneDays * DAY_MS
             array.remove(records, index)
+            changed := true
         index -= 1
     while array.size(records) > zoneLimit
         array.shift(records)
-    array.size(records)
+        changed := true
+    changed

@@ -1,10 +1,12 @@
-# 幽玄 — Ethereal v1.1.0
+# 幽玄 — Ethereal v1.2.0
 
 **幽玄 (Yūgen)** is the separate, boxes-only indicator requested by the trader. Paste the complete [ethereal.pine](../indicators/ethereal.pine) into a new TradingView Pine Editor indicator, save and add it to NQ1!. All settings are English; the indicator name is Japanese.
 
-[Download the folder](https://github.com/ren73533-sudo/INDI/raw/refs/heads/main/downloads/Ethereal-v1.1.0.zip).
+[Download the folder](https://github.com/ren73533-sudo/INDI/raw/refs/heads/main/downloads/Ethereal-v1.2.0.zip).
 
 Version 1.1 corrects the earlier stair-step display. Confluence now establishes a **resting horizontal price area for a later return tap**. The area stays at its original prices while VWAP / profile move, and projects to the right until price invalidates it.
+
+Version 1.2 fixes the last-bar-only export and drawing gates that left earlier Bar Replay cursors without zones. It transports compact zone history on every available source bar and updates the drawing on every available chart bar. The strategy, settings, resting-area bounds and green/yellow rules are preserved.
 
 ## What appears
 
@@ -74,6 +76,16 @@ Load overnight and prior-session history. **Engine history** defaults to 6,000 o
 
 The profile estimates volume by distributing candle volume across its high–low range; it is not actual volume-at-price. Matching the DRW VWAP remains unverified without its source.
 
+## Bar Replay
+
+Replace the entire older Ethereal script with `indicators/ethereal.pine`, save it and add the updated indicator. Start replay after loading overnight history and allow at least one new source minute for a completed-minute snapshot. Use the same symbol, session and settings when comparing timeframes.
+
+Each historical chart bar now receives the zones known at its completed-source timestamp. A later invalidation or yellow upgrade does not alter an earlier cursor's snapshot. Quiet replay steps advance the right projection without moving the original start or prices. Drawing objects are rebuilt only when the visible zone selection or state changes.
+
+The source caches a compact string when zone state changes, rather than copying the mutable level/profile collections into every historical snapshot. The hidden `f_engine(true)` audit argument exposes those raw collections only for offline numerical comparisons; production uses `f_engine()`.
+
+Replay still needs available 1m history within the **Engine history** setting and the feed/account limits. A cursor outside that coverage has no source state. Missing warmup or fewer than two eligible concept types also yields no box. Invalidated zones are hidden by default; enable **Show invalidated / expired zones** to inspect retained broken areas. This release has been checked with synthetic historical cursors; native TradingView Bar Replay remains an external acceptance check.
+
 ## Development and validation
 
 The standalone Pine file is generated from the existing indicator's calculation engine and the templates in `tools/ethereal/`. It has no runtime dependency on other files in TradingView. The generator does not edit the original indicator.
@@ -84,8 +96,8 @@ node tools/build-ethereal.mjs --check
 npm test
 ```
 
-Tests cover every distinct pair, order independence, yellow requirements, reference-timeframe filtering, actual green/yellow boxes across all seven displays, point/time calibration, persistence after lost alignment, normal return taps, wick invalidation, prevention of duplicate staircases / respawning, display filtering, VAH/VAL reactions, frozen source snapshots, preserved anchors and equality with the original engine calculations. Production-default timeframe checks use the unchanged standalone source. Custom offline fixtures only materialize input default literals to work around PineTS input forwarding.
+Tests cover every distinct pair, order independence, yellow requirements, reference-timeframe filtering, actual green/yellow boxes across all seven displays, point/time calibration, persistence after lost alignment, normal return taps, wick invalidation, prevention of duplicate staircases / respawning, display filtering, VAH/VAL reactions, frozen source snapshots, preserved anchors and equality with the original engine calculations. Replay tests compare historical cursors with independent prefix-only runs on all seven displays, include later invalidations, round-trip 150 compact records and check right-edge advancement during quiet steps. Production-default timeframe checks use the unchanged standalone source. Custom offline fixtures only materialize input default literals to work around PineTS input forwarding.
 
 TradingView compilation, actual chart zoom / scale interaction, live source-context rollback, NQ feed behavior and account runtime / memory limits still require TradingView testing. Synthetic software checks are not a real-market backtest.
 
-For the first chart test, use identical symbol, data session and settings across displays; inspect a green pair, a yellow full stack, a late yellow upgrade, and zoom / pan both axes. Compare against your manually marked VAH/VAL, STDV and RB examples.
+For the first chart test, use identical symbol, data session and settings across displays; inspect a green pair, a yellow full stack, a late yellow upgrade, and zoom / pan both axes. In Bar Replay, advance through formation, a quiet interval, a return tap and invalidation, then restart at an earlier cursor to compare the areas. Compare against your manually marked VAH/VAL, STDV and RB examples. If TradingView rejects the script, record the exact Pine Editor or red-exclamation error; offline tests cannot diagnose an unseen native error.

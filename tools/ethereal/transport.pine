@@ -1,0 +1,28 @@
+// Primitive, cached history for Bar Replay. Large mutable level/profile
+// collections stay inside the 1m engine. Anchor ledgers are internal only.
+f_packZones(array<ZoneRecord> records) =>
+    string packed = ""
+    for record in records
+        packed += str.tostring(record.start) + ";" + str.tostring(record.finish) + ";" + str.tostring(record.lo, "#.########") + ";" + str.tostring(record.hi, "#.########") + ";" + str.tostring(record.kinds) + ";" + (record.yellow ? "1" : "0") + ";" + (record.live ? "1" : "0") + ";" + str.tostring(record.side) + ";" + str.tostring(record.killLo, "#.########") + ";" + str.tostring(record.killHi, "#.########") + ";" + str.tostring(record.yellowAt) + "\n"
+    packed
+
+f_unpackZones(string packed) =>
+    array<ZoneRecord> records = array.new<ZoneRecord>()
+    for row in str.split(packed, "\n")
+        if row != ""
+            array<string> fields = str.split(row, ";")
+            if array.size(fields) != 11
+                runtime.error("Invalid internal replay snapshot.")
+            int start = int(str.tonumber(array.get(fields, 0)))
+            int finish = int(str.tonumber(array.get(fields, 1)))
+            float bottom = str.tonumber(array.get(fields, 2))
+            float top = str.tonumber(array.get(fields, 3))
+            int kinds = int(str.tonumber(array.get(fields, 4)))
+            bool yellow = array.get(fields, 5) == "1"
+            bool live = array.get(fields, 6) == "1"
+            int side = int(str.tonumber(array.get(fields, 7)))
+            float killLo = str.tonumber(array.get(fields, 8))
+            float killHi = str.tonumber(array.get(fields, 9))
+            int yellowAt = int(str.tonumber(array.get(fields, 10)))
+            array.push(records, ZoneRecord.new(start, finish, bottom, top, kinds, yellow, live, na, side, "", killLo, killHi, yellowAt))
+    records

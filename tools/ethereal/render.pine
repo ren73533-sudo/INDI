@@ -1,37 +1,55 @@
 [snapshot] = request.security(syminfo.tickerid, "1", [f_engine()], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off, calc_bars_count = engineBars)
 
-// Wide resting bands, projected into future time. Zoom and chart-bar width
-// never enter their coordinates. Broken zones are hidden by default.
+// Process every available chart bar, including historical replay cursors.
+// Rebuild objects only when visible zones change; otherwise move their right
+// edges with completed source time. Start and price bounds remain frozen.
+var array<ZoneRecord> zoneState = array.new<ZoneRecord>()
+var string appliedData = na
+var string drawingSignature = na
 var array<box> drawnBoxes = array.new<box>()
-if barstate.islast
-    for item in drawnBoxes
-        box.delete(item)
-    array.clear(drawnBoxes)
-    if not na(snapshot)
-        array<ZoneRecord> active = array.new<ZoneRecord>()
-        array<float> distances = array.new_float()
-        for record in snapshot.zones
-            if record.live
-                array.push(active, record)
-                array.push(distances, math.max(record.lo - snapshot.referencePrice, math.max(snapshot.referencePrice - record.hi, 0.0)))
-        array<ZoneRecord> visible = array.new<ZoneRecord>()
-        for id in array.sort_indices(distances, order.ascending)
-            if array.size(visible) < maxPoi
-                array.push(visible, array.get(active, id))
-        if showBroken
-            int index = array.size(snapshot.zones) - 1
-            while index >= 0 and array.size(visible) < 150
-                ZoneRecord record = array.get(snapshot.zones, index)
-                if not record.live
-                    array.push(visible, record)
-                index -= 1
-        // Yellow is drawn last so a weaker overlapping zone cannot cover it.
+var array<box> projectedBoxes = array.new<box>()
+if not na(snapshot)
+    if na(appliedData) or snapshot.zoneData != appliedData
+        zoneState := f_unpackZones(snapshot.zoneData)
+        appliedData := snapshot.zoneData
+    array<ZoneRecord> active = array.new<ZoneRecord>()
+    array<float> distances = array.new_float()
+    for record in zoneState
+        if record.live
+            array.push(active, record)
+            array.push(distances, math.max(record.lo - snapshot.referencePrice, math.max(snapshot.referencePrice - record.hi, 0.0)))
+    array<ZoneRecord> visible = array.new<ZoneRecord>()
+    for id in array.sort_indices(distances, order.ascending)
+        if array.size(visible) < maxPoi
+            array.push(visible, array.get(active, id))
+    if showBroken
+        int index = array.size(zoneState) - 1
+        while index >= 0 and array.size(visible) < 150
+            ZoneRecord record = array.get(zoneState, index)
+            if not record.live
+                array.push(visible, record)
+            index -= 1
+    string signature = f_packZones(visible)
+    if na(drawingSignature) or signature != drawingSignature
+        for item in drawnBoxes
+            box.delete(item)
+        array.clear(drawnBoxes)
+        array.clear(projectedBoxes)
+        // Yellow is drawn last so weaker overlapping zones cannot cover it.
         for layer = 0 to 1
             for record in visible
-                if record.live or showBroken
-                    int rightEdge = record.live ? snapshot.asOf + boxMinutes * 60000 : record.finish
-                    if layer == 0 and (not record.yellow or record.yellowAt > record.start)
-                        int greenEnd = record.yellow ? record.yellowAt : rightEdge
-                        array.push(drawnBoxes, box.new(left = record.start, top = record.hi, right = greenEnd, bottom = record.lo, xloc = xloc.bar_time, bgcolor = color.new(greenColor, boxOpacity), border_color = greenColor, border_width = borderWidth))
-                    if layer == 1 and record.yellow
-                        array.push(drawnBoxes, box.new(left = record.yellowAt, top = record.hi, right = rightEdge, bottom = record.lo, xloc = xloc.bar_time, bgcolor = color.new(yellowColor, boxOpacity), border_color = yellowColor, border_width = borderWidth))
+                int rightEdge = record.live ? snapshot.asOf + boxMinutes * 60000 : record.finish
+                if layer == 0 and (not record.yellow or record.yellowAt > record.start)
+                    int greenEnd = record.yellow ? record.yellowAt : rightEdge
+                    box item = box.new(left = record.start, top = record.hi, right = greenEnd, bottom = record.lo, xloc = xloc.bar_time, bgcolor = color.new(greenColor, boxOpacity), border_color = greenColor, border_width = borderWidth)
+                    array.push(drawnBoxes, item)
+                    if record.live and not record.yellow
+                        array.push(projectedBoxes, item)
+                if layer == 1 and record.yellow
+                    box item = box.new(left = record.yellowAt, top = record.hi, right = rightEdge, bottom = record.lo, xloc = xloc.bar_time, bgcolor = color.new(yellowColor, boxOpacity), border_color = yellowColor, border_width = borderWidth)
+                    array.push(drawnBoxes, item)
+                    if record.live
+                        array.push(projectedBoxes, item)
+        drawingSignature := signature
+    for item in projectedBoxes
+        box.set_right(item, snapshot.asOf + boxMinutes * 60000)

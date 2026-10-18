@@ -10,16 +10,20 @@ const source = readFileSync(new URL('../indicators/ethereal.pine', import.meta.u
 const displays = ['1', '5', '10', '15', '30', '60', '240'];
 const short = () => [candle(SEPT23, 100), candle(SEPT23 + MINUTE, 100)];
 const plot = (context, title) => context.plots[title].data.at(-1).value;
-const records = context => state(context, 'snapshot').zones.array;
+const records = context => state(context, 'zoneState').array;
 const recordSummary = r => ({ start: r.start, finish: r.finish, lo: r.lo, hi: r.hi, kinds: r.kinds, yellow: r.yellow, live: r.live, lastSeen: r.lastSeen, side: r.side, anchors: r.anchors, killLo: r.killLo, killHi: r.killHi, yellowAt: r.yellowAt });
 const boxes = context => context.plots.__boxes__?.data.at(-1).value ?? [];
 
-async function run(bars, inputs = {}, extra = '', timeframe = '1') {
+async function run(bars, inputs = {}, extra = '', timeframe = '1', audit = false) {
   const last = bars.at(-1);
   const feed = [...bars, candle(last.closeTime, last.close, last.close, last.close, last.close, 0)];
   // Unmodified production code with default settings unless explicit calibration
   // is requested. Input literals only are configured for the PineTS limitation.
-  const runtime = (Object.keys(inputs).length ? configuredSource(source, inputs) : source) + extra;
+  let runtime = Object.keys(inputs).length ? configuredSource(source, inputs) : source;
+  // The optional engine argument exports raw calculation collections for this
+  // numerical audit only. Production exports compact view history instead.
+  if (audit) runtime = runtime.replace('[f_engine()]', '[f_engine(true)]');
+  runtime += extra;
   const context = await new PineTS(new OfflineProvider(feed), 'CME_MINI:NQ1!', timeframe, feed.length).run(new Indicator(runtime));
   assert.deepEqual(context.warnings, []);
   return context;
@@ -73,6 +77,7 @@ test('Japanese standalone build stays synchronized and contains only box renderi
   assert.match(source, /indicator\("幽玄", "幽玄"/);
   assert.doesNotMatch(source, /\b(?:line|label|table)\.new\s*\(|\bplot\s*\(|\bplotshape\s*\(|\balertcondition\s*\(|strategy\.(?:entry|order)/);
   assert.doesNotMatch(source, /chart\.(?:left|right)_visible_bar_time|xloc\.bar_index|extend\.right/);
+  assert.doesNotMatch(source, /barstate\.islast/);
   new Indicator(source).prepare();
 });
 
@@ -171,7 +176,7 @@ test('zone height, padding, forward projection and both colors are configurable 
 
 test('new box presentation preserves the original Fib, VWAP, profile and RB calculations', async () => {
   const bars = fullStack();
-  const current = state(await run(bars), 'snapshot');
+  const current = state(await run(bars, {}, '', '1', true), 'snapshot');
   const previous = state(await runLegacy(bars, {}, '', '1', true), 'snapshot');
   for (const field of ['asOf','day','today0','today1','mean','m2','weight','profileVolume','baseRow'])
     assert.equal(current[field], previous[field], field);
@@ -291,4 +296,98 @@ test('display limits select resting areas and invalidated areas are hidden unles
   const history = await run(broken, { 'Show invalidated / expired zones': true });
   assert.ok(boxes(history).length > 0);
   assert.ok(boxes(history).every(b => b.right <= state(history, 'snapshot').asOf));
+});
+
+function atBar(context, name, index) {
+  for (const scope of [context.let, context.var]) {
+    const key = Object.keys(scope).find(key => key.endsWith('_' + name));
+    if (key) return scope[key].data[index];
+  }
+  throw new Error(`Missing historical state: ${name}`);
+}
+
+const replayProbe = `
+plot(array.size(drawnBoxes), "replay count")
+plot(not na(snapshot) ? snapshot.asOf : na, "replay clock")
+plot(array.size(projectedBoxes) > 0 ? box.get_right(array.get(projectedBoxes, 0)) : na, "replay right")
+`;
+
+async function rawReplay(feed, timeframe = '1') {
+  // A historical cursor ends at a completed chart bar, without the extra
+  // observation minute used by other fixtures. Later data remains loaded in
+  // the full run; a separate prefix run reproduces the cursor independently.
+  const context = await new PineTS(new OfflineProvider(feed), 'CME_MINI:NQ1!', timeframe, feed.length).run(new Indicator(source + replayProbe));
+  assert.deepEqual(context.warnings, []);
+  return context;
+}
+
+test('historical replay cursors draw their own zones on all seven timeframes despite later invalidations', async () => {
+  const past = fullStack();
+  const future = Array.from({ length: 60 }, (_, i) => candle(SEPT23 + (480 + i) * MINUTE, 130, 130, 200, 0));
+  const feed = [...past, ...future];
+  for (const tf of displays) {
+    const full = await rawReplay(feed, tf);
+    const prefix = await rawReplay(past, tf);
+    const frames = full.plots['replay count'].data;
+    const cursor = frames.findIndex(frame => frame.time === SEPT23 + (480 - Number(tf)) * MINUTE);
+    assert.ok(cursor >= 0 && cursor < frames.length - 1, `cursor must have future bars on ${tf}`);
+    assert.ok(frames[cursor].value > 0, `historical zones missing on ${tf}`);
+    assert.equal(frames[cursor].value, plot(prefix, 'replay count'), tf);
+    assert.equal(full.plots['replay clock'].data[cursor].value, SEPT23 + 479 * MINUTE, tf);
+    assert.equal(atBar(full, 'drawingSignature', cursor), state(prefix, 'drawingSignature'), `future data changed the earlier view on ${tf}`);
+    const historical = atBar(full, 'snapshot', cursor);
+    assert.equal(historical.zoneData, state(prefix, 'snapshot').zoneData, tf);
+    assert.ok(!historical.profile?.array && !historical.fibs?.array, 'production replay must not copy raw calculation collections on every bar');
+    assert.equal(plot(full, 'replay count'), 0, `later wick breach should remove the current zones on ${tf}`);
+    assert.ok(plot(prefix, 'replay count') > 0, `earlier replay prefix should still show them on ${tf}`);
+  }
+});
+
+test('compact replay transport round-trips 150 zones without copying anchor ledgers', async () => {
+  const extra = `
+array<ZoneRecord> originals = array.new<ZoneRecord>()
+string ledger = "${'anchor-private:'.repeat(300)}"
+for id = 0 to 149
+    bool yellow = id % 2 == 0
+    int stamp = time + id * 60000
+    array.push(originals, ZoneRecord.new(stamp, stamp + 60000, 100 + id * 0.0625, 105 + id * 0.0625, yellow ? 4 : 2, yellow, true, time_close, 1, ledger, 85 + id * 0.0625, 120 + id * 0.0625, yellow ? stamp : na))
+string packed = f_packZones(originals)
+array<ZoneRecord> restored = f_unpackZones(packed)
+int errors = 0
+for id = 0 to array.size(restored) - 1
+    ZoneRecord a = array.get(originals, id)
+    ZoneRecord b = array.get(restored, id)
+    if a.start != b.start or a.finish != b.finish or a.lo != b.lo or a.hi != b.hi or a.kinds != b.kinds or a.yellow != b.yellow or a.live != b.live or a.side != b.side or a.killLo != b.killLo or a.killHi != b.killHi
+        errors += 1
+    if a.yellow and a.yellowAt != b.yellowAt
+        errors += 1
+plot(array.size(restored), "transport count")
+plot(str.length(packed), "transport length")
+plot(str.contains(packed, "anchor-private") ? 1 : 0, "transport ledger")
+plot(errors, "transport errors")
+`;
+  const context = await run(short(), {}, extra);
+  assert.equal(plot(context, 'transport count'), 150);
+  assert.equal(plot(context, 'transport errors'), 0);
+  assert.equal(plot(context, 'transport ledger'), 0);
+  assert.ok(plot(context, 'transport length') < 40960);
+});
+
+test('quiet replay steps advance the right edge while keeping the cached zone history and start/price anchors unchanged', async () => {
+  const feed = fullStack().filter(bar => bar.openTime < SEPT23 + 330 * MINUTE);
+  const context = await rawReplay(feed);
+  const frames = context.plots['replay clock'].data;
+  let payload, view;
+  for (const minute of [300, 305, 310, 315, 320]) {
+    const index = frames.findIndex(frame => frame.time === SEPT23 + minute * MINUTE);
+    assert.ok(context.plots['replay count'].data[index].value > 0);
+    const snapshot = atBar(context, 'snapshot', index);
+    const signature = atBar(context, 'drawingSignature', index);
+    assert.equal(context.plots['replay right'].data[index].value, snapshot.asOf + 240 * MINUTE);
+    if (payload === undefined) { payload = snapshot.zoneData; view = signature; }
+    else {
+      assert.equal(snapshot.zoneData, payload, 'quiet steps should reuse the compact zone data');
+      assert.equal(signature, view, 'advancing replay must not move the resting price areas');
+    }
+  }
 });
