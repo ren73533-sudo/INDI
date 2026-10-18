@@ -1,8 +1,8 @@
 //@version=6
 indicator("幽玄", "幽玄", overlay = true, max_boxes_count = 300, max_bars_back = 500, dynamic_requests = true)
 
-// Ethereal / Yugen v1.2.0. Standalone build: node tools/build-ethereal.mjs.
-// Same strategy calculations as nq_key_levels.pine; only confluence boxes are drawn.
+// Ethereal / Yugen v1.3.0. Standalone build: node tools/build-ethereal.mjs.
+// Same strategy calculations as nq_key_levels.pine; confluence boxes with optional text.
 // Fixed timestamp / price anchors. Completed 1-minute data; up to one minute delay.
 
 const string G_CORE = "01 · Confluence"
@@ -74,3 +74,11 @@ string zoneSizing = input.string("Fixed height", "Zone sizing", options = ["Fixe
 float mergeDistance = input.float(0.0, "Nearby zone merge distance (points)", minval = 0, maxval = 50, step = 0.25, tooltip = "An anchor already inside a resting band shares it. Increase to include nearby anchors. Existing price bounds never expand or move.", group = G_BOX)
 int zoneMaxDays = input.int(0, "Zone expiration in days (0 = until invalidation)", minval = 0, maxval = 30, group = G_BOX)
 bool showBroken = input.bool(false, "Show invalidated / expired zones", group = G_BOX)
+
+string rbPlacement = input.string("Original anchor", "RB zone placement", options = ["Original anchor", "Beyond wick confluence"], tooltip = "Beyond wick confluence: RB stacks require an aligned Fib, VWAP or VAH/VAL level beyond the wick tip. Center a fixed-height box on the nearest such level. No arbitrary offset or future reversal price is used. Non-RB pairs retain their original placement.", group = G_BOX)
+float minimumSweep = input.float(0.25, "Minimum distance beyond RB wick (points)", minval = 0.25, maxval = 100, step = 0.25, tooltip = "Applies only to Beyond wick confluence. The outer level must also be within Confluence tolerance of the wick tip. This is calibration, not a measured optimal entry distance.", group = G_BOX)
+bool freshOnly = input.bool(false, "Hide zones after first return", tooltip = "Hide a zone after the first completed source candle overlaps its band after formation. Also skip creation if that candle already reaches the band. Does not claim the zone will reverse, and does not change price invalidation.", group = G_BOX)
+bool showConfluenceText = input.bool(true, "Show confluence text", tooltip = "Show the concept families used at formation, plus contributing RB timeframes. A later yellow upgrade has its own text; earlier green text is preserved. No OTE is calculated.", group = G_BOX)
+color confluenceTextColor = input.color(#ffffff, "Confluence text color", group = G_BOX)
+string confluenceTextSize = input.string("Small", "Confluence text size", options = ["Tiny", "Small", "Normal", "Large"], group = G_BOX)
+bool showDirectionSymbol = input.bool(true, "Show reversal side symbol (β / ρ)", tooltip = "β = support / buy-reversal area. ρ = resistance / sell-reversal area. Uses the zone's frozen source-anchor side, not a new trade signal. Independent of Show confluence text; text color and size apply to both.", group = G_BOX)

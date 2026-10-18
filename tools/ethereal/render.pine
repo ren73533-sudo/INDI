@@ -1,3 +1,17 @@
+f_confluenceTextSize() =>
+    switch confluenceTextSize
+        "Tiny" => size.tiny
+        "Normal" => size.normal
+        "Large" => size.large
+        => size.small
+
+f_boxCaption(ZoneRecord record, bool yellow) =>
+    string caption = showDirectionSymbol ? (record.side == 1 ? "ρ" : "β") : ""
+    string sources = yellow ? record.yellowText : record.sourceText
+    if showConfluenceText and sources != ""
+        caption += (caption == "" ? "" : "  ") + sources
+    caption
+
 [snapshot] = request.security(syminfo.tickerid, "1", [f_engine()], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off, calc_bars_count = engineBars)
 
 // Process every available chart bar, including historical replay cursors.
@@ -15,7 +29,7 @@ if not na(snapshot)
     array<ZoneRecord> active = array.new<ZoneRecord>()
     array<float> distances = array.new_float()
     for record in zoneState
-        if record.live
+        if record.live and (not freshOnly or na(record.touchedAt))
             array.push(active, record)
             array.push(distances, math.max(record.lo - snapshot.referencePrice, math.max(snapshot.referencePrice - record.hi, 0.0)))
     array<ZoneRecord> visible = array.new<ZoneRecord>()
@@ -26,7 +40,7 @@ if not na(snapshot)
         int index = array.size(zoneState) - 1
         while index >= 0 and array.size(visible) < 150
             ZoneRecord record = array.get(zoneState, index)
-            if not record.live
+            if not record.live and (not freshOnly or na(record.touchedAt))
                 array.push(visible, record)
             index -= 1
     string signature = f_packZones(visible)
@@ -41,12 +55,12 @@ if not na(snapshot)
                 int rightEdge = record.live ? snapshot.asOf + boxMinutes * 60000 : record.finish
                 if layer == 0 and (not record.yellow or record.yellowAt > record.start)
                     int greenEnd = record.yellow ? record.yellowAt : rightEdge
-                    box item = box.new(left = record.start, top = record.hi, right = greenEnd, bottom = record.lo, xloc = xloc.bar_time, bgcolor = color.new(greenColor, boxOpacity), border_color = greenColor, border_width = borderWidth)
+                    box item = box.new(left = record.start, top = record.hi, right = greenEnd, bottom = record.lo, xloc = xloc.bar_time, bgcolor = color.new(greenColor, boxOpacity), border_color = greenColor, border_width = borderWidth, text = f_boxCaption(record, false), text_color = confluenceTextColor, text_size = f_confluenceTextSize(), text_halign = text.align_center, text_valign = text.align_center)
                     array.push(drawnBoxes, item)
                     if record.live and not record.yellow
                         array.push(projectedBoxes, item)
                 if layer == 1 and record.yellow
-                    box item = box.new(left = record.yellowAt, top = record.hi, right = rightEdge, bottom = record.lo, xloc = xloc.bar_time, bgcolor = color.new(yellowColor, boxOpacity), border_color = yellowColor, border_width = borderWidth)
+                    box item = box.new(left = record.yellowAt, top = record.hi, right = rightEdge, bottom = record.lo, xloc = xloc.bar_time, bgcolor = color.new(yellowColor, boxOpacity), border_color = yellowColor, border_width = borderWidth, text = f_boxCaption(record, true), text_color = confluenceTextColor, text_size = f_confluenceTextSize(), text_halign = text.align_center, text_valign = text.align_center)
                     array.push(drawnBoxes, item)
                     if record.live
                         array.push(projectedBoxes, item)

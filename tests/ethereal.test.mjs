@@ -11,7 +11,8 @@ const displays = ['1', '5', '10', '15', '30', '60', '240'];
 const short = () => [candle(SEPT23, 100), candle(SEPT23 + MINUTE, 100)];
 const plot = (context, title) => context.plots[title].data.at(-1).value;
 const records = context => state(context, 'zoneState').array;
-const recordSummary = r => ({ start: r.start, finish: r.finish, lo: r.lo, hi: r.hi, kinds: r.kinds, yellow: r.yellow, live: r.live, lastSeen: r.lastSeen, side: r.side, anchors: r.anchors, killLo: r.killLo, killHi: r.killHi, yellowAt: r.yellowAt });
+const recordSummary = r => ({ start: r.start, finish: r.finish, lo: r.lo, hi: r.hi, kinds: r.kinds, yellow: r.yellow, live: r.live, lastSeen: r.lastSeen, side: r.side, anchors: r.anchors, killLo: r.killLo, killHi: r.killHi, yellowAt: r.yellowAt, touchedAt: r.touchedAt, sourceText: r.sourceText, yellowText: r.yellowText });
+const caption = (record, yellow = record.yellow) => `${record.side === 1 ? 'ρ' : 'β'}  ${yellow ? record.yellowText : record.sourceText}`;
 const boxes = context => context.plots.__boxes__?.data.at(-1).value ?? [];
 
 async function run(bars, inputs = {}, extra = '', timeframe = '1', audit = false) {
@@ -74,6 +75,7 @@ plot(f_probe(false, 0, "RB 10m", 0, 150) ? 1 : 0, "unrelated reaction")
 
 test('Japanese standalone build stays synchronized and contains only box rendering', () => {
   assert.equal(source, buildEthereal());
+  assert.match(source, /^\/\/@version=6\n/);
   assert.match(source, /indicator\("幽玄", "幽玄"/);
   assert.doesNotMatch(source, /\b(?:line|label|table)\.new\s*\(|\bplot\s*\(|\bplotshape\s*\(|\balertcondition\s*\(|strategy\.(?:entry|order)/);
   assert.doesNotMatch(source, /chart\.(?:left|right)_visible_bar_time|xloc\.bar_index|extend\.right/);
@@ -110,7 +112,7 @@ test('yellow needs all four types, a matching recent reaction and an RB at or ab
   assert.equal(plot(relaxed, 'without RB'), 0);
 });
 
-test('production defaults draw text-free green and yellow boxes with identical time/price anchors on every display', async () => {
+test('production defaults draw annotated green and yellow boxes with identical time/price anchors on every display', async () => {
   let baseline;
   for (const tf of displays) {
     const result = await run(fullStack(), {}, '', tf);
@@ -125,7 +127,8 @@ test('production defaults draw text-free green and yellow boxes with identical t
       const right = asOf + 240 * MINUTE;
       const box = boxes(result).find(b => b.left === left && b.right === right && b.bottom === record.lo && b.top === record.hi && b.border_color.toLowerCase() === (record.yellow ? '#f1c40f' : '#27ae60'));
       assert.ok(box, `record not drawn on ${tf}`);
-      assert.equal(box.text, '', tf);
+      assert.equal(box.text, caption(record), tf);
+      assert.ok(box.text.length > 0, tf);
       assert.equal(box.left, left);
       assert.equal(box.right, right);
       assert.ok(box.right - box.left >= 240 * MINUTE, 'resting zones must be long horizontal bands, not minute fragments');
@@ -169,7 +172,7 @@ test('zone height, padding, forward projection and both colors are configurable 
     assert.ok(box.right <= state(result, 'snapshot').asOf + 45 * MINUTE);
     assert.ok(['#123456','#abcdef'].includes(box.border_color.toLowerCase()));
     assert.equal(box.border_width, 3);
-    assert.equal(box.text, '');
+    assert.ok(box.text.length > 0);
   }
   assert.ok(boxes(result).some(b => b.right === state(result, 'snapshot').asOf + 45 * MINUTE));
 });
@@ -350,14 +353,14 @@ string ledger = "${'anchor-private:'.repeat(300)}"
 for id = 0 to 149
     bool yellow = id % 2 == 0
     int stamp = time + id * 60000
-    array.push(originals, ZoneRecord.new(stamp, stamp + 60000, 100 + id * 0.0625, 105 + id * 0.0625, yellow ? 4 : 2, yellow, true, time_close, 1, ledger, 85 + id * 0.0625, 120 + id * 0.0625, yellow ? stamp : na))
+    array.push(originals, ZoneRecord.new(stamp, stamp + 60000, 100 + id * 0.0625, 105 + id * 0.0625, yellow ? 4 : 2, yellow, true, time_close, 1, ledger, 85 + id * 0.0625, 120 + id * 0.0625, yellow ? stamp : na, stamp + 30000, "STDV | VWAP | VAH/VAL | RB 5m/10m/15m", yellow ? "STDV | VWAP | VAH/VAL | RB 5m/10m/15m" : ""))
 string packed = f_packZones(originals)
 array<ZoneRecord> restored = f_unpackZones(packed)
 int errors = 0
 for id = 0 to array.size(restored) - 1
     ZoneRecord a = array.get(originals, id)
     ZoneRecord b = array.get(restored, id)
-    if a.start != b.start or a.finish != b.finish or a.lo != b.lo or a.hi != b.hi or a.kinds != b.kinds or a.yellow != b.yellow or a.live != b.live or a.side != b.side or a.killLo != b.killLo or a.killHi != b.killHi
+    if a.start != b.start or a.finish != b.finish or a.lo != b.lo or a.hi != b.hi or a.kinds != b.kinds or a.yellow != b.yellow or a.live != b.live or a.side != b.side or a.killLo != b.killLo or a.killHi != b.killHi or a.touchedAt != b.touchedAt or a.sourceText != b.sourceText or a.yellowText != b.yellowText
         errors += 1
     if a.yellow and a.yellowAt != b.yellowAt
         errors += 1
@@ -390,4 +393,129 @@ test('quiet replay steps advance the right edge while keeping the cached zone hi
       assert.equal(signature, view, 'advancing replay must not move the resting price areas');
     }
   }
+});
+
+const sweepProbe = `
+f_sweepCase(int side, float pointPrice, bool rbEnabled) =>
+    array<Level> members = array.new<Level>()
+    if rbEnabled
+        array.push(members, f_level(side == 1 ? 100 : 95, side == 1 ? 105 : 100, 4, "RB 10m", time, f_day(time), side))
+    else
+        array.push(members, f_level(100, 100, 1, "+2.5", time, f_day(time), side))
+    array.push(members, f_level(pointPrice, pointPrice, 2, "VWAP +2 SD", time, f_day(time), side))
+    array<Poi> found = f_findPois(members, close)
+    float result = na
+    if array.size(found) > 0
+        [anchor, price, valid] = f_zoneAnchor(array.get(found, 0), members)
+        result := valid ? price : na
+    result
+plot(f_sweepCase(1, 110, true), "upper")
+plot(f_sweepCase(-1, 90, true), "lower")
+plot(f_sweepCase(1, 102, true), "inside")
+plot(f_sweepCase(1, 121, true), "too far")
+plot(f_sweepCase(1, 120, true), "invalidated price")
+plot(f_sweepCase(1, 106, true), "small sweep")
+plot(f_sweepCase(1, 101, false), "without RB")
+`;
+
+test('beyond-wick placement uses an aligned outside level, symmetrically, and rejects invented sweep prices', async () => {
+  const original = await run(short(), {}, sweepProbe);
+  assert.equal(plot(original, 'upper'), 105);
+  assert.equal(plot(original, 'lower'), 95);
+  const current = await run(short(), { 'RB zone placement': 'Beyond wick confluence' }, sweepProbe);
+  assert.equal(plot(current, 'upper'), 110);
+  assert.equal(plot(current, 'lower'), 90);
+  assert.equal(plot(current, 'without RB'), 100, 'a valid non-RB pair must remain eligible');
+  for (const title of ['inside', 'too far', 'invalidated price']) assert.ok(Number.isNaN(plot(current, title)), title);
+  const minimum = await run(short(), { 'RB zone placement': 'Beyond wick confluence', 'Minimum distance beyond RB wick (points)': 2 }, sweepProbe);
+  assert.ok(Number.isNaN(plot(minimum, 'small sweep')));
+});
+
+const sweepAreaProbe = `
+var array<ZoneRecord> sweepRecords = array.new<ZoneRecord>()
+var Reaction sweepMemory = Reaction.new(na, na, na, na, na)
+array<Level> sweepMembers = array.from(f_level(100, 105, 4, "RB 10m", time, f_day(time), 1), f_level(110 + bar_index, 110 + bar_index, 2, "VWAP +2 SD", time, f_day(time), 1))
+f_updateZones(sweepRecords, sweepMembers, sweepMemory, time_close, close)
+`;
+
+test('a beyond-wick resting band freezes the known outside price instead of drifting or covering the old wick', async () => {
+  const feed = Array.from({ length: 4 }, (_, i) => candle(SEPT23 + i * MINUTE, 90));
+  const settings = { 'RB zone placement': 'Beyond wick confluence' };
+  for (const sizing of ['Fixed height', 'Cover confluence span']) {
+    const result = await run(feed, { ...settings, 'Zone sizing': sizing }, sweepAreaProbe);
+    const areas = state(result, 'sweepRecords').array;
+    assert.equal(areas.length, 1);
+    assert.equal(areas[0].lo, 107);
+    assert.equal(areas[0].hi, 113);
+    assert.equal(areas[0].start, SEPT23 + MINUTE);
+    assert.equal(areas[0].killHi, 120, 'wick-based invalidation stays independently configured');
+    assert.equal(areas[0].sourceText, 'VWAP | RB 10m');
+  }
+});
+
+test('optional box text shows actual contributors, preserves green history and supports color, size and hiding', async () => {
+  const result = await run(fullStack(), { 'Confluence text color': '#aabbcc', 'Confluence text size': 'Tiny' });
+  for (const box of boxes(result)) {
+    assert.ok(box.text.includes(' | '));
+    assert.ok(!box.text.includes('OTE'));
+    assert.equal(box.text_color.toLowerCase(), '#aabbcc');
+    assert.equal(box.text_size, 'tiny');
+  }
+  const upgraded = records(result).find(record => record.yellow && record.yellowAt > record.start);
+  assert.ok(upgraded);
+  assert.ok(upgraded.yellowText.includes('STDV') && upgraded.yellowText.includes('VWAP') && /VAH|VAL/.test(upgraded.yellowText) && upgraded.yellowText.includes('RB '));
+  const before = records(await run(fullStack().slice(0, -1))).find(record => record.start === upgraded.start && record.lo === upgraded.lo);
+  assert.equal(upgraded.sourceText, before.sourceText);
+  assert.ok(boxes(result).some(box => box.left === upgraded.start && box.right === upgraded.yellowAt && box.text === caption(before, false)));
+  const hidden = await run(fullStack(), { 'Show confluence text': false, 'Show reversal side symbol (β / ρ)': false });
+  assert.ok(boxes(hidden).length > 0);
+  assert.ok(boxes(hidden).every(box => box.text === ''));
+  assert.deepEqual(records(hidden).map(recordSummary), records(await run(fullStack())).map(recordSummary), 'text settings cannot change qualification');
+});
+
+test('first-return filtering hides a touched area only after the completed source minute and preserves the earlier replay view', async () => {
+  const settings = { 'Hide zones after first return': true };
+  const past = fullStack();
+  const before = await run(past, settings);
+  const target = records(before).find(record => record.live && (record.touchedAt == null || Number.isNaN(record.touchedAt)) && boxes(before).some(box => box.bottom === record.lo && box.top === record.hi));
+  assert.ok(target, 'fixture must have an untouched visible resting zone');
+  const price = (target.lo + target.hi) / 2;
+  const last = past.at(-1);
+  const touch = candle(last.closeTime, last.close, last.close, Math.max(last.close, price), Math.min(last.close, price));
+  const runtime = configuredSource(source, settings);
+  const forming = await new PineTS(new OfflineProvider([...past, touch]), 'CME_MINI:NQ1!', '1', past.length + 1).run(new Indicator(runtime));
+  assert.ok(boxes(forming).some(box => box.bottom === target.lo && box.top === target.hi), 'forming touch cannot hide a known area');
+  const after = await run([...past, touch], settings);
+  const touched = records(after).find(record => record.start === target.start && record.lo === target.lo);
+  assert.equal(touched.touchedAt, touch.closeTime);
+  assert.ok(!boxes(after).some(box => box.left === target.start && box.bottom === target.lo && box.top === target.hi));
+  const prefix = await run(past, settings);
+  const geometry = box => Object.fromEntries(Object.entries(box).filter(([key]) => key !== 'id'));
+  assert.deepEqual(boxes(prefix).map(geometry), boxes(before).map(geometry), 'later contact cannot change an earlier replay prefix');
+  const probe = await run([candle(SEPT23, 100, 100, 102, 98)], settings, restingProbe);
+  assert.equal(state(probe, 'probeRecords').array.length, 0, 'do not introduce a fresh zone after its creation candle already hit it');
+});
+
+
+test('beta and rho use the frozen buy/sell side and can be shown independently of confluence text', async () => {
+  const extra = `
+ZoneRecord buy = ZoneRecord.new(time, time_close, 90, 95, 2, false, true, time, -1, "", 75, 110, na, na, "STDV | RB 5m", "STDV | VWAP | VAL | RB 5m")
+ZoneRecord sell = ZoneRecord.new(time, time_close, 105, 110, 2, false, true, time, 1, "", 90, 125, na, na, "VWAP | RB 10m", "STDV | VWAP | VAH | RB 10m")
+string buyCaption = f_boxCaption(buy, false)
+string sellCaption = f_boxCaption(sell, false)
+string yellowCaption = f_boxCaption(buy, true)
+`;
+  const both = await run(short(), {}, extra);
+  assert.equal(state(both, 'buyCaption'), 'β  STDV | RB 5m');
+  assert.equal(state(both, 'sellCaption'), 'ρ  VWAP | RB 10m');
+  assert.equal(state(both, 'yellowCaption'), 'β  STDV | VWAP | VAL | RB 5m');
+  const symbols = await run(short(), { 'Show confluence text': false }, extra);
+  assert.equal(state(symbols, 'buyCaption'), 'β');
+  assert.equal(state(symbols, 'sellCaption'), 'ρ');
+  const names = await run(short(), { 'Show reversal side symbol (β / ρ)': false }, extra);
+  assert.equal(state(names, 'buyCaption'), 'STDV | RB 5m');
+  assert.equal(state(names, 'sellCaption'), 'VWAP | RB 10m');
+  const neither = await run(short(), { 'Show confluence text': false, 'Show reversal side symbol (β / ρ)': false }, extra);
+  assert.equal(state(neither, 'buyCaption'), '');
+  assert.equal(state(neither, 'sellCaption'), '');
 });

@@ -71,6 +71,69 @@ f_anchorMember(Poi zone, array<Level> candidates) =>
 f_anchorKey(Level anchor) =>
     "|" + str.tostring(anchor.kind) + ":" + anchor.caption + ":" + str.tostring(anchor.epoch) + "|"
 
+// Record only the known contributors, never infer a concept from the box grade.
+f_confluenceText(Poi zone, array<Level> candidates) =>
+    bool fib = false
+    bool vwap = false
+    bool vah = false
+    bool val = false
+    bool rbFive = false
+    bool rbTen = false
+    bool rbFifteen = false
+    for id in zone.memberIds
+        Level member = array.get(candidates, id)
+        fib := fib or member.kind == 1
+        vwap := vwap or member.kind == 2
+        vah := vah or (member.kind == 3 and member.caption == "VAH ~")
+        val := val or (member.kind == 3 and member.caption == "VAL ~")
+        rbFive := rbFive or (member.kind == 4 and member.caption == "RB 5m")
+        rbTen := rbTen or (member.kind == 4 and member.caption == "RB 10m")
+        rbFifteen := rbFifteen or (member.kind == 4 and member.caption == "RB 15m")
+    string caption = fib ? "STDV" : ""
+    if vwap
+        caption += (caption == "" ? "" : " | ") + "VWAP"
+    if vah or val
+        caption += (caption == "" ? "" : " | ") + (vah and val ? "VAH/VAL" : vah ? "VAH" : "VAL")
+    if rbFive or rbTen or rbFifteen
+        string frames = rbFive ? "5m" : ""
+        frames += rbTen ? (frames == "" ? "" : "/") + "10m" : ""
+        frames += rbFifteen ? (frames == "" ? "" : "/") + "15m" : ""
+        caption += (caption == "" ? "" : " | ") + "RB " + frames
+    caption
+
+f_rbSeconds(Level level) =>
+    level.caption == "RB 15m" ? 900 : level.caption == "RB 10m" ? 600 : 300
+
+// Optional placement uses a REAL aligned level outside a formed wick. If an RB
+// stack has no such level, skip it; do not manufacture a sweep price.
+f_zoneAnchor(Poi zone, array<Level> candidates) =>
+    Level anchor = f_anchorMember(zone, candidates)
+    float price = anchor.kind == 4 ? math.max(anchor.lo, math.min(anchor.hi, (zone.lo + zone.hi) / 2)) : (anchor.lo + anchor.hi) / 2
+    bool valid = true
+    if rbPlacement == "Beyond wick confluence"
+        bool hasRb = false
+        float gap = na
+        int seconds = 0
+        int bestKind = 99
+        for id in zone.memberIds
+            Level rb = array.get(candidates, id)
+            if rb.kind == 4
+                hasRb := true
+                for pointId in zone.memberIds
+                    Level point = array.get(candidates, pointId)
+                    if point.kind != 4
+                        float distance = rb.side == 1 ? point.lo - rb.hi : rb.lo - point.hi
+                        int frame = f_rbSeconds(rb)
+                        bool better = na(gap) or distance < gap or (distance == gap and (frame > seconds or (frame == seconds and point.kind < bestKind)))
+                        if distance >= math.max(minimumSweep, syminfo.mintick) and distance <= tolerance and distance < invalidation and better
+                            gap := distance
+                            seconds := frame
+                            bestKind := point.kind
+                            anchor := rb
+                            price := (point.lo + point.hi) / 2
+        valid := not hasRb or not na(gap)
+    [anchor, price, valid]
+
 // Confluence CREATES a resting price area. It does not have to keep following
 // VWAP / profile to stay on the chart. Only a price breach (or optional expiry)
 // retires it. Each anchor is consumed once, including after invalidation.
@@ -78,6 +141,9 @@ f_updateZones(array<ZoneRecord> records, array<Level> candidates, Reaction react
     bool changed = false
     array<Poi> current = f_findPois(candidates, reference)
     for record in records
+        if record.live and record.start < now and na(record.touchedAt) and low <= record.hi and high >= record.lo
+            record.touchedAt := now
+            changed := true
         bool expired = zoneMaxDays > 0 and now - record.start >= zoneMaxDays * DAY_MS
         bool breached = record.side == 1 ? high >= record.killHi : low <= record.killLo
         if record.live and record.start < now and (breached or expired)
@@ -85,11 +151,14 @@ f_updateZones(array<ZoneRecord> records, array<Level> candidates, Reaction react
             record.finish := now
             changed := true
     for zone in current
-        Level anchor = f_anchorMember(zone, candidates)
+        [anchor, anchorPrice, placementValid] = f_zoneAnchor(zone, candidates)
+        if not placementValid
+            continue
         string key = f_anchorKey(anchor)
-        float anchorPrice = anchor.kind == 4 ? math.max(anchor.lo, math.min(anchor.hi, (zone.lo + zone.hi) / 2)) : (anchor.lo + anchor.hi) / 2
-        float rawLo = math.min(anchor.lo, zone.lo)
-        float rawHi = math.max(anchor.hi, zone.hi)
+        bool sweepPlacement = rbPlacement == "Beyond wick confluence" and anchor.kind == 4
+        // In sweep mode the old wick is context, not the new price band.
+        float rawLo = sweepPlacement ? anchorPrice : math.min(anchor.lo, zone.lo)
+        float rawHi = sweepPlacement ? anchorPrice : math.max(anchor.hi, zone.hi)
         float middle = zoneSizing == "Fixed height" ? anchorPrice : (rawLo + rawHi) / 2
         float height = zoneSizing == "Fixed height" ? minimumHeight : math.max(minimumHeight, rawHi - rawLo)
         float bottom = math.floor((middle - height / 2 - boxPadding) / syminfo.mintick) * syminfo.mintick
@@ -121,10 +190,15 @@ f_updateZones(array<ZoneRecord> records, array<Level> candidates, Reaction react
                 if yellow and not record.yellow
                     record.yellow := true
                     record.yellowAt := now
+                    record.yellowText := f_confluenceText(zone, candidates)
                     changed := true
-        if found < 0 and not consumed
+        bool awaitingReturn = anchor.side == 1 ? high < bottom : low > top
+        if found < 0 and not consumed and (not freshOnly or awaitingReturn)
             int side = anchor.side
-            array.push(records, ZoneRecord.new(now, now, bottom, top, zone.kinds, yellow, true, now, side, key, anchor.lo - invalidation, anchor.hi + invalidation, yellow ? now : na))
+            ZoneRecord created = ZoneRecord.new(now, now, bottom, top, zone.kinds, yellow, true, now, side, key, anchor.lo - invalidation, anchor.hi + invalidation, yellow ? now : na)
+            created.sourceText := f_confluenceText(zone, candidates)
+            created.yellowText := yellow ? created.sourceText : ""
+            array.push(records, created)
             changed := true
     int index = array.size(records) - 1
     while index >= 0

@@ -3,7 +3,7 @@
 f_packZones(array<ZoneRecord> records) =>
     string packed = ""
     for record in records
-        packed += str.tostring(record.start) + ";" + str.tostring(record.finish) + ";" + str.tostring(record.lo, "#.########") + ";" + str.tostring(record.hi, "#.########") + ";" + str.tostring(record.kinds) + ";" + (record.yellow ? "1" : "0") + ";" + (record.live ? "1" : "0") + ";" + str.tostring(record.side) + ";" + str.tostring(record.killLo, "#.########") + ";" + str.tostring(record.killHi, "#.########") + ";" + str.tostring(record.yellowAt) + "\n"
+        packed += str.tostring(record.start) + ";" + str.tostring(record.finish) + ";" + str.tostring(record.lo, "#.########") + ";" + str.tostring(record.hi, "#.########") + ";" + str.tostring(record.kinds) + ";" + (record.yellow ? "1" : "0") + ";" + (record.live ? "1" : "0") + ";" + str.tostring(record.side) + ";" + str.tostring(record.killLo, "#.########") + ";" + str.tostring(record.killHi, "#.########") + ";" + str.tostring(record.yellowAt) + ";" + str.tostring(record.touchedAt) + ";" + record.sourceText + ";" + record.yellowText + "\n"
     packed
 
 f_unpackZones(string packed) =>
@@ -11,7 +11,7 @@ f_unpackZones(string packed) =>
     for row in str.split(packed, "\n")
         if row != ""
             array<string> fields = str.split(row, ";")
-            if array.size(fields) != 11
+            if array.size(fields) != 14
                 runtime.error("Invalid internal replay snapshot.")
             int start = int(str.tonumber(array.get(fields, 0)))
             int finish = int(str.tonumber(array.get(fields, 1)))
@@ -24,5 +24,8 @@ f_unpackZones(string packed) =>
             float killLo = str.tonumber(array.get(fields, 8))
             float killHi = str.tonumber(array.get(fields, 9))
             int yellowAt = int(str.tonumber(array.get(fields, 10)))
-            array.push(records, ZoneRecord.new(start, finish, bottom, top, kinds, yellow, live, na, side, "", killLo, killHi, yellowAt))
+            int touchedAt = int(str.tonumber(array.get(fields, 11)))
+            string sourceText = array.get(fields, 12)
+            string yellowText = array.get(fields, 13)
+            array.push(records, ZoneRecord.new(start, finish, bottom, top, kinds, yellow, live, na, side, "", killLo, killHi, yellowAt, touchedAt, sourceText, yellowText))
     records

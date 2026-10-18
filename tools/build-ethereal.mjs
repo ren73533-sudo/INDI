@@ -29,6 +29,9 @@ export function buildEthereal() {
     float killLo
     float killHi
     int yellowAt
+    int touchedAt = na
+    string sourceText = ""
+    string yellowText = ""
 
 type Reaction
     int day
