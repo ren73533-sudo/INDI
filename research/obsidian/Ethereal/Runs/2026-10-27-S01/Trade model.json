@@ -1,0 +1,28 @@
+{
+  "status": "frozen-before-outcomes",
+  "sessionId": "2026-10-27-S01",
+  "declaredUtc": "2026-10-27T14:41:10.909759+00:00",
+  "session": "NY RTH 09:30-16:00 America/New_York",
+  "entry": "resting limit at box midpoint; buy rounds down and sell rounds up to 0.25-point NQ tick",
+  "orderPriority": "nearest fresh correct-side visible zone from prior close, ties yellow then older formation/key; selected before seeing candle high/low",
+  "positionLimit": 1,
+  "plannedInitialStopPoints": 20,
+  "breakEvenTriggerPoints": 60,
+  "breakEvenStop": "modeled fill price; gross break-even before unspecified costs",
+  "referenceTargetPoints": 130,
+  "targetPolicy": "fixed 130-point baseline; no future-selected target",
+  "firstTouchPolicy": "first-band-contact attempt only; unfilled midpoint consumes attempt; prior hidden contacts excluded using touchedAt",
+  "sessionExit": "flatten at NY session close; positive partial exits listed separately from 130-point TP wins",
+  "ambiguousOhlcPolicy": "do not invent intrabar order; ambiguous trade blocks further entries for that NY session",
+  "gapPolicy": "observed opening-price improvement for entry; active stop gap fills at open and risk violation is reported, never capped fictitiously",
+  "costs": "unspecified; gross points only",
+  "reactionStudy": "separate 5/15/30-minute post-contact-close +/-15 benchmark; not trade win rate",
+  "pilotScoreDates": [
+    "2026-01-22",
+    "2026-01-23"
+  ],
+  "pilotReplay": "continuous prefix from archive first candle through 2026-01-23 UTC; no daily cold restarts",
+  "holdoutPolicy": "no replay/scoring of reserved 2026-03-18 to 2026-04-15 validation period in this pilot",
+  "dataSha256": "1c8e870334e2aec4eb0f1d14020b44ec22c2094ececac3d28b711b25ab9eb069",
+  "sourceSha256": "1304c756d9b725701181c3f3dd8722387157b47d82fe7f3817cf9e5d482f2709"
+}

@@ -40,8 +40,8 @@
     },
     {
       "path": "Ethereal/Index.md",
-      "sha256": "d1bde6cea2f0a76ba2fb674d89944c44b940eff24e357cb6e1df813d15c36821",
-      "bytes": 1627
+      "sha256": "fdd783f6a45398eaf22a9ad61b3b331d86b63955fb88b824c87a9c4df8a2379d",
+      "bytes": 1916
     },
     {
       "path": "Ethereal/Protocol.md",
@@ -52,6 +52,31 @@
       "path": "Ethereal/Results/2026-10-27 Data validation.md",
       "sha256": "eee4c2b8edc1da04f70c58c8dc5099e3346e7d0fe84805419e2ae625695145a7",
       "bytes": 1102
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Progress.md",
+      "sha256": "7224c170a373f26debbf7d7ae8e0ec05251f948e8b4de64bd422a0c3de012672",
+      "bytes": 740
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Report.md",
+      "sha256": "182a83d5689b3e438bb399d310acc991425cf40b96e185a8327f5c79bcf83d30",
+      "bytes": 2344
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Settings-midnight.json",
+      "sha256": "f625d76b271d185510fb6555f825587a23477db43bf166105a7b765a61526e7c",
+      "bytes": 2289
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Settings-range.json",
+      "sha256": "9d3f272d41b43e88d6dbd330b44cf16980e32ecf28617eb1020e31c6365e3c2e",
+      "bytes": 2276
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Trade model.json",
+      "sha256": "643c30fac9930028af9c02c50f885bd585941c07416fcde4f55ae5da61ee9640",
+      "bytes": 1837
     },
     {
       "path": "Ethereal/Templates/Run report.md",
