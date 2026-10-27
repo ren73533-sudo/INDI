@@ -15,11 +15,19 @@ Requested destination: `C:\brain\Ethereal`. The trader has Claude Code installed
 
 Use the actual Ethereal source, known-before-contact boxes, frozen sides and grade history. Reserve the latest 20 complete dates before inspecting strategy outcomes. Keep software checks, data checks and market results distinguishable.
 
-## Outstanding implementation work
+## 2026-10-27 — Freeze the first trade baseline
 
-- Adapt the study runner from the original full-display indicator to Ethereal v1.4.
-- Preserve honest external-feed identity and record history coverage/initialization.
-- Verify prefix consistency and event deduplication across any replay batches.
+The trader requests position direction, NQ price, contributor evidence, narrative, points, win rate and review opinions. The first reference uses a midpoint limit, planned 20-point stop, gross break-even stop after +60 points and fixed TP130. Targets remain fixed before outcomes; variable-target rules require a separately declared experiment. Costs are unspecified. A stop gap can exceed planned risk and must be reported honestly.
+
+## Completed implementation
+
+- The study now replays the actual Ethereal v1.4 source with same-index pre-contact state.
+- External feed identity, initialization and 100,000-minute history override are recorded.
+- Focused tests verify prefix consistency, source gaps, grade history, prior contacts, execution ambiguities and holdout protection.
+
+## Outstanding research work
+
 - Obtain dated manual acceptance/rejection examples to evaluate matching the trader's actual zone selection.
 - Run calibration, freeze a selected configuration, then evaluate the untouched validation period.
-- Define execution, stops, exits and costs only if a subsequent trade backtest is requested. The current objective remains a POI reaction study.
+- Compare construction timeframes in a separately declared experiment; display timeframe alone shares the same source engine.
+- Specify real trading costs and use finer data to resolve one-minute execution ambiguity before interpreting net profitability or tick precision.

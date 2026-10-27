@@ -1,7 +1,7 @@
 ---
 project: Ethereal
 type: study-protocol
-status: specified-not-executed
+status: active
 created: 2026-10-27
 ---
 
@@ -15,9 +15,9 @@ The configuration files in `Evidence` are snapshots of the code defaults and a p
 
 ## 2. Validate the data and replay
 
-Check UTC timestamps, duplicate or invalid rows, price tick alignment, volume, overnight coverage, RTH coverage and gaps. Record provider identity and the unresolved contract/rollover methodology. Exclude unusable initialization periods, and require the configured Fib/VWAP/profile readiness before scoring.
+Check UTC timestamps, duplicate or invalid rows, price tick alignment, volume, overnight coverage, RTH coverage and gaps. Record provider identity and the unresolved contract/rollover methodology. Exclude unusable initialization periods. S01 requires two published Fib sets and records the engine's VWAP/profile readiness; the actual indicator determines which concept sources may qualify a visible zone.
 
-The existing `tools/poi-study.mjs` loads `nq_key_levels.pine`, not Ethereal. Adapt the replay to the actual `ethereal.pine` source before labeling any output as an Ethereal result. Preserve its resting boxes, mandatory Fib rule, frozen side, grade history, display selection and first-return policy. Label the external data source honestly; it is not a verified TradingView NQ1! feed.
+The older `tools/poi-study.mjs` loads `nq_key_levels.pine`, not Ethereal. S01 uses `tools/ethereal-replay.mjs` and `tools/run-ethereal-session.mjs` to replay the actual `ethereal.pine` source. Preserve its resting boxes, mandatory Fib rule, frozen side, grade history, display selection and first-return policy. Label the external data source honestly; it is not a verified TradingView NQ1! feed.
 
 The production history default is 6,000 source minutes, while the dataset contains 83,919 rows. Declare the study history setting and any batching/initialization rules. Do not interpret unavailable historical snapshots as zero qualifying zones. Test that adding later candles does not change earlier scored states under the declared history policy, and explicitly account for history-window boundaries.
 
@@ -44,9 +44,9 @@ Use 5-, 15- and 30-minute elapsed horizons. The initial price reference is the c
 
 Record favorable and adverse excursion, directional close change, penetration beyond the frozen band, and timing. Report counts by green/yellow grade, Fib mode, concept combination, side and session. Include coverage/exclusion counts and event-level CSV evidence alongside summaries.
 
-If used, a symmetric 15-point first-hit comparison is a descriptive benchmark, not the trader's stop or target. If both thresholds occur in one 1m candle, mark the order **ambiguous**. Missing follow-up candles make the relevant horizon **incomplete**. Do not select an assumed intrabar path.
+If used, a symmetric 15-point first-hit comparison is a descriptive benchmark, not the trader's stop or target. An observed open at or beyond one threshold establishes that boundary first. If the candle opens between thresholds and both occur within that minute, mark the order **ambiguous**. Missing follow-up candles make the relevant horizon **incomplete**. Do not select an assumed intrabar path.
 
-One-minute OHLCV cannot establish exact top/bottom ticks, queue position or tick-by-tick fill order. A trade backtest needs separately specified entry, stop, exit and costs.
+One-minute OHLCV cannot establish exact top/bottom ticks, queue position or tick-by-tick fill order. The separately frozen S01 trade baseline is midpoint limit / planned SL20 / BE60 / fixed TP130, one position, NY RTH entries and session-end exit. Full rules and ambiguity handling are in [[Ethereal/Runs/2026-10-27-S01/Report|S01 report]] and its Trade model.json. Costs remain unspecified; trade results are gross points only.
 
 ## 6. Review failures before changing rules
 

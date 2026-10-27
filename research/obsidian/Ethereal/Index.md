@@ -7,7 +7,7 @@ created: 2026-10-27
 
 # Ethereal research
 
-The research objective is to reproduce the trader's defined reversal areas more faithfully and measure their subsequent price reactions. The current work has acquired and validated a historical dataset. Session S01 is now implementing and verifying the actual-Ethereal replay and trade model. No market outcomes have been produced at this checkpoint.
+The research objective is to reproduce the trader's defined reversal areas more faithfully and measure their subsequent price reactions. The NQ archive and actual-Ethereal replay are verified for offline research. Session S01 completed an initial two-date pilot with no trade entries; its 37-date calibration comparison is now running. A trade win rate is not available at this checkpoint.
 
 ## Active session
 
@@ -32,8 +32,8 @@ The research objective is to reproduce the trader's defined reversal areas more 
 | Complete overnight and NY RTH dates | 58 |
 | Indicator | Ethereal v1.4.0; source identity recorded |
 | Software checks | 62 previously reported passing; retained execution log unavailable in the current restored workspace |
-| Current market-reaction runner | Actual-Ethereal adapter/scorers under implementation |
-| Market-reaction study | Session S01 started; pilot not executed yet |
-| Trade model | Midpoint / planned SL20 / BE60 / TP130 defined; outcomes not measured yet |
+| Current market-reaction runner | Actual-Ethereal replay, reaction and trade scorers implemented and independently reviewed |
+| Market-reaction study | Initial pilot complete; extended Range / Midnight calibration running |
+| Trade model | Midpoint / planned SL20 / BE60 / TP130; pilot entered no trades |
 
 The 20 latest complete dates are reserved for validation before any strategy-result inspection. Their exact list is in `Evidence/study-design.json`. Data coverage checks do not measure trading performance.

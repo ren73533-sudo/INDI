@@ -14,3 +14,7 @@ The retained indicator source currently matches SHA-256 `1304c756d9b725701181c3f
 The original temporary execution log is unavailable in the current restored workspace. These are recorded historical results, not a fresh run performed on 2026-10-27. Future software runs should save their full logs and exit status under the corresponding run directory.
 
 Native TradingView compilation/live rollback/replay remains externally unverified. Software checks do not establish a market win rate, profitability, DRW equivalence or exact tick precision.
+
+## Fresh S01 research verification
+
+On 2026-10-27, the actual-Ethereal replay, reaction scorer, trade scorer and validation-scope tests passed: **52 passed, 0 failed, 0 skipped**. The full retained log is `Runs/2026-10-27-S01/Software checks.log`; the source generator check also passed. These focused research checks are separate from the historical 62-check indicator record above. See [[Ethereal/Runs/2026-10-27-S01/Implementation audit|S01 implementation audit]] for reviewed corrections.

@@ -15,7 +15,7 @@ Use only that dedicated directory for this import. Preserve the rest of the vaul
 Keep the directory structure, Markdown frontmatter, Obsidian links and JSON evidence files intact.
 If an existing destination file has different local content, preserve it and place the incoming file in a dated Imports subdirectory; report the conflict instead of overwriting it.
 Open Index.md and report which files were imported.
-Do not invent market results: the current notes record data readiness and a proposed protocol, not an executed Ethereal reaction study.
+Do not invent market results. Read the latest S01 report and progress log to distinguish completed measurements, active work and untested hypotheses.
 ```
 
 Subsequent cloud-generated runs belong under `Ethereal/Runs/<run-id>/`. Preserve completed run records; corrections should explain the change and reference the prior run.
@@ -26,5 +26,5 @@ Raw third-party market CSV files are not bundled here. The provenance note recor
 
 - Prepared: data provenance, validation record, configuration snapshots, protocol and report template.
 - Historical record: 62 offline software checks previously passed; this does not establish market performance.
-- Not run: an Ethereal v1.4 market-reaction study.
+- Active: S01 actual-Ethereal reaction and trade studies; read the run report for completed measurements.
 - Not verified: native TradingView compilation/replay, direct equivalence of the public data to TradingView NQ1!, and any trade win rate or profitability.

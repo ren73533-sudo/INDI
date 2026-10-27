@@ -15,8 +15,8 @@
     },
     {
       "path": "Ethereal/Decisions.md",
-      "sha256": "6721ab7b32e8dad9910e73941d795078206f780875cbaf7a8b5dad9492029d10",
-      "bytes": 1443
+      "sha256": "8bb0157f1b4d0b9cc42fde472d9b3b2329219ebeba5b15a18ae24d47a8db041b",
+      "bytes": 2148
     },
     {
       "path": "Ethereal/Evidence/Data validation.json",
@@ -40,13 +40,13 @@
     },
     {
       "path": "Ethereal/Index.md",
-      "sha256": "fdd783f6a45398eaf22a9ad61b3b331d86b63955fb88b824c87a9c4df8a2379d",
-      "bytes": 1916
+      "sha256": "ad6761693691b2210ae885dd198c151f1a280a2fa35bea230c133d4a17c004de",
+      "bytes": 2008
     },
     {
       "path": "Ethereal/Protocol.md",
-      "sha256": "49c649e2c7b08d34db319d0b741d5a362f51ce6cac9bf8b58034d1d7d5b13f54",
-      "bytes": 5703
+      "sha256": "ed07c4874b06dc0f59ac859ba6671cd9f6049749dcfdb4700eff8582ba806667",
+      "bytes": 6159
     },
     {
       "path": "Ethereal/Results/2026-10-27 Data validation.md",
@@ -54,9 +54,19 @@
       "bytes": 1102
     },
     {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration scope.json",
+      "sha256": "71a9767e701dee9cf33e41e78c57b3fa7b870565ee104e014a9b56cc30e9b984",
+      "bytes": 1312
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Implementation audit.md",
+      "sha256": "cdbace644fd700727be61b591053a6ca39034dfb252ac6cf4fcdc648e9e1cd88",
+      "bytes": 2838
+    },
+    {
       "path": "Ethereal/Runs/2026-10-27-S01/Progress.md",
-      "sha256": "7224c170a373f26debbf7d7ae8e0ec05251f948e8b4de64bd422a0c3de012672",
-      "bytes": 740
+      "sha256": "e2f9166dbc90477565db3de984c55d0edc9d52f6cdab613c792d8713eaa0d142",
+      "bytes": 1388
     },
     {
       "path": "Ethereal/Runs/2026-10-27-S01/Report.md",
@@ -74,6 +84,11 @@
       "bytes": 2276
     },
     {
+      "path": "Ethereal/Runs/2026-10-27-S01/Software checks.log",
+      "sha256": "034ab376f811949665ed742ba26ea56c6c0528d0ad8149cd26742ba576dc5161",
+      "bytes": 5700
+    },
+    {
       "path": "Ethereal/Runs/2026-10-27-S01/Trade model.json",
       "sha256": "643c30fac9930028af9c02c50f885bd585941c07416fcde4f55ae5da61ee9640",
       "bytes": 1837
@@ -85,8 +100,8 @@
     },
     {
       "path": "Ethereal/Tests/Software checks.md",
-      "sha256": "098ff302159d4a9069a8d7f940d86bf9e29b1d0054daa812c3ce3729295f1163",
-      "bytes": 1075
+      "sha256": "c7699ef263caaab20bf9724bf1e7816a103fa78568e6bb71af2f05069c6d139d",
+      "bytes": 1569
     }
   ]
 }
