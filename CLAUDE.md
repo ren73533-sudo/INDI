@@ -66,4 +66,6 @@ A flat zero-volume observation minute exposes the state after the last fixture c
 
 PineTS is not TradingView. Do not claim official compilation, live behavior, DRW equivalence, actual volume-at-price or profitability without evidence.
 
-Next: compile v0.3.1, compare 1m / 10m / 4h at matching engine timestamps, inspect live minute boundaries, market gaps, source availability and execution limits. Real NQ CSV for the requested POI reaction study is still missing.
+Next: native chart verification remains necessary. A public third-party NQ 1m archive has been acquired (83,919 rows; 2026-01-20 to 2026-04-15); provider claims, unresolved rollover methodology, coverage and hashes are in `research/obsidian/Ethereal`. Raw CSV files are not in Git. The existing `tools/poi-study.mjs` still loads the original full-display source and must be adapted before claiming Ethereal reaction results. No Ethereal market study has run yet.
+
+The trader wants tests/results recorded in the local Obsidian vault `C:\brain\Ethereal` and has Claude Code on that PC. `research/obsidian/README.md` supplies the local import handoff. The cloud session cannot access the PC's drive. Preserve existing vault files and record import conflicts rather than overwriting local edits. Every experiment needs a versioned run report, exact settings, source/data hashes and event evidence. The latest 20 complete dates (2026-03-18 through 2026-04-15, exact list in `Evidence/study-design.json`) are reserved for validation before inspecting strategy outcomes.

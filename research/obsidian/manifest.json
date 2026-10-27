@@ -1,0 +1,67 @@
+{
+  "format": "ethereal-obsidian-import-v1",
+  "root": "Ethereal",
+  "created": "2026-10-27",
+  "files": [
+    {
+      "path": "Ethereal/Baseline configuration.md",
+      "sha256": "4057f52877716023d14577bd1473ffee03ca05d4323ce7d6010f190256985c83",
+      "bytes": 1344
+    },
+    {
+      "path": "Ethereal/Data/NQ 2026 provenance.md",
+      "sha256": "416f84b7244b3252272dc7096baa155c55afed1b74e6366704209ab0caff5c4a",
+      "bytes": 1903
+    },
+    {
+      "path": "Ethereal/Decisions.md",
+      "sha256": "6721ab7b32e8dad9910e73941d795078206f780875cbaf7a8b5dad9492029d10",
+      "bytes": 1443
+    },
+    {
+      "path": "Ethereal/Evidence/Data validation.json",
+      "sha256": "b3e9cdf1a003c45eb7861c782e1eadca4dfede3f9b932aab77495126bf573688",
+      "bytes": 9856
+    },
+    {
+      "path": "Ethereal/Evidence/Midnight baseline.json",
+      "sha256": "ac2c97ff9f6bb4c36755156f4f9268d1a5aae04afae9ef557ee88c929fed737d",
+      "bytes": 2246
+    },
+    {
+      "path": "Ethereal/Evidence/Range defaults.json",
+      "sha256": "faaf71daecead948e972ef61cf6417a82813edbbd9d57b2cb06e3e0ee894e1f3",
+      "bytes": 2233
+    },
+    {
+      "path": "Ethereal/Evidence/study-design.json",
+      "sha256": "f8743e62c1a36b7a89f653aa56f5b4dcc8222e9ddd9122593328b2b6494d1488",
+      "bytes": 2321
+    },
+    {
+      "path": "Ethereal/Index.md",
+      "sha256": "d1bde6cea2f0a76ba2fb674d89944c44b940eff24e357cb6e1df813d15c36821",
+      "bytes": 1627
+    },
+    {
+      "path": "Ethereal/Protocol.md",
+      "sha256": "49c649e2c7b08d34db319d0b741d5a362f51ce6cac9bf8b58034d1d7d5b13f54",
+      "bytes": 5703
+    },
+    {
+      "path": "Ethereal/Results/2026-10-27 Data validation.md",
+      "sha256": "eee4c2b8edc1da04f70c58c8dc5099e3346e7d0fe84805419e2ae625695145a7",
+      "bytes": 1102
+    },
+    {
+      "path": "Ethereal/Templates/Run report.md",
+      "sha256": "0e3196a91a118eae92047230caaf3e535e43ede4fda0d7a5949f2edc5e933bd0",
+      "bytes": 1743
+    },
+    {
+      "path": "Ethereal/Tests/Software checks.md",
+      "sha256": "098ff302159d4a9069a8d7f940d86bf9e29b1d0054daa812c3ce3729295f1163",
+      "bytes": 1075
+    }
+  ]
+}

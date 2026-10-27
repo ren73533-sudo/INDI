@@ -4,11 +4,13 @@ This is a historical **price-reaction study**, not a strategy or profitability b
 
 ## Status
 
-No real-market study has been run yet: no historical NQ dataset is available in the cloud workspace. The checked free-data endpoint was denied by the network proxy. Synthetic software checks do not establish reversal performance.
+No real-market Ethereal study has been run yet. A public third-party NQ 1m archive has now been downloaded and validated in the research workspace: 83,919 rows from 2026-01-20 through 2026-04-15, including 58 complete overnight/NY RTH dates. Provider, contract-methodology limits and hashes are recorded in the [Obsidian research notes](../research/obsidian/Ethereal/Data/NQ%202026%20provenance.md). Raw market files are not committed here.
+
+**The CLI below studies the original full-display `nq_key_levels.pine`, not Ethereal v1.4.** Adapt its replay before using it for Ethereal's resting boxes, mandatory in-band Fib, midnight anchoring, frozen sides, grade history and display policy. Do not label an unchanged CLI report as an Ethereal result. The [research protocol](../research/obsidian/Ethereal/Protocol.md) defines that pending work and the reserved validation dates. Synthetic software checks do not establish reversal performance.
 
 ## Data required
 
-Export **NQ1! standard 1-minute OHLCV** from TradingView, with columns:
+For an exact comparison to the trader's chart, export **NQ1! standard 1-minute OHLCV** from TradingView, with columns:
 
 ```csv
 time,open,high,low,close,volume
