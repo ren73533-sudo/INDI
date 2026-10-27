@@ -1,7 +1,7 @@
 ---
 project: Ethereal
 type: session-progress
-status: running
+status: calibration-complete-validation-pending
 created: 2026-10-27
 ---
 
@@ -16,3 +16,6 @@ created: 2026-10-27
 - 2026-10-27T18:39:13.781Z: Resumed after usage interruption. Replay, reaction and trade scorer tests pass. Trade simulation now correctly counts known stop-only entry-minute losses.
 - 2026-10-27T18:39:13.781Z: Initial two-date pilots complete: Range 14.12 seconds / 657.9 MiB peak RSS; Midnight 15.72 seconds / 677.4 MiB. Both entered zero trades, so no trade win rate exists yet. Range had one reaction event / one unfilled midpoint attempt; Midnight had none. CSV export quoting defect found by independent audit and corrected before publication.
 - 2026-10-27T18:39:13.781Z: Extended scope frozen: 37 calibration dates, unchanged 5m construction, Range and Midnight separately, continuous source prefix through March 17. Twenty validation dates remain unreplayed.
+
+- 2026-10-27T18:50:45.872439+00:00: Both clean extended runs completed: 55,439 bars each, 37 complete scored dates, 14,430 ready RTH minutes each. Range: 42 entries / 40 resolved / 2 ambiguous; TP130 5/40; +199.75 gross resolved points. Midnight: 33 / 32 / 1; TP130 2/32; -173.75 gross resolved points.
+- 2026-10-27T18:50:45.872439+00:00: Second read-only artifact audit verified hashes, slice, standard CSV parsing, SL/BE/TP, session timing, no overlap and untouched holdout. Full journals and machine-readable evidence prepared for Obsidian. First baseline calibration complete; retuning/timeframe ranking/validation pending. No background process remains.

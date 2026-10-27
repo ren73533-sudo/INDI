@@ -1,0 +1,3430 @@
+{
+  "status": "complete",
+  "mode": "midnight",
+  "scoreDates": [
+    "2026-01-22",
+    "2026-01-23",
+    "2026-01-26",
+    "2026-01-27",
+    "2026-01-28",
+    "2026-01-29",
+    "2026-01-30",
+    "2026-02-02",
+    "2026-02-03",
+    "2026-02-04",
+    "2026-02-06",
+    "2026-02-09",
+    "2026-02-10",
+    "2026-02-11",
+    "2026-02-12",
+    "2026-02-13",
+    "2026-02-17",
+    "2026-02-18",
+    "2026-02-19",
+    "2026-02-20",
+    "2026-02-23",
+    "2026-02-24",
+    "2026-02-25",
+    "2026-02-26",
+    "2026-02-27",
+    "2026-03-02",
+    "2026-03-03",
+    "2026-03-04",
+    "2026-03-05",
+    "2026-03-06",
+    "2026-03-09",
+    "2026-03-10",
+    "2026-03-11",
+    "2026-03-12",
+    "2026-03-13",
+    "2026-03-16",
+    "2026-03-17"
+  ],
+  "endExclusiveUtc": "2026-03-18T00:00:00.000Z",
+  "dataSha256": "1c8e870334e2aec4eb0f1d14020b44ec22c2094ececac3d28b711b25ab9eb069",
+  "sliceSha256": "b00ff2307fcb356a68259c2b84a3e6fda5beb87c806fd7d90ef78d7773323e3f",
+  "sliceHashEncoding": "JSON.stringify(parsed chronological bars)",
+  "sourceSha256": "1304c756d9b725701181c3f3dd8722387157b47d82fe7f3817cf9e5d482f2709",
+  "toolHashes": {
+    "ethereal-replay.mjs": "b8446c6105db641192ef0a92cc67ddb0a5d11d8bfddb8f81c17d80c3ee134734",
+    "ethereal-study.mjs": "6b7eb0b4d625c3fc8c6a4c1855164c51d63a2dfc5078ac1b810452bb2a398870",
+    "ethereal-trades.mjs": "a799cdd8f605ce7f9ed1fc1d9948c33d5e5094df5e4ad43e7f32dd7efb651cbf",
+    "run-ethereal-session.mjs": "ee681bb4259a932cd35ea6efba39ede7b21bc33a358d75c55a67b9167759ccc7"
+  },
+  "continuousInitialization": true,
+  "firstInputUtc": "2026-01-20T15:56:00.000Z",
+  "lastInputUtc": "2026-03-17T23:59:00.000Z",
+  "bars": 55439,
+  "holdoutReplayed": false,
+  "startedUtc": "2026-10-27T18:40:55.091Z",
+  "history": {
+    "requestedBars": 100000,
+    "effectiveBars": 100000,
+    "policy": "include every supplied historical candle; expand the requested study history explicitly when needed",
+    "overridden": false
+  },
+  "completedUtc": "2026-10-27T18:45:37.096Z",
+  "runtime": {
+    "replaySeconds": 280.43155005700004,
+    "totalSeconds": 281.99568028199997,
+    "peakRssMiB": 5136.453125,
+    "runtime": "PineTS 0.11.1; third-party runtime, not TradingView"
+  },
+  "coverage": {
+    "bars": 55439,
+    "availableFrames": 55438,
+    "firstInputUtc": "2026-01-20T15:56:00.000Z",
+    "lastInputUtc": "2026-03-17T23:59:00.000Z",
+    "firstAvailableUtc": "2026-01-20T15:57:00.000Z"
+  },
+  "identity": {
+    "ticker": "PUBLIC_TOPSTEPX:NQ",
+    "instrument": "NQ futures, public third-party OHLCV archive",
+    "declaredProvider": "TopstepX / ProjectX (source repository claim)",
+    "tradingViewNQ1Equivalent": "unverified",
+    "contractAndRollover": "per-bar contracts, stitching and back-adjustment unverified",
+    "timezone": "UTC timestamps; America/Chicago instrument metadata"
+  },
+  "timing": "frames[i] is pre-contact state at bars[i].openTime; snapshot excludes bars[i]",
+  "effectiveInputs": {
+    "Confluence tolerance (points)": 15,
+    "Invalidation distance (points)": 15,
+    "Also invalidate VWAP / profile until the next reset": true,
+    "Engine history (1-minute candles)": 100000,
+    "Maximum displayed active zones": 8,
+    "Zone height (points)": 5,
+    "Box padding per side (points)": 0.5,
+    "Right projection (minutes)": 240,
+    "Invalidated zone history (calendar days)": 2,
+    "Maximum retained zones": 150,
+    "Standard alignment color (green)": "#27AE60FF",
+    "Full qualification color (yellow)": "#F1C40FFF",
+    "Fill transparency (0 = opaque)": 78,
+    "Border width": 1,
+    "Yellow RB reference timeframe": "5",
+    "Yellow requires a VAH / VAL reversal": true,
+    "Reversal memory (minutes)": 15,
+    "VAH / VAL touch tolerance (points)": 1,
+    "Reversal candle must close in the reversal direction": true,
+    "Include Fib STDV": true,
+    "Construction timeframe": "5",
+    "Fixed UTC range window": "0000-0730",
+    "Arm ±3 / ±3.5 / ±4 expansion": "Both sides",
+    "Fib retention": "Previous session",
+    "Include VWAP ±2 / ±3": true,
+    "Anchor": "Futures CME 18:00 New York",
+    "Custom UTC hour": 22,
+    "Custom UTC minute": 0,
+    "RTH: accumulate only 09:30–16:00 New York": true,
+    "Band warmup (minutes)": 5,
+    "Include VAH / VAL": true,
+    "Profile row size (ticks)": 20,
+    "Value area (%)": 70,
+    "Maximum profile rows": 600,
+    "Profile warmup (minutes after UTC midnight)": 15,
+    "Include RBs": true,
+    "5 min": true,
+    "10 min": true,
+    "15 min": true,
+    "Wick ≥ N × body": 2,
+    "Wick ≥ % of candle range": 60,
+    "Prior move: lookback candles": 2,
+    "Confirmation close beyond the": "Body",
+    "Maximum retained RBs": 40,
+    "RB expiration in days (0 = none)": 0,
+    "Zone sizing": "Fixed height",
+    "Nearby zone merge distance (points)": 0,
+    "Zone expiration in days (0 = until invalidation)": 0,
+    "Show invalidated / expired zones": false,
+    "RB zone placement": "Original anchor",
+    "Minimum distance beyond RB wick (points)": 0.25,
+    "Hide zones after first return": false,
+    "Show confluence text": true,
+    "Confluence text color": "#FFFFFFFF",
+    "Confluence text size": "Small",
+    "Show reversal side symbol (β / ρ)": true,
+    "Require active Fib STDV inside box": true,
+    "Fib anchoring": "Midnight open / first body swing"
+  },
+  "runtimeSourceSha256": "489c1805d45c732be944c6a8608882fd1a6a1914d9f9b6597a274f52a2d05df7",
+  "reactionConfiguration": {
+    "session": "ny",
+    "horizons": [
+      5,
+      15,
+      30
+    ],
+    "thresholdPoints": 15,
+    "minimumFibSets": 2,
+    "scoreDates": [
+      "2026-01-22",
+      "2026-01-23",
+      "2026-01-26",
+      "2026-01-27",
+      "2026-01-28",
+      "2026-01-29",
+      "2026-01-30",
+      "2026-02-02",
+      "2026-02-03",
+      "2026-02-04",
+      "2026-02-06",
+      "2026-02-09",
+      "2026-02-10",
+      "2026-02-11",
+      "2026-02-12",
+      "2026-02-13",
+      "2026-02-17",
+      "2026-02-18",
+      "2026-02-19",
+      "2026-02-20",
+      "2026-02-23",
+      "2026-02-24",
+      "2026-02-25",
+      "2026-02-26",
+      "2026-02-27",
+      "2026-03-02",
+      "2026-03-03",
+      "2026-03-04",
+      "2026-03-05",
+      "2026-03-06",
+      "2026-03-09",
+      "2026-03-10",
+      "2026-03-11",
+      "2026-03-12",
+      "2026-03-13",
+      "2026-03-16",
+      "2026-03-17"
+    ],
+    "restrictOutcomesToScoreDates": true,
+    "timing": "same-index snapshot known at contact candle open; contact candle cannot create its own tested zone",
+    "reference": "contact candle close; observation begins with the following candle",
+    "deduplication": "first overlap per stable resting-zone key across all available visible history, plus transported touchedAt evidence; no daily reset",
+    "repeatedContacts": "separate completed-minute approach candidates, not independent trades or tick-resolved visits",
+    "contactInvalidationPolicy": "retain causal reaction event and flag unsequenced on-contact invalidation; no assumed fill or trading success",
+    "benchmarkMeaning": "symmetric descriptive reaction benchmark, not approved entry/SL/TP",
+    "benchmarkOrdering": "observed open at/beyond a boundary precedes intrabar extremes; two-boundary candles opening strictly inside remain ambiguous",
+    "yellowGrade": "grade known at contact; never upgrade past green events with future information"
+  },
+  "reactionSummary": {
+    "5": {
+      "totalEvents": 74,
+      "completeEvents": 74,
+      "incompleteEvents": 0,
+      "meanFavorableExcursion": 27.425675675675677,
+      "medianFavorableExcursion": 14,
+      "meanAdverseExcursion": 28.43918918918919,
+      "medianAdverseExcursion": 18,
+      "meanDirectionalCloseChange": 3.108108108108108,
+      "benchmarks": {
+        "favorable-first": 29,
+        "adverse-first": 34,
+        "ambiguous": 1,
+        "neither": 10
+      },
+      "resolvedBenchmarkEvents": 63,
+      "favorableFirstShareResolved": 0.4603174603174603,
+      "favorableFirstShareAllComplete": 0.3918918918918919,
+      "adverseFirstShareAllComplete": 0.4594594594594595,
+      "ambiguousShareAllComplete": 0.013513513513513514,
+      "neitherShareAllComplete": 0.13513513513513514,
+      "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+    },
+    "15": {
+      "totalEvents": 74,
+      "completeEvents": 74,
+      "incompleteEvents": 0,
+      "meanFavorableExcursion": 50.90878378378378,
+      "medianFavorableExcursion": 28.375,
+      "meanAdverseExcursion": 45.570945945945944,
+      "medianAdverseExcursion": 27.75,
+      "meanDirectionalCloseChange": 4.125,
+      "benchmarks": {
+        "favorable-first": 36,
+        "adverse-first": 37,
+        "ambiguous": 1,
+        "neither": 0
+      },
+      "resolvedBenchmarkEvents": 73,
+      "favorableFirstShareResolved": 0.4931506849315068,
+      "favorableFirstShareAllComplete": 0.4864864864864865,
+      "adverseFirstShareAllComplete": 0.5,
+      "ambiguousShareAllComplete": 0.013513513513513514,
+      "neitherShareAllComplete": 0,
+      "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+    },
+    "30": {
+      "totalEvents": 74,
+      "completeEvents": 74,
+      "incompleteEvents": 0,
+      "meanFavorableExcursion": 65.88513513513513,
+      "medianFavorableExcursion": 38.5,
+      "meanAdverseExcursion": 61.932432432432435,
+      "medianAdverseExcursion": 32.875,
+      "meanDirectionalCloseChange": -0.8108108108108109,
+      "benchmarks": {
+        "favorable-first": 36,
+        "adverse-first": 37,
+        "ambiguous": 1,
+        "neither": 0
+      },
+      "resolvedBenchmarkEvents": 73,
+      "favorableFirstShareResolved": 0.4931506849315068,
+      "favorableFirstShareAllComplete": 0.4864864864864865,
+      "adverseFirstShareAllComplete": 0.5,
+      "ambiguousShareAllComplete": 0.013513513513513514,
+      "neitherShareAllComplete": 0,
+      "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+    }
+  },
+  "reactionGroups": {
+    "byGrade": {
+      "green": {
+        "events": 74,
+        "summaries": {
+          "5": {
+            "totalEvents": 74,
+            "completeEvents": 74,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 27.425675675675677,
+            "medianFavorableExcursion": 14,
+            "meanAdverseExcursion": 28.43918918918919,
+            "medianAdverseExcursion": 18,
+            "meanDirectionalCloseChange": 3.108108108108108,
+            "benchmarks": {
+              "favorable-first": 29,
+              "adverse-first": 34,
+              "ambiguous": 1,
+              "neither": 10
+            },
+            "resolvedBenchmarkEvents": 63,
+            "favorableFirstShareResolved": 0.4603174603174603,
+            "favorableFirstShareAllComplete": 0.3918918918918919,
+            "adverseFirstShareAllComplete": 0.4594594594594595,
+            "ambiguousShareAllComplete": 0.013513513513513514,
+            "neitherShareAllComplete": 0.13513513513513514,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "15": {
+            "totalEvents": 74,
+            "completeEvents": 74,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 50.90878378378378,
+            "medianFavorableExcursion": 28.375,
+            "meanAdverseExcursion": 45.570945945945944,
+            "medianAdverseExcursion": 27.75,
+            "meanDirectionalCloseChange": 4.125,
+            "benchmarks": {
+              "favorable-first": 36,
+              "adverse-first": 37,
+              "ambiguous": 1,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 73,
+            "favorableFirstShareResolved": 0.4931506849315068,
+            "favorableFirstShareAllComplete": 0.4864864864864865,
+            "adverseFirstShareAllComplete": 0.5,
+            "ambiguousShareAllComplete": 0.013513513513513514,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "30": {
+            "totalEvents": 74,
+            "completeEvents": 74,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 65.88513513513513,
+            "medianFavorableExcursion": 38.5,
+            "meanAdverseExcursion": 61.932432432432435,
+            "medianAdverseExcursion": 32.875,
+            "meanDirectionalCloseChange": -0.8108108108108109,
+            "benchmarks": {
+              "favorable-first": 36,
+              "adverse-first": 37,
+              "ambiguous": 1,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 73,
+            "favorableFirstShareResolved": 0.4931506849315068,
+            "favorableFirstShareAllComplete": 0.4864864864864865,
+            "adverseFirstShareAllComplete": 0.5,
+            "ambiguousShareAllComplete": 0.013513513513513514,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          }
+        }
+      }
+    },
+    "bySide": {
+      "resistance": {
+        "events": 51,
+        "summaries": {
+          "5": {
+            "totalEvents": 51,
+            "completeEvents": 51,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 27.602941176470587,
+            "medianFavorableExcursion": 16.5,
+            "meanAdverseExcursion": 20.284313725490197,
+            "medianAdverseExcursion": 13.5,
+            "meanDirectionalCloseChange": 9.117647058823529,
+            "benchmarks": {
+              "favorable-first": 21,
+              "adverse-first": 20,
+              "ambiguous": 1,
+              "neither": 9
+            },
+            "resolvedBenchmarkEvents": 41,
+            "favorableFirstShareResolved": 0.5121951219512195,
+            "favorableFirstShareAllComplete": 0.4117647058823529,
+            "adverseFirstShareAllComplete": 0.39215686274509803,
+            "ambiguousShareAllComplete": 0.0196078431372549,
+            "neitherShareAllComplete": 0.17647058823529413,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "15": {
+            "totalEvents": 51,
+            "completeEvents": 51,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 46.509803921568626,
+            "medianFavorableExcursion": 36.5,
+            "meanAdverseExcursion": 35.299019607843135,
+            "medianAdverseExcursion": 23.75,
+            "meanDirectionalCloseChange": 7.980392156862745,
+            "benchmarks": {
+              "favorable-first": 27,
+              "adverse-first": 23,
+              "ambiguous": 1,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 50,
+            "favorableFirstShareResolved": 0.54,
+            "favorableFirstShareAllComplete": 0.5294117647058824,
+            "adverseFirstShareAllComplete": 0.45098039215686275,
+            "ambiguousShareAllComplete": 0.0196078431372549,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "30": {
+            "totalEvents": 51,
+            "completeEvents": 51,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 64.15196078431373,
+            "medianFavorableExcursion": 42.5,
+            "meanAdverseExcursion": 41.9264705882353,
+            "medianAdverseExcursion": 31.25,
+            "meanDirectionalCloseChange": 19.779411764705884,
+            "benchmarks": {
+              "favorable-first": 27,
+              "adverse-first": 23,
+              "ambiguous": 1,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 50,
+            "favorableFirstShareResolved": 0.54,
+            "favorableFirstShareAllComplete": 0.5294117647058824,
+            "adverseFirstShareAllComplete": 0.45098039215686275,
+            "ambiguousShareAllComplete": 0.0196078431372549,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          }
+        }
+      },
+      "support": {
+        "events": 23,
+        "summaries": {
+          "5": {
+            "totalEvents": 23,
+            "completeEvents": 23,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 27.032608695652176,
+            "medianFavorableExcursion": 7.25,
+            "meanAdverseExcursion": 46.52173913043478,
+            "medianAdverseExcursion": 31.75,
+            "meanDirectionalCloseChange": -10.217391304347826,
+            "benchmarks": {
+              "favorable-first": 8,
+              "adverse-first": 14,
+              "ambiguous": 0,
+              "neither": 1
+            },
+            "resolvedBenchmarkEvents": 22,
+            "favorableFirstShareResolved": 0.36363636363636365,
+            "favorableFirstShareAllComplete": 0.34782608695652173,
+            "adverseFirstShareAllComplete": 0.6086956521739131,
+            "ambiguousShareAllComplete": 0,
+            "neitherShareAllComplete": 0.043478260869565216,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "15": {
+            "totalEvents": 23,
+            "completeEvents": 23,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 60.66304347826087,
+            "medianFavorableExcursion": 17,
+            "meanAdverseExcursion": 68.34782608695652,
+            "medianAdverseExcursion": 62,
+            "meanDirectionalCloseChange": -4.423913043478261,
+            "benchmarks": {
+              "favorable-first": 9,
+              "adverse-first": 14,
+              "ambiguous": 0,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 23,
+            "favorableFirstShareResolved": 0.391304347826087,
+            "favorableFirstShareAllComplete": 0.391304347826087,
+            "adverseFirstShareAllComplete": 0.6086956521739131,
+            "ambiguousShareAllComplete": 0,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "30": {
+            "totalEvents": 23,
+            "completeEvents": 23,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 69.72826086956522,
+            "medianFavorableExcursion": 20.5,
+            "meanAdverseExcursion": 106.29347826086956,
+            "medianAdverseExcursion": 146.25,
+            "meanDirectionalCloseChange": -46.46739130434783,
+            "benchmarks": {
+              "favorable-first": 9,
+              "adverse-first": 14,
+              "ambiguous": 0,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 23,
+            "favorableFirstShareResolved": 0.391304347826087,
+            "favorableFirstShareAllComplete": 0.391304347826087,
+            "adverseFirstShareAllComplete": 0.6086956521739131,
+            "ambiguousShareAllComplete": 0,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          }
+        }
+      }
+    },
+    "byConfluence": {
+      "Fib STDV + RB": {
+        "events": 26,
+        "summaries": {
+          "5": {
+            "totalEvents": 26,
+            "completeEvents": 26,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 15.798076923076923,
+            "medianFavorableExcursion": 10.375,
+            "meanAdverseExcursion": 36.90384615384615,
+            "medianAdverseExcursion": 33.625,
+            "meanDirectionalCloseChange": -17.35576923076923,
+            "benchmarks": {
+              "favorable-first": 8,
+              "adverse-first": 16,
+              "ambiguous": 0,
+              "neither": 2
+            },
+            "resolvedBenchmarkEvents": 24,
+            "favorableFirstShareResolved": 0.3333333333333333,
+            "favorableFirstShareAllComplete": 0.3076923076923077,
+            "adverseFirstShareAllComplete": 0.6153846153846154,
+            "ambiguousShareAllComplete": 0,
+            "neitherShareAllComplete": 0.07692307692307693,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "15": {
+            "totalEvents": 26,
+            "completeEvents": 26,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 26.057692307692307,
+            "medianFavorableExcursion": 15,
+            "meanAdverseExcursion": 61.49038461538461,
+            "medianAdverseExcursion": 52.375,
+            "meanDirectionalCloseChange": -28.182692307692307,
+            "benchmarks": {
+              "favorable-first": 9,
+              "adverse-first": 17,
+              "ambiguous": 0,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 26,
+            "favorableFirstShareResolved": 0.34615384615384615,
+            "favorableFirstShareAllComplete": 0.34615384615384615,
+            "adverseFirstShareAllComplete": 0.6538461538461539,
+            "ambiguousShareAllComplete": 0,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "30": {
+            "totalEvents": 26,
+            "completeEvents": 26,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 48.45192307692308,
+            "medianFavorableExcursion": 39.25,
+            "meanAdverseExcursion": 76.5673076923077,
+            "medianAdverseExcursion": 56.875,
+            "meanDirectionalCloseChange": -14.35576923076923,
+            "benchmarks": {
+              "favorable-first": 9,
+              "adverse-first": 17,
+              "ambiguous": 0,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 26,
+            "favorableFirstShareResolved": 0.34615384615384615,
+            "favorableFirstShareAllComplete": 0.34615384615384615,
+            "adverseFirstShareAllComplete": 0.6538461538461539,
+            "ambiguousShareAllComplete": 0,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          }
+        }
+      },
+      "Fib STDV + VAH/VAL + RB": {
+        "events": 2,
+        "summaries": {
+          "5": {
+            "totalEvents": 2,
+            "completeEvents": 2,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 17.375,
+            "medianFavorableExcursion": 17.375,
+            "meanAdverseExcursion": 57,
+            "medianAdverseExcursion": 57,
+            "meanDirectionalCloseChange": -23.875,
+            "benchmarks": {
+              "favorable-first": 1,
+              "adverse-first": 1,
+              "ambiguous": 0,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 2,
+            "favorableFirstShareResolved": 0.5,
+            "favorableFirstShareAllComplete": 0.5,
+            "adverseFirstShareAllComplete": 0.5,
+            "ambiguousShareAllComplete": 0,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "15": {
+            "totalEvents": 2,
+            "completeEvents": 2,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 20.125,
+            "medianFavorableExcursion": 20.125,
+            "meanAdverseExcursion": 83.25,
+            "medianAdverseExcursion": 83.25,
+            "meanDirectionalCloseChange": -79.25,
+            "benchmarks": {
+              "favorable-first": 1,
+              "adverse-first": 1,
+              "ambiguous": 0,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 2,
+            "favorableFirstShareResolved": 0.5,
+            "favorableFirstShareAllComplete": 0.5,
+            "adverseFirstShareAllComplete": 0.5,
+            "ambiguousShareAllComplete": 0,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "30": {
+            "totalEvents": 2,
+            "completeEvents": 2,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 20.125,
+            "medianFavorableExcursion": 20.125,
+            "meanAdverseExcursion": 85.875,
+            "medianAdverseExcursion": 85.875,
+            "meanDirectionalCloseChange": -59,
+            "benchmarks": {
+              "favorable-first": 1,
+              "adverse-first": 1,
+              "ambiguous": 0,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 2,
+            "favorableFirstShareResolved": 0.5,
+            "favorableFirstShareAllComplete": 0.5,
+            "adverseFirstShareAllComplete": 0.5,
+            "ambiguousShareAllComplete": 0,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          }
+        }
+      },
+      "Fib STDV + VWAP": {
+        "events": 37,
+        "summaries": {
+          "5": {
+            "totalEvents": 37,
+            "completeEvents": 37,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 34.060810810810814,
+            "medianFavorableExcursion": 18,
+            "meanAdverseExcursion": 18.864864864864863,
+            "medianAdverseExcursion": 13.75,
+            "meanDirectionalCloseChange": 18.216216216216218,
+            "benchmarks": {
+              "favorable-first": 16,
+              "adverse-first": 12,
+              "ambiguous": 1,
+              "neither": 8
+            },
+            "resolvedBenchmarkEvents": 28,
+            "favorableFirstShareResolved": 0.5714285714285714,
+            "favorableFirstShareAllComplete": 0.43243243243243246,
+            "adverseFirstShareAllComplete": 0.32432432432432434,
+            "ambiguousShareAllComplete": 0.02702702702702703,
+            "neitherShareAllComplete": 0.21621621621621623,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "15": {
+            "totalEvents": 37,
+            "completeEvents": 37,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 72.06756756756756,
+            "medianFavorableExcursion": 47.25,
+            "meanAdverseExcursion": 30.12162162162162,
+            "medianAdverseExcursion": 20.25,
+            "meanDirectionalCloseChange": 38.13513513513514,
+            "benchmarks": {
+              "favorable-first": 22,
+              "adverse-first": 14,
+              "ambiguous": 1,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 36,
+            "favorableFirstShareResolved": 0.6111111111111112,
+            "favorableFirstShareAllComplete": 0.5945945945945946,
+            "adverseFirstShareAllComplete": 0.3783783783783784,
+            "ambiguousShareAllComplete": 0.02702702702702703,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "30": {
+            "totalEvents": 37,
+            "completeEvents": 37,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 85.64864864864865,
+            "medianFavorableExcursion": 71.5,
+            "meanAdverseExcursion": 51.67567567567568,
+            "medianAdverseExcursion": 27.75,
+            "meanDirectionalCloseChange": 16.06756756756757,
+            "benchmarks": {
+              "favorable-first": 22,
+              "adverse-first": 14,
+              "ambiguous": 1,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 36,
+            "favorableFirstShareResolved": 0.6111111111111112,
+            "favorableFirstShareAllComplete": 0.5945945945945946,
+            "adverseFirstShareAllComplete": 0.3783783783783784,
+            "ambiguousShareAllComplete": 0.02702702702702703,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          }
+        }
+      },
+      "Fib STDV + VWAP + RB": {
+        "events": 9,
+        "summaries": {
+          "5": {
+            "totalEvents": 9,
+            "completeEvents": 9,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 35.97222222222222,
+            "medianFavorableExcursion": 30,
+            "meanAdverseExcursion": 37,
+            "medianAdverseExcursion": 18.25,
+            "meanDirectionalCloseChange": 6.111111111111111,
+            "benchmarks": {
+              "favorable-first": 4,
+              "adverse-first": 5,
+              "ambiguous": 0,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 9,
+            "favorableFirstShareResolved": 0.4444444444444444,
+            "favorableFirstShareAllComplete": 0.4444444444444444,
+            "adverseFirstShareAllComplete": 0.5555555555555556,
+            "ambiguousShareAllComplete": 0,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "15": {
+            "totalEvents": 9,
+            "completeEvents": 9,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 42.55555555555556,
+            "medianFavorableExcursion": 36.5,
+            "meanAdverseExcursion": 54.72222222222222,
+            "medianAdverseExcursion": 20.25,
+            "meanDirectionalCloseChange": -23.833333333333332,
+            "benchmarks": {
+              "favorable-first": 4,
+              "adverse-first": 5,
+              "ambiguous": 0,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 9,
+            "favorableFirstShareResolved": 0.4444444444444444,
+            "favorableFirstShareAllComplete": 0.4444444444444444,
+            "adverseFirstShareAllComplete": 0.5555555555555556,
+            "ambiguousShareAllComplete": 0,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "30": {
+            "totalEvents": 9,
+            "completeEvents": 9,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 45.166666666666664,
+            "medianFavorableExcursion": 36.5,
+            "meanAdverseExcursion": 56.5,
+            "medianAdverseExcursion": 25.5,
+            "meanDirectionalCloseChange": -18.13888888888889,
+            "benchmarks": {
+              "favorable-first": 4,
+              "adverse-first": 5,
+              "ambiguous": 0,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 9,
+            "favorableFirstShareResolved": 0.4444444444444444,
+            "favorableFirstShareAllComplete": 0.4444444444444444,
+            "adverseFirstShareAllComplete": 0.5555555555555556,
+            "ambiguousShareAllComplete": 0,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          }
+        }
+      }
+    },
+    "bySession": {
+      "ny": {
+        "events": 74,
+        "summaries": {
+          "5": {
+            "totalEvents": 74,
+            "completeEvents": 74,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 27.425675675675677,
+            "medianFavorableExcursion": 14,
+            "meanAdverseExcursion": 28.43918918918919,
+            "medianAdverseExcursion": 18,
+            "meanDirectionalCloseChange": 3.108108108108108,
+            "benchmarks": {
+              "favorable-first": 29,
+              "adverse-first": 34,
+              "ambiguous": 1,
+              "neither": 10
+            },
+            "resolvedBenchmarkEvents": 63,
+            "favorableFirstShareResolved": 0.4603174603174603,
+            "favorableFirstShareAllComplete": 0.3918918918918919,
+            "adverseFirstShareAllComplete": 0.4594594594594595,
+            "ambiguousShareAllComplete": 0.013513513513513514,
+            "neitherShareAllComplete": 0.13513513513513514,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "15": {
+            "totalEvents": 74,
+            "completeEvents": 74,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 50.90878378378378,
+            "medianFavorableExcursion": 28.375,
+            "meanAdverseExcursion": 45.570945945945944,
+            "medianAdverseExcursion": 27.75,
+            "meanDirectionalCloseChange": 4.125,
+            "benchmarks": {
+              "favorable-first": 36,
+              "adverse-first": 37,
+              "ambiguous": 1,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 73,
+            "favorableFirstShareResolved": 0.4931506849315068,
+            "favorableFirstShareAllComplete": 0.4864864864864865,
+            "adverseFirstShareAllComplete": 0.5,
+            "ambiguousShareAllComplete": 0.013513513513513514,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "30": {
+            "totalEvents": 74,
+            "completeEvents": 74,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 65.88513513513513,
+            "medianFavorableExcursion": 38.5,
+            "meanAdverseExcursion": 61.932432432432435,
+            "medianAdverseExcursion": 32.875,
+            "meanDirectionalCloseChange": -0.8108108108108109,
+            "benchmarks": {
+              "favorable-first": 36,
+              "adverse-first": 37,
+              "ambiguous": 1,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 73,
+            "favorableFirstShareResolved": 0.4931506849315068,
+            "favorableFirstShareAllComplete": 0.4864864864864865,
+            "adverseFirstShareAllComplete": 0.5,
+            "ambiguousShareAllComplete": 0.013513513513513514,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          }
+        }
+      }
+    },
+    "byContactInvalidation": {
+      "threshold-not-reached-on-contact": {
+        "events": 63,
+        "summaries": {
+          "5": {
+            "totalEvents": 63,
+            "completeEvents": 63,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 26.841269841269842,
+            "medianFavorableExcursion": 16.5,
+            "meanAdverseExcursion": 27.78968253968254,
+            "medianAdverseExcursion": 17.75,
+            "meanDirectionalCloseChange": 2.007936507936508,
+            "benchmarks": {
+              "favorable-first": 25,
+              "adverse-first": 29,
+              "ambiguous": 1,
+              "neither": 8
+            },
+            "resolvedBenchmarkEvents": 54,
+            "favorableFirstShareResolved": 0.46296296296296297,
+            "favorableFirstShareAllComplete": 0.3968253968253968,
+            "adverseFirstShareAllComplete": 0.4603174603174603,
+            "ambiguousShareAllComplete": 0.015873015873015872,
+            "neitherShareAllComplete": 0.12698412698412698,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "15": {
+            "totalEvents": 63,
+            "completeEvents": 63,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 45.55555555555556,
+            "medianFavorableExcursion": 23.25,
+            "meanAdverseExcursion": 44.492063492063494,
+            "medianAdverseExcursion": 27.75,
+            "meanDirectionalCloseChange": -2.0436507936507935,
+            "benchmarks": {
+              "favorable-first": 31,
+              "adverse-first": 31,
+              "ambiguous": 1,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 62,
+            "favorableFirstShareResolved": 0.5,
+            "favorableFirstShareAllComplete": 0.49206349206349204,
+            "adverseFirstShareAllComplete": 0.49206349206349204,
+            "ambiguousShareAllComplete": 0.015873015873015872,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "30": {
+            "totalEvents": 63,
+            "completeEvents": 63,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 60.46031746031746,
+            "medianFavorableExcursion": 36.5,
+            "meanAdverseExcursion": 61.214285714285715,
+            "medianAdverseExcursion": 33,
+            "meanDirectionalCloseChange": -2.9523809523809526,
+            "benchmarks": {
+              "favorable-first": 31,
+              "adverse-first": 31,
+              "ambiguous": 1,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 62,
+            "favorableFirstShareResolved": 0.5,
+            "favorableFirstShareAllComplete": 0.49206349206349204,
+            "adverseFirstShareAllComplete": 0.49206349206349204,
+            "ambiguousShareAllComplete": 0.015873015873015872,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          }
+        }
+      },
+      "threshold-reached-on-contact": {
+        "events": 11,
+        "summaries": {
+          "5": {
+            "totalEvents": 11,
+            "completeEvents": 11,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 30.772727272727273,
+            "medianFavorableExcursion": 13.25,
+            "meanAdverseExcursion": 32.15909090909091,
+            "medianAdverseExcursion": 27.75,
+            "meanDirectionalCloseChange": 9.409090909090908,
+            "benchmarks": {
+              "favorable-first": 4,
+              "adverse-first": 5,
+              "ambiguous": 0,
+              "neither": 2
+            },
+            "resolvedBenchmarkEvents": 9,
+            "favorableFirstShareResolved": 0.4444444444444444,
+            "favorableFirstShareAllComplete": 0.36363636363636365,
+            "adverseFirstShareAllComplete": 0.45454545454545453,
+            "ambiguousShareAllComplete": 0,
+            "neitherShareAllComplete": 0.18181818181818182,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "15": {
+            "totalEvents": 11,
+            "completeEvents": 11,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 81.56818181818181,
+            "medianFavorableExcursion": 49.5,
+            "meanAdverseExcursion": 51.75,
+            "medianAdverseExcursion": 32.75,
+            "meanDirectionalCloseChange": 39.45454545454545,
+            "benchmarks": {
+              "favorable-first": 5,
+              "adverse-first": 6,
+              "ambiguous": 0,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 11,
+            "favorableFirstShareResolved": 0.45454545454545453,
+            "favorableFirstShareAllComplete": 0.45454545454545453,
+            "adverseFirstShareAllComplete": 0.5454545454545454,
+            "ambiguousShareAllComplete": 0,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "30": {
+            "totalEvents": 11,
+            "completeEvents": 11,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 96.95454545454545,
+            "medianFavorableExcursion": 78.5,
+            "meanAdverseExcursion": 66.04545454545455,
+            "medianAdverseExcursion": 32.75,
+            "meanDirectionalCloseChange": 11.454545454545455,
+            "benchmarks": {
+              "favorable-first": 5,
+              "adverse-first": 6,
+              "ambiguous": 0,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 11,
+            "favorableFirstShareResolved": 0.45454545454545453,
+            "favorableFirstShareAllComplete": 0.45454545454545453,
+            "adverseFirstShareAllComplete": 0.5454545454545454,
+            "ambiguousShareAllComplete": 0,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          }
+        }
+      }
+    },
+    "byOpeningBeyondBand": {
+      "open-not-beyond-adverse-edge": {
+        "events": 74,
+        "summaries": {
+          "5": {
+            "totalEvents": 74,
+            "completeEvents": 74,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 27.425675675675677,
+            "medianFavorableExcursion": 14,
+            "meanAdverseExcursion": 28.43918918918919,
+            "medianAdverseExcursion": 18,
+            "meanDirectionalCloseChange": 3.108108108108108,
+            "benchmarks": {
+              "favorable-first": 29,
+              "adverse-first": 34,
+              "ambiguous": 1,
+              "neither": 10
+            },
+            "resolvedBenchmarkEvents": 63,
+            "favorableFirstShareResolved": 0.4603174603174603,
+            "favorableFirstShareAllComplete": 0.3918918918918919,
+            "adverseFirstShareAllComplete": 0.4594594594594595,
+            "ambiguousShareAllComplete": 0.013513513513513514,
+            "neitherShareAllComplete": 0.13513513513513514,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "15": {
+            "totalEvents": 74,
+            "completeEvents": 74,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 50.90878378378378,
+            "medianFavorableExcursion": 28.375,
+            "meanAdverseExcursion": 45.570945945945944,
+            "medianAdverseExcursion": 27.75,
+            "meanDirectionalCloseChange": 4.125,
+            "benchmarks": {
+              "favorable-first": 36,
+              "adverse-first": 37,
+              "ambiguous": 1,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 73,
+            "favorableFirstShareResolved": 0.4931506849315068,
+            "favorableFirstShareAllComplete": 0.4864864864864865,
+            "adverseFirstShareAllComplete": 0.5,
+            "ambiguousShareAllComplete": 0.013513513513513514,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          },
+          "30": {
+            "totalEvents": 74,
+            "completeEvents": 74,
+            "incompleteEvents": 0,
+            "meanFavorableExcursion": 65.88513513513513,
+            "medianFavorableExcursion": 38.5,
+            "meanAdverseExcursion": 61.932432432432435,
+            "medianAdverseExcursion": 32.875,
+            "meanDirectionalCloseChange": -0.8108108108108109,
+            "benchmarks": {
+              "favorable-first": 36,
+              "adverse-first": 37,
+              "ambiguous": 1,
+              "neither": 0
+            },
+            "resolvedBenchmarkEvents": 73,
+            "favorableFirstShareResolved": 0.4931506849315068,
+            "favorableFirstShareAllComplete": 0.4864864864864865,
+            "adverseFirstShareAllComplete": 0.5,
+            "ambiguousShareAllComplete": 0.013513513513513514,
+            "neitherShareAllComplete": 0,
+            "rateMeaning": "descriptive post-close reaction benchmark shares, not trade win rate; overlapping events are not independent"
+          }
+        }
+      }
+    }
+  },
+  "reactionExclusions": {
+    "outsideScoringDatesBars": 4919,
+    "outsideRequestedSessionBars": 36090,
+    "unavailableSourceBars": 0,
+    "insufficientFibSetsBars": 0,
+    "noConsecutivePriorMinuteBars": 0,
+    "invalidatedZoneStates": 0,
+    "outsideVisibleProjectionZoneStates": 68,
+    "futureFormationZoneStates": 0,
+    "priorTouchesKnownFromEngine": 4,
+    "firstTouchOutsideScoringDates": 33,
+    "firstTouchOutsideRequestedSession": 253,
+    "firstTouchUnavailableWarmupOrPrior": 0,
+    "firstTouchAlreadyInside": 18,
+    "firstTouchWrongSide": 5,
+    "repeatTouchingBars": 3979,
+    "overlapContactCopies": 0,
+    "repeatedApproachCandidates": 191
+  },
+  "tradeConfiguration": {
+    "session": "ny",
+    "stopPoints": 20,
+    "breakEvenPoints": 60,
+    "targetPoints": 130,
+    "tickSize": 0.25,
+    "minimumFibSets": 2,
+    "scoreDates": [
+      "2026-01-22",
+      "2026-01-23",
+      "2026-01-26",
+      "2026-01-27",
+      "2026-01-28",
+      "2026-01-29",
+      "2026-01-30",
+      "2026-02-02",
+      "2026-02-03",
+      "2026-02-04",
+      "2026-02-06",
+      "2026-02-09",
+      "2026-02-10",
+      "2026-02-11",
+      "2026-02-12",
+      "2026-02-13",
+      "2026-02-17",
+      "2026-02-18",
+      "2026-02-19",
+      "2026-02-20",
+      "2026-02-23",
+      "2026-02-24",
+      "2026-02-25",
+      "2026-02-26",
+      "2026-02-27",
+      "2026-03-02",
+      "2026-03-03",
+      "2026-03-04",
+      "2026-03-05",
+      "2026-03-06",
+      "2026-03-09",
+      "2026-03-10",
+      "2026-03-11",
+      "2026-03-12",
+      "2026-03-13",
+      "2026-03-16",
+      "2026-03-17"
+    ],
+    "entry": "one pre-bar nearest correct-side fresh visible zone; midpoint rounded buy down/sell up to NQ tick; opening-price improvement modeled",
+    "priority": "distance from previous close, yellow on ties, older formation, stable key",
+    "firstTouch": "first band-contact candle only; unfilled midpoint consumes the first attempt; no retest trades",
+    "side": "frozen beta support/buy or rho resistance/sell",
+    "positionLimit": "one position; no same-minute re-entry after an exit",
+    "ambiguousPolicy": "mark unresolved and block new entries for rest of that NY session",
+    "sessionExit": "flatten at final NY RTH candle close; positive sub-target exits remain distinct from 130-point TP wins",
+    "stopExecution": "stop crossing fills at level; observed opening gaps through stop fill at opening price and can exceed planned risk",
+    "costs": "unspecified; no fees/slippage invented; results are gross points only",
+    "excursions": "confirmed lower bounds only; unsequenced entry/exit-bar extrema are not claimed as exact held-trade MFE/MAE"
+  },
+  "tradeSummary": {
+    "enteredTrades": 33,
+    "resolvedTrades": 32,
+    "ambiguousTrades": 1,
+    "incompleteTrades": 0,
+    "targetWins": 2,
+    "initialStopExits": 27,
+    "breakEvenStopExits": 2,
+    "positiveSessionExitsBelowTarget": 1,
+    "negativeSessionExits": 0,
+    "flatSessionExits": 0,
+    "targetWinRateResolved": {
+      "numerator": 2,
+      "denominator": 32,
+      "rate": 0.0625
+    },
+    "positiveExitRateResolved": {
+      "numerator": 3,
+      "denominator": 32,
+      "rate": 0.09375
+    },
+    "targetWinRateBoundsAllEntered": {
+      "denominator": 33,
+      "unknownOutcomes": 1,
+      "lower": 0.06060606060606061,
+      "upper": 0.09090909090909091,
+      "meaning": "extreme outcome bounds for entered trades; not confidence intervals or a complete account path"
+    },
+    "grossPointsOnResolvedTrades": -173.75,
+    "meanGrossTargetWinPoints": 130,
+    "plannedRiskExceededByGapTrades": 0,
+    "worstResolvedGrossPoints": -20,
+    "maximumConfirmedConsecutiveInitialStops": 8,
+    "maximumConfirmedConsecutiveNegativeExits": 8
+  },
+  "tradeExclusions": {
+    "unavailableFrames": 1,
+    "staleOrMissingPriorMinuteBars": 45,
+    "firstBandContacts": 361,
+    "repeatedBandContacts": 3979,
+    "previouslyTouchedInSourceContacts": 4,
+    "firstContactsOutsideScoreDates": 33,
+    "firstContactsOutsideNyRth": 253,
+    "firstContactsBeforeWarmup": 0,
+    "firstContactsWithoutContiguousPrior": 0,
+    "firstContactsWhileBusy": 15,
+    "firstContactsBlockedByAmbiguity": 3,
+    "firstContactsFromWrongSide": 0,
+    "firstContactsNotSelectedByPrebarPriority": 13,
+    "unfilledFirstContactAttempts": 11
+  },
+  "days": [
+    {
+      "date": "2026-01-22",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 14,
+      "uniqueRthKeys": 4,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-01-22T00:00:00.000Z",
+          "values": {
+            "today0": 25117.25,
+            "today1": 25143.25,
+            "publishedDay": 1768953600000
+          },
+          "absoluteLegPoints": 26
+        },
+        {
+          "observedUtc": "2026-01-22T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1768953600000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-01-22T00:25:00.000Z",
+          "values": {
+            "today0": 25553,
+            "today1": 25570.75,
+            "publishedDay": 1769040000000
+          },
+          "absoluteLegPoints": 17.75
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-01-22T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 25553,
+        "today1": 25570.75,
+        "publishedDay": 1769040000000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 4,
+        "retainedLive": 4,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 0,
+      "reactionEvents": 0
+    },
+    {
+      "date": "2026-01-23",
+      "observedMinutes": 1320,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 16,
+      "uniqueRthKeys": 4,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-01-23T00:00:00.000Z",
+          "values": {
+            "today0": 25553,
+            "today1": 25570.75,
+            "publishedDay": 1769040000000
+          },
+          "absoluteLegPoints": 17.75
+        },
+        {
+          "observedUtc": "2026-01-23T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1769040000000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-01-23T00:25:00.000Z",
+          "values": {
+            "today0": 25616.75,
+            "today1": 25632,
+            "publishedDay": 1769126400000
+          },
+          "absoluteLegPoints": 15.25
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-01-23T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 25616.75,
+        "today1": 25632,
+        "publishedDay": 1769126400000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 4,
+        "retainedLive": 4,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 0,
+      "reactionEvents": 0
+    },
+    {
+      "date": "2026-01-26",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 11,
+      "uniqueRthKeys": 8,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-01-26T00:00:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1769126400000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-01-26T00:15:00.000Z",
+          "values": {
+            "today0": 25559.75,
+            "today1": 25586.75,
+            "publishedDay": 1769385600000
+          },
+          "absoluteLegPoints": 27
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-01-26T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 25559.75,
+        "today1": 25586.75,
+        "publishedDay": 1769385600000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 8,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 0,
+      "reactionEvents": 0
+    },
+    {
+      "date": "2026-01-27",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 18,
+      "uniqueRthKeys": 8,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-01-27T00:00:00.000Z",
+          "values": {
+            "today0": 25559.75,
+            "today1": 25586.75,
+            "publishedDay": 1769385600000
+          },
+          "absoluteLegPoints": 27
+        },
+        {
+          "observedUtc": "2026-01-27T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1769385600000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-01-27T00:45:00.000Z",
+          "values": {
+            "today0": 25890.5,
+            "today1": 25898.5,
+            "publishedDay": 1769472000000
+          },
+          "absoluteLegPoints": 8
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-01-27T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 25890.5,
+        "today1": 25898.5,
+        "publishedDay": 1769472000000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 13,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 0,
+      "reactionEvents": 0
+    },
+    {
+      "date": "2026-01-28",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 20,
+      "uniqueRthKeys": 8,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-01-28T00:00:00.000Z",
+          "values": {
+            "today0": 25890.5,
+            "today1": 25898.5,
+            "publishedDay": 1769472000000
+          },
+          "absoluteLegPoints": 8
+        },
+        {
+          "observedUtc": "2026-01-28T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1769472000000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-01-28T00:25:00.000Z",
+          "values": {
+            "today0": 26138.25,
+            "today1": 26159.25,
+            "publishedDay": 1769558400000
+          },
+          "absoluteLegPoints": 21
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-01-28T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 26138.25,
+        "today1": 26159.25,
+        "publishedDay": 1769558400000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 19,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 0,
+      "reactionEvents": 0
+    },
+    {
+      "date": "2026-01-29",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 25,
+      "uniqueRthKeys": 18,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-01-29T00:00:00.000Z",
+          "values": {
+            "today0": 26138.25,
+            "today1": 26159.25,
+            "publishedDay": 1769558400000
+          },
+          "absoluteLegPoints": 21
+        },
+        {
+          "observedUtc": "2026-01-29T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1769558400000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-01-29T00:20:00.000Z",
+          "values": {
+            "today0": 26173.25,
+            "today1": 26145.5,
+            "publishedDay": 1769644800000
+          },
+          "absoluteLegPoints": 27.75
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-01-29T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 26173.25,
+        "today1": 26145.5,
+        "publishedDay": 1769644800000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 17,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 2,
+      "reactionEvents": 6
+    },
+    {
+      "date": "2026-01-30",
+      "observedMinutes": 1320,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 18,
+      "uniqueRthKeys": 12,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-01-30T00:00:00.000Z",
+          "values": {
+            "today0": 26173.25,
+            "today1": 26145.5,
+            "publishedDay": 1769644800000
+          },
+          "absoluteLegPoints": 27.75
+        },
+        {
+          "observedUtc": "2026-01-30T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1769644800000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-01-30T00:35:00.000Z",
+          "values": {
+            "today0": 25972.5,
+            "today1": 25926,
+            "publishedDay": 1769731200000
+          },
+          "absoluteLegPoints": 46.5
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-01-30T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 25972.5,
+        "today1": 25926,
+        "publishedDay": 1769731200000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 14,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 0,
+      "reactionEvents": 0
+    },
+    {
+      "date": "2026-02-02",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 22,
+      "uniqueRthKeys": 16,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-02T00:00:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1769731200000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-02T00:55:00.000Z",
+          "values": {
+            "today0": 25532.5,
+            "today1": 25616.5,
+            "publishedDay": 1769990400000
+          },
+          "absoluteLegPoints": 84
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-02T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 25532.5,
+        "today1": 25616.5,
+        "publishedDay": 1769990400000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 14,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 2,
+      "reactionEvents": 6
+    },
+    {
+      "date": "2026-02-03",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 17,
+      "uniqueRthKeys": 10,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-03T00:00:00.000Z",
+          "values": {
+            "today0": 25532.5,
+            "today1": 25616.5,
+            "publishedDay": 1769990400000
+          },
+          "absoluteLegPoints": 84
+        },
+        {
+          "observedUtc": "2026-02-03T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1769990400000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-03T00:20:00.000Z",
+          "values": {
+            "today0": 25947.75,
+            "today1": 25941,
+            "publishedDay": 1770076800000
+          },
+          "absoluteLegPoints": 6.75
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-03T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 25947.75,
+        "today1": 25941,
+        "publishedDay": 1770076800000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 10,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 0,
+      "reactionEvents": 0
+    },
+    {
+      "date": "2026-02-04",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 18,
+      "uniqueRthKeys": 10,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-04T00:00:00.000Z",
+          "values": {
+            "today0": 25947.75,
+            "today1": 25941,
+            "publishedDay": 1770076800000
+          },
+          "absoluteLegPoints": 6.75
+        },
+        {
+          "observedUtc": "2026-02-04T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1770076800000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-04T00:35:00.000Z",
+          "values": {
+            "today0": 25427.75,
+            "today1": 25407.25,
+            "publishedDay": 1770163200000
+          },
+          "absoluteLegPoints": 20.5
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-04T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 25427.75,
+        "today1": 25407.25,
+        "publishedDay": 1770163200000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 12,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 1,
+      "reactionEvents": 1
+    },
+    {
+      "date": "2026-02-06",
+      "observedMinutes": 1320,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 20,
+      "uniqueRthKeys": 13,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-06T00:00:00.000Z",
+          "values": {
+            "today0": 25067.5,
+            "today1": 25114.5,
+            "publishedDay": 1770249600000
+          },
+          "absoluteLegPoints": 47
+        },
+        {
+          "observedUtc": "2026-02-06T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1770249600000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-06T00:20:00.000Z",
+          "values": {
+            "today0": 24334.75,
+            "today1": 24267.75,
+            "publishedDay": 1770336000000
+          },
+          "absoluteLegPoints": 67
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-06T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24334.75,
+        "today1": 24267.75,
+        "publishedDay": 1770336000000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 22,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 1,
+      "reactionEvents": 3
+    },
+    {
+      "date": "2026-02-09",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 22,
+      "uniqueRthKeys": 12,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-09T00:00:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1770336000000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-09T00:15:00.000Z",
+          "values": {
+            "today0": 25275,
+            "today1": 25330.5,
+            "publishedDay": 1770595200000
+          },
+          "absoluteLegPoints": 55.5
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-09T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 25275,
+        "today1": 25330.5,
+        "publishedDay": 1770595200000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 21,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 2,
+      "reactionEvents": 3
+    },
+    {
+      "date": "2026-02-10",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 19,
+      "uniqueRthKeys": 16,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-10T00:00:00.000Z",
+          "values": {
+            "today0": 25275,
+            "today1": 25330.5,
+            "publishedDay": 1770595200000
+          },
+          "absoluteLegPoints": 55.5
+        },
+        {
+          "observedUtc": "2026-02-10T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1770595200000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-10T00:20:00.000Z",
+          "values": {
+            "today0": 25344.75,
+            "today1": 25317.75,
+            "publishedDay": 1770681600000
+          },
+          "absoluteLegPoints": 27
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-10T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 25344.75,
+        "today1": 25317.75,
+        "publishedDay": 1770681600000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 24,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 1,
+      "reactionEvents": 5
+    },
+    {
+      "date": "2026-02-11",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 25,
+      "uniqueRthKeys": 13,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-11T00:00:00.000Z",
+          "values": {
+            "today0": 25344.75,
+            "today1": 25317.75,
+            "publishedDay": 1770681600000
+          },
+          "absoluteLegPoints": 27
+        },
+        {
+          "observedUtc": "2026-02-11T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1770681600000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-11T00:50:00.000Z",
+          "values": {
+            "today0": 25273.5,
+            "today1": 25289.5,
+            "publishedDay": 1770768000000
+          },
+          "absoluteLegPoints": 16
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-11T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 25273.5,
+        "today1": 25289.5,
+        "publishedDay": 1770768000000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 19,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 0,
+      "reactionEvents": 0
+    },
+    {
+      "date": "2026-02-12",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 25,
+      "uniqueRthKeys": 19,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-12T00:00:00.000Z",
+          "values": {
+            "today0": 25273.5,
+            "today1": 25289.5,
+            "publishedDay": 1770768000000
+          },
+          "absoluteLegPoints": 16
+        },
+        {
+          "observedUtc": "2026-02-12T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1770768000000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-12T00:50:00.000Z",
+          "values": {
+            "today0": 25233.25,
+            "today1": 25270.75,
+            "publishedDay": 1770854400000
+          },
+          "absoluteLegPoints": 37.5
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-12T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 25233.25,
+        "today1": 25270.75,
+        "publishedDay": 1770854400000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 19,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 2,
+      "reactionEvents": 6
+    },
+    {
+      "date": "2026-02-13",
+      "observedMinutes": 1320,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 17,
+      "uniqueRthKeys": 14,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-13T00:00:00.000Z",
+          "values": {
+            "today0": 25233.25,
+            "today1": 25270.75,
+            "publishedDay": 1770854400000
+          },
+          "absoluteLegPoints": 37.5
+        },
+        {
+          "observedUtc": "2026-02-13T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1770854400000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-13T00:40:00.000Z",
+          "values": {
+            "today0": 24820,
+            "today1": 24778.75,
+            "publishedDay": 1770940800000
+          },
+          "absoluteLegPoints": 41.25
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-13T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24820,
+        "today1": 24778.75,
+        "publishedDay": 1770940800000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 20,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 2,
+      "reactionEvents": 3
+    },
+    {
+      "date": "2026-02-17",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 23,
+      "uniqueRthKeys": 17,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-17T00:00:00.000Z",
+          "values": {
+            "today0": 24831.75,
+            "today1": 24842,
+            "publishedDay": 1771200000000
+          },
+          "absoluteLegPoints": 10.25
+        },
+        {
+          "observedUtc": "2026-02-17T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1771200000000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-17T00:25:00.000Z",
+          "values": {
+            "today0": 24818.75,
+            "today1": 24805.5,
+            "publishedDay": 1771286400000
+          },
+          "absoluteLegPoints": 13.25
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-17T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24818.75,
+        "today1": 24805.5,
+        "publishedDay": 1771286400000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 25,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 1,
+      "reactionEvents": 6
+    },
+    {
+      "date": "2026-02-18",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 23,
+      "uniqueRthKeys": 13,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-18T00:00:00.000Z",
+          "values": {
+            "today0": 24818.75,
+            "today1": 24805.5,
+            "publishedDay": 1771286400000
+          },
+          "absoluteLegPoints": 13.25
+        },
+        {
+          "observedUtc": "2026-02-18T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1771286400000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-18T00:20:00.000Z",
+          "values": {
+            "today0": 24711.25,
+            "today1": 24748.5,
+            "publishedDay": 1771372800000
+          },
+          "absoluteLegPoints": 37.25
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-18T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24711.25,
+        "today1": 24748.5,
+        "publishedDay": 1771372800000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 24,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 1,
+      "reactionEvents": 1
+    },
+    {
+      "date": "2026-02-19",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 19,
+      "uniqueRthKeys": 13,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-19T00:00:00.000Z",
+          "values": {
+            "today0": 24711.25,
+            "today1": 24748.5,
+            "publishedDay": 1771372800000
+          },
+          "absoluteLegPoints": 37.25
+        },
+        {
+          "observedUtc": "2026-02-19T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1771372800000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-19T00:35:00.000Z",
+          "values": {
+            "today0": 24964.5,
+            "today1": 24925,
+            "publishedDay": 1771459200000
+          },
+          "absoluteLegPoints": 39.5
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-19T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24964.5,
+        "today1": 24925,
+        "publishedDay": 1771459200000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 31,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 1,
+      "reactionEvents": 1
+    },
+    {
+      "date": "2026-02-20",
+      "observedMinutes": 1320,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 28,
+      "uniqueRthKeys": 16,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-20T00:00:00.000Z",
+          "values": {
+            "today0": 24964.5,
+            "today1": 24925,
+            "publishedDay": 1771459200000
+          },
+          "absoluteLegPoints": 39.5
+        },
+        {
+          "observedUtc": "2026-02-20T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1771459200000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-20T00:30:00.000Z",
+          "values": {
+            "today0": 24878.25,
+            "today1": 24865.25,
+            "publishedDay": 1771545600000
+          },
+          "absoluteLegPoints": 13
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-20T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24878.25,
+        "today1": 24865.25,
+        "publishedDay": 1771545600000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 30,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 1,
+      "reactionEvents": 4
+    },
+    {
+      "date": "2026-02-23",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 18,
+      "uniqueRthKeys": 13,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-23T00:00:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1771545600000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-23T00:15:00.000Z",
+          "values": {
+            "today0": 24970,
+            "today1": 24931.75,
+            "publishedDay": 1771804800000
+          },
+          "absoluteLegPoints": 38.25
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-23T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24970,
+        "today1": 24931.75,
+        "publishedDay": 1771804800000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 31,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 0,
+      "reactionEvents": 0
+    },
+    {
+      "date": "2026-02-24",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 21,
+      "uniqueRthKeys": 20,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-24T00:00:00.000Z",
+          "values": {
+            "today0": 24970,
+            "today1": 24931.75,
+            "publishedDay": 1771804800000
+          },
+          "absoluteLegPoints": 38.25
+        },
+        {
+          "observedUtc": "2026-02-24T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1771804800000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-24T00:25:00.000Z",
+          "values": {
+            "today0": 24789,
+            "today1": 24814,
+            "publishedDay": 1771891200000
+          },
+          "absoluteLegPoints": 25
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-24T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24789,
+        "today1": 24814,
+        "publishedDay": 1771891200000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 34,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 4,
+      "reactionEvents": 7
+    },
+    {
+      "date": "2026-02-25",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 26,
+      "uniqueRthKeys": 11,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-25T00:00:00.000Z",
+          "values": {
+            "today0": 24789,
+            "today1": 24814,
+            "publishedDay": 1771891200000
+          },
+          "absoluteLegPoints": 25
+        },
+        {
+          "observedUtc": "2026-02-25T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1771891200000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-25T00:30:00.000Z",
+          "values": {
+            "today0": 25044.5,
+            "today1": 25041,
+            "publishedDay": 1771977600000
+          },
+          "absoluteLegPoints": 3.5
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-25T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 25044.5,
+        "today1": 25041,
+        "publishedDay": 1771977600000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 25,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 0,
+      "reactionEvents": 0
+    },
+    {
+      "date": "2026-02-26",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 20,
+      "uniqueRthKeys": 11,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-26T00:00:00.000Z",
+          "values": {
+            "today0": 25044.5,
+            "today1": 25041,
+            "publishedDay": 1771977600000
+          },
+          "absoluteLegPoints": 3.5
+        },
+        {
+          "observedUtc": "2026-02-26T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1771977600000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-26T00:30:00.000Z",
+          "values": {
+            "today0": 25315.75,
+            "today1": 25325,
+            "publishedDay": 1772064000000
+          },
+          "absoluteLegPoints": 9.25
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-26T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 25315.75,
+        "today1": 25325,
+        "publishedDay": 1772064000000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 24,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 0,
+      "reactionEvents": 0
+    },
+    {
+      "date": "2026-02-27",
+      "observedMinutes": 1320,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 21,
+      "uniqueRthKeys": 9,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-02-27T00:00:00.000Z",
+          "values": {
+            "today0": 25315.75,
+            "today1": 25325,
+            "publishedDay": 1772064000000
+          },
+          "absoluteLegPoints": 9.25
+        },
+        {
+          "observedUtc": "2026-02-27T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1772064000000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-02-27T00:25:00.000Z",
+          "values": {
+            "today0": 24995,
+            "today1": 25021,
+            "publishedDay": 1772150400000
+          },
+          "absoluteLegPoints": 26
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-02-27T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24995,
+        "today1": 25021,
+        "publishedDay": 1772150400000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 25,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 0,
+      "reactionEvents": 0
+    },
+    {
+      "date": "2026-03-02",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 25,
+      "uniqueRthKeys": 11,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-03-02T00:00:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1772150400000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-03-02T00:20:00.000Z",
+          "values": {
+            "today0": 24739.25,
+            "today1": 24758.5,
+            "publishedDay": 1772409600000
+          },
+          "absoluteLegPoints": 19.25
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-03-02T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24739.25,
+        "today1": 24758.5,
+        "publishedDay": 1772409600000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 18,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 0,
+      "reactionEvents": 0
+    },
+    {
+      "date": "2026-03-03",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 19,
+      "uniqueRthKeys": 12,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-03-03T00:00:00.000Z",
+          "values": {
+            "today0": 24739.25,
+            "today1": 24758.5,
+            "publishedDay": 1772409600000
+          },
+          "absoluteLegPoints": 19.25
+        },
+        {
+          "observedUtc": "2026-03-03T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1772409600000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-03-03T00:25:00.000Z",
+          "values": {
+            "today0": 24972.5,
+            "today1": 24936.5,
+            "publishedDay": 1772496000000
+          },
+          "absoluteLegPoints": 36
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-03-03T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24972.5,
+        "today1": 24936.5,
+        "publishedDay": 1772496000000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 22,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 0,
+      "reactionEvents": 0
+    },
+    {
+      "date": "2026-03-04",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 26,
+      "uniqueRthKeys": 20,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-03-04T00:00:00.000Z",
+          "values": {
+            "today0": 24972.5,
+            "today1": 24936.5,
+            "publishedDay": 1772496000000
+          },
+          "absoluteLegPoints": 36
+        },
+        {
+          "observedUtc": "2026-03-04T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1772496000000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-03-04T00:25:00.000Z",
+          "values": {
+            "today0": 24702,
+            "today1": 24791.75,
+            "publishedDay": 1772582400000
+          },
+          "absoluteLegPoints": 89.75
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-03-04T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24702,
+        "today1": 24791.75,
+        "publishedDay": 1772582400000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 25,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 2,
+      "reactionEvents": 6
+    },
+    {
+      "date": "2026-03-05",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 19,
+      "uniqueRthKeys": 13,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-03-05T00:00:00.000Z",
+          "values": {
+            "today0": 24702,
+            "today1": 24791.75,
+            "publishedDay": 1772582400000
+          },
+          "absoluteLegPoints": 89.75
+        },
+        {
+          "observedUtc": "2026-03-05T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1772582400000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-03-05T00:25:00.000Z",
+          "values": {
+            "today0": 25171,
+            "today1": 25228.75,
+            "publishedDay": 1772668800000
+          },
+          "absoluteLegPoints": 57.75
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-03-05T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 25171,
+        "today1": 25228.75,
+        "publishedDay": 1772668800000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 24,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 1,
+      "reactionEvents": 1
+    },
+    {
+      "date": "2026-03-06",
+      "observedMinutes": 1320,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 24,
+      "uniqueRthKeys": 15,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-03-06T00:00:00.000Z",
+          "values": {
+            "today0": 25171,
+            "today1": 25228.75,
+            "publishedDay": 1772668800000
+          },
+          "absoluteLegPoints": 57.75
+        },
+        {
+          "observedUtc": "2026-03-06T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1772668800000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-03-06T00:20:00.000Z",
+          "values": {
+            "today0": 25059.75,
+            "today1": 25092.25,
+            "publishedDay": 1772755200000
+          },
+          "absoluteLegPoints": 32.5
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-03-06T14:30:00.000Z",
+        "fibSets": 2,
+        "today0": 25059.75,
+        "today1": 25092.25,
+        "publishedDay": 1772755200000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 30,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 0,
+      "reactionEvents": 0
+    },
+    {
+      "date": "2026-03-09",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 23,
+      "uniqueRthKeys": 12,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-03-09T00:00:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1772755200000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-03-09T00:30:00.000Z",
+          "values": {
+            "today0": 24215.5,
+            "today1": 24140,
+            "publishedDay": 1773014400000
+          },
+          "absoluteLegPoints": 75.5
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-03-09T13:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24215.5,
+        "today1": 24140,
+        "publishedDay": 1773014400000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 23,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 1,
+      "reactionEvents": 1
+    },
+    {
+      "date": "2026-03-10",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 25,
+      "uniqueRthKeys": 18,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-03-10T00:00:00.000Z",
+          "values": {
+            "today0": 24215.5,
+            "today1": 24140,
+            "publishedDay": 1773014400000
+          },
+          "absoluteLegPoints": 75.5
+        },
+        {
+          "observedUtc": "2026-03-10T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1773014400000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-03-10T00:20:00.000Z",
+          "values": {
+            "today0": 24881,
+            "today1": 24841.25,
+            "publishedDay": 1773100800000
+          },
+          "absoluteLegPoints": 39.75
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-03-10T13:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24881,
+        "today1": 24841.25,
+        "publishedDay": 1773100800000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 28,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 2,
+      "reactionEvents": 3
+    },
+    {
+      "date": "2026-03-11",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 20,
+      "uniqueRthKeys": 14,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-03-11T00:00:00.000Z",
+          "values": {
+            "today0": 24881,
+            "today1": 24841.25,
+            "publishedDay": 1773100800000
+          },
+          "absoluteLegPoints": 39.75
+        },
+        {
+          "observedUtc": "2026-03-11T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1773100800000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-03-11T00:55:00.000Z",
+          "values": {
+            "today0": 25019.5,
+            "today1": 25055,
+            "publishedDay": 1773187200000
+          },
+          "absoluteLegPoints": 35.5
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-03-11T13:30:00.000Z",
+        "fibSets": 2,
+        "today0": 25019.5,
+        "today1": 25055,
+        "publishedDay": 1773187200000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 26,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 1,
+      "reactionEvents": 1
+    },
+    {
+      "date": "2026-03-12",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 17,
+      "uniqueRthKeys": 11,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-03-12T00:00:00.000Z",
+          "values": {
+            "today0": 25019.5,
+            "today1": 25055,
+            "publishedDay": 1773187200000
+          },
+          "absoluteLegPoints": 35.5
+        },
+        {
+          "observedUtc": "2026-03-12T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1773187200000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-03-12T00:20:00.000Z",
+          "values": {
+            "today0": 24788,
+            "today1": 24755.25,
+            "publishedDay": 1773273600000
+          },
+          "absoluteLegPoints": 32.75
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-03-12T13:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24788,
+        "today1": 24755.25,
+        "publishedDay": 1773273600000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 20,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 1,
+      "reactionEvents": 1
+    },
+    {
+      "date": "2026-03-13",
+      "observedMinutes": 1260,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 12,
+      "uniqueRthKeys": 12,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-03-13T00:00:00.000Z",
+          "values": {
+            "today0": 24788,
+            "today1": 24755.25,
+            "publishedDay": 1773273600000
+          },
+          "absoluteLegPoints": 32.75
+        },
+        {
+          "observedUtc": "2026-03-13T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1773273600000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-03-13T00:40:00.000Z",
+          "values": {
+            "today0": 24529,
+            "today1": 24637.5,
+            "publishedDay": 1773360000000
+          },
+          "absoluteLegPoints": 108.5
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-03-13T13:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24529,
+        "today1": 24637.5,
+        "publishedDay": 1773360000000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 22,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 1,
+      "reactionEvents": 3
+    },
+    {
+      "date": "2026-03-16",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 18,
+      "uniqueRthKeys": 14,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-03-16T00:00:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1773360000000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-03-16T00:25:00.000Z",
+          "values": {
+            "today0": 24650.5,
+            "today1": 24720.5,
+            "publishedDay": 1773619200000
+          },
+          "absoluteLegPoints": 70
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-03-16T13:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24650.5,
+        "today1": 24720.5,
+        "publishedDay": 1773619200000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 25,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 1,
+      "reactionEvents": 3
+    },
+    {
+      "date": "2026-03-17",
+      "observedMinutes": 1380,
+      "rthMinutes": 390,
+      "readyRthMinutes": 390,
+      "rthWithVisibleZone": 390,
+      "rthWithVisibleYellow": 0,
+      "rthWithRetainedYellow": 0,
+      "uniqueVisibleKeys": 20,
+      "uniqueRthKeys": 14,
+      "uniqueRthYellowKeys": 0,
+      "anchors": [
+        {
+          "observedUtc": "2026-03-17T00:00:00.000Z",
+          "values": {
+            "today0": 24650.5,
+            "today1": 24720.5,
+            "publishedDay": 1773619200000
+          },
+          "absoluteLegPoints": 70
+        },
+        {
+          "observedUtc": "2026-03-17T00:01:00.000Z",
+          "values": {
+            "today0": null,
+            "today1": null,
+            "publishedDay": 1773619200000
+          },
+          "absoluteLegPoints": null
+        },
+        {
+          "observedUtc": "2026-03-17T00:30:00.000Z",
+          "values": {
+            "today0": 24880.25,
+            "today1": 24826.75,
+            "publishedDay": 1773705600000
+          },
+          "absoluteLegPoints": 53.5
+        }
+      ],
+      "firstRthSnapshot": {
+        "timeUtc": "2026-03-17T13:30:00.000Z",
+        "fibSets": 2,
+        "today0": 24880.25,
+        "today1": 24826.75,
+        "publishedDay": 1773705600000,
+        "readiness": {
+          "vwapReady": true,
+          "vpReady": true,
+          "vwapComplete": true,
+          "vpComplete": true,
+          "vpOverflow": false,
+          "rbEvictions": 0
+        },
+        "visibleLive": 8,
+        "retainedLive": 25,
+        "retainedYellowLive": 0
+      },
+      "enteredTrades": 2,
+      "reactionEvents": 3
+    }
+  ]
+}

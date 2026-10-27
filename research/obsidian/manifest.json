@@ -15,8 +15,8 @@
     },
     {
       "path": "Ethereal/Decisions.md",
-      "sha256": "8bb0157f1b4d0b9cc42fde472d9b3b2329219ebeba5b15a18ae24d47a8db041b",
-      "bytes": 2148
+      "sha256": "d555fd11452c50e8d5bfd1488631c9f49d0ff3f8a0d6f5984dda871851c9c1e8",
+      "bytes": 2650
     },
     {
       "path": "Ethereal/Evidence/Data validation.json",
@@ -40,8 +40,8 @@
     },
     {
       "path": "Ethereal/Index.md",
-      "sha256": "ad6761693691b2210ae885dd198c151f1a280a2fa35bea230c133d4a17c004de",
-      "bytes": 2008
+      "sha256": "9e42c1d6bcb20fa64797b4626d0dba6bebe615062782f62c5e55b1a49430fa32",
+      "bytes": 2563
     },
     {
       "path": "Ethereal/Protocol.md",
@@ -54,24 +54,129 @@
       "bytes": 1102
     },
     {
+      "path": "Ethereal/Runs/2026-10-27-S01/Audit metrics.json",
+      "sha256": "2edd900343e5b07f372422b9a6cf412b83dbf16d1d310d698ecafb90efaa9fe1",
+      "bytes": 2588
+    },
+    {
       "path": "Ethereal/Runs/2026-10-27-S01/Calibration scope.json",
       "sha256": "71a9767e701dee9cf33e41e78c57b3fa7b870565ee104e014a9b56cc30e9b984",
       "bytes": 1312
     },
     {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-midnight/Days.json",
+      "sha256": "3ea5c2184c602c583cc62e1367baf6a62160168cc583ad6cd2db9a20da0963c4",
+      "bytes": 54192
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-midnight/Events.csv",
+      "sha256": "c8376f1731139f91f05b8da19c9bc414954c98e5bff0715cd0546d39b1c70360",
+      "bytes": 98879
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-midnight/Progress.json",
+      "sha256": "d335d4988c049a0add5a23a8165fa9c7e3d7eb0e3c39ba3ad1c6daded064e549",
+      "bytes": 2199
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-midnight/Reactions.json",
+      "sha256": "1c0b0bbe8250ab0637d82330414906596710f930b065d23a9458263566e02f20",
+      "bytes": 868305
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-midnight/Report.md",
+      "sha256": "5b8d6b609c6748f0b982965f1dbf1d689faf43c4e7b631814ef3d45d0e45aee6",
+      "bytes": 12652
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-midnight/Settings.json",
+      "sha256": "736a163334d63dedea3add2e071bfc5e73a9d4ebeae2db4612be04037214e278",
+      "bytes": 2248
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-midnight/Summary.json",
+      "sha256": "db95b254a23ded78668de8f86ca239ec0fac8e21b60dc300d21af2e56866a124",
+      "bytes": 108096
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-midnight/Trade journal.md",
+      "sha256": "e4ae76f4580b9e3962986c64200e258ab976ebf9fa88a2597a6a36cd459d2b1d",
+      "bytes": 86606
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-midnight/Trades.csv",
+      "sha256": "439258bc67910aec4c55c62e3285c8f8e136d99b6fc6ee9e6db18b3045698ac3",
+      "bytes": 24316
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-midnight/Trades.json",
+      "sha256": "3decf958eb1e027d368e347f37eb7cad3f0dfc51e2b2e8871301b01270a7e159",
+      "bytes": 84984
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-range/Days.json",
+      "sha256": "6b37b720c2a500a31bd7de05073988459c62b8550311358cceeec2451682d28b",
+      "bytes": 53777
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-range/Events.csv",
+      "sha256": "0d40f0528150ad70ee511abf2455a826111a95d599d3f96730b3fdcc20d97c1e",
+      "bytes": 112193
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-range/Progress.json",
+      "sha256": "068f426c9fd5ef20e0cebdc455c3d7fe1e4f4b1858684673b9a00100ced211ee",
+      "bytes": 2193
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-range/Reactions.json",
+      "sha256": "84989d788873e73af22d33bd8490e4d33c790f11d56bff1832a2844aeb4bb9e0",
+      "bytes": 793776
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-range/Report.md",
+      "sha256": "4834ccd38eedfba21eb8cb23ade85996f3f42e01ceeea176f9f2a1c2b5394492",
+      "bytes": 13552
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-range/Settings.json",
+      "sha256": "2a6fa12cffac608db7223b2cee224980bab777805206f44d6acda9a65101a2d5",
+      "bytes": 2235
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-range/Summary.json",
+      "sha256": "fe8a7b45a6df015a787f8b0153e8be379fd98407b3af7c69c4e8d8f7c08d75bd",
+      "bytes": 101460
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-range/Trade journal.md",
+      "sha256": "12b0c5513004e8805555bf90e7117f20c0ffff6c2612eea074019a7e4d1ee3f0",
+      "bytes": 109114
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-range/Trades.csv",
+      "sha256": "c3082c76a192063adf7cc7691a39a57cc635f70b2795b737bf14653f4dae94f2",
+      "bytes": 30842
+    },
+    {
+      "path": "Ethereal/Runs/2026-10-27-S01/Calibration-range/Trades.json",
+      "sha256": "3c9960ddc5688ff78ba33e86590fb44b9d839f4a5018a27670149e09b1f6a7c8",
+      "bytes": 107487
+    },
+    {
       "path": "Ethereal/Runs/2026-10-27-S01/Implementation audit.md",
-      "sha256": "cdbace644fd700727be61b591053a6ca39034dfb252ac6cf4fcdc648e9e1cd88",
-      "bytes": 2838
+      "sha256": "5e1cfa56d7f35f4e9f09390b5b0754a321238ee761f1ef294ced5a5452206929",
+      "bytes": 3730
     },
     {
       "path": "Ethereal/Runs/2026-10-27-S01/Progress.md",
-      "sha256": "e2f9166dbc90477565db3de984c55d0edc9d52f6cdab613c792d8713eaa0d142",
-      "bytes": 1388
+      "sha256": "116a75e40c3fc93d20697c547327124edadca1483d517c8e149c706f842fb2f6",
+      "bytes": 2080
     },
     {
       "path": "Ethereal/Runs/2026-10-27-S01/Report.md",
-      "sha256": "182a83d5689b3e438bb399d310acc991425cf40b96e185a8327f5c79bcf83d30",
-      "bytes": 2344
+      "sha256": "e102c4b4e7d6346ce599537e9cd4aa6ff0faac35a7395568d4d6df7e7e86d3fc",
+      "bytes": 11074
     },
     {
       "path": "Ethereal/Runs/2026-10-27-S01/Settings-midnight.json",

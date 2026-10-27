@@ -27,3 +27,9 @@ Same-index frames contain only previous completed-minute state. Contact cannot c
 ## Remaining limits
 
 PineTS is a third-party runtime, not TradingView certification. One-minute OHLC cannot resolve all fills, paths or queue priority. The public archive's exact contracts, roll process and NQ1! equivalence remain unverified. The finite initialization prefix cannot reconstruct earlier persistent zones. No fees or slippage model was supplied. Overlapping zones, dates and candidate modes are dependent samples; extreme outcome bounds are not confidence intervals or a complete account path. Untouched validation and a best-timeframe claim remain pending.
+
+## Completed extended artifact review
+
+A second read-only internal review checked both final 55,439-bar runs. It verified current source/tool/data/slice hashes, 37×390 ready RTH minutes, standard strict CSV parsing and nested JSON, entry session timing, planned SL20/BE60/TP130 levels, BE activation timestamps on target/BE exits, no overlapping re-entry, and no further entries after an ambiguous outcome in the same NY session. Reserved validation candles were not replayed.
+
+Independent arithmetic matches Range 650−560+109.75=+199.75 and Midnight 260−540+106.25=−173.75 gross resolved points. The report preserves partial session exits, ambiguous outcomes, small-sample limits and the distinction between zero retained yellow and renderer filtering. No remaining implementation blocker was identified by this internal review; this is not external certification of a trading edge.

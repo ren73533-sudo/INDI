@@ -31,3 +31,7 @@ The trader requests position direction, NQ price, contributor evidence, narrativ
 - Run calibration, freeze a selected configuration, then evaluate the untouched validation period.
 - Compare construction timeframes in a separately declared experiment; display timeframe alone shares the same source engine.
 - Specify real trading costs and use finer data to resolve one-minute execution ambiguity before interpreting net profitability or tick precision.
+
+## 2026-10-27 — First baseline calibration completed
+
+The 37-date Range/Midnight comparison is complete; full results and calibration priorities are in [[Ethereal/Runs/2026-10-27-S01/Report|S01 audit]]. Both candidates use 5m construction. No configuration has been declared optimal or selected for validation. All 20 validation dates remain untouched. Further family, freshness, geometry or anchoring changes are new experiments; the baseline source/settings and measured records remain preserved.

@@ -1,0 +1,91 @@
+{
+  "scope": "37 calibration dates; separate 5m-construction experiments, not a pooled portfolio",
+  "validationReplayed": false,
+  "modes": {
+    "range": {
+      "dailyLegs": 37,
+      "medianLegPoints": 138.5,
+      "minLegPoints": 72.5,
+      "maxLegPoints": 437.75,
+      "legsBelow20": 0,
+      "rthMinutes": 14430,
+      "readyRthMinutes": 14430,
+      "visibleYellowRthMinutes": 0,
+      "retainedYellowRthMinutes": 0,
+      "firstContactReactionEvents": 84,
+      "penetratedContacts": 38,
+      "medianPositivePenetrationPoints": 6.25,
+      "maxPenetrationPoints": 36,
+      "contactsReachingKillThreshold": 9,
+      "medianTpZoneAgeMinutes": 1481,
+      "medianStopZoneAgeMinutes": 408.5,
+      "setups": {
+        "STDV + VWAP": {
+          "entered": 26,
+          "resolved": 25,
+          "targetWins": 4,
+          "initialStops": 17,
+          "breakEvenExits": 2,
+          "positiveSessionExits": 2,
+          "grossResolvedPoints": 244.5
+        },
+        "STDV + RB": {
+          "entered": 16,
+          "resolved": 15,
+          "targetWins": 1,
+          "initialStops": 11,
+          "breakEvenExits": 2,
+          "positiveSessionExits": 1,
+          "grossResolvedPoints": -44.75
+        }
+      }
+    },
+    "midnight": {
+      "dailyLegs": 37,
+      "medianLegPoints": 32.75,
+      "minLegPoints": 3.5,
+      "maxLegPoints": 108.5,
+      "legsBelow20": 10,
+      "rthMinutes": 14430,
+      "readyRthMinutes": 14430,
+      "visibleYellowRthMinutes": 0,
+      "retainedYellowRthMinutes": 0,
+      "firstContactReactionEvents": 74,
+      "penetratedContacts": 42,
+      "medianPositivePenetrationPoints": 8.125,
+      "maxPenetrationPoints": 23,
+      "contactsReachingKillThreshold": 11,
+      "medianTpZoneAgeMinutes": 470.5,
+      "medianStopZoneAgeMinutes": 785,
+      "setups": {
+        "STDV + RB": {
+          "entered": 15,
+          "resolved": 15,
+          "targetWins": 0,
+          "initialStops": 14,
+          "breakEvenExits": 0,
+          "positiveSessionExits": 1,
+          "grossResolvedPoints": -173.75
+        },
+        "Three-or-more families": {
+          "entered": 3,
+          "resolved": 3,
+          "targetWins": 0,
+          "initialStops": 3,
+          "breakEvenExits": 0,
+          "positiveSessionExits": 0,
+          "grossResolvedPoints": -60
+        },
+        "STDV + VWAP": {
+          "entered": 15,
+          "resolved": 14,
+          "targetWins": 2,
+          "initialStops": 10,
+          "breakEvenExits": 2,
+          "positiveSessionExits": 0,
+          "grossResolvedPoints": 60
+        }
+      }
+    }
+  }
+}

@@ -26,5 +26,7 @@ Raw third-party market CSV files are not bundled here. The provenance note recor
 
 - Prepared: data provenance, validation record, configuration snapshots, protocol and report template.
 - Historical record: 62 offline software checks previously passed; this does not establish market performance.
-- Active: S01 actual-Ethereal reaction and trade studies; read the run report for completed measurements.
-- Not verified: native TradingView compilation/replay, direct equivalence of the public data to TradingView NQ1!, and any trade win rate or profitability.
+- Completed: S01 first 37-date actual-Ethereal calibration audit, two separate 5m-construction modes, individual trade journals and CSV/JSON evidence.
+- Fresh research checks: 52 passed; full execution log retained in S01.
+- Pending: candidate retuning, construction-timeframe comparison and the 20 untouched validation dates. No background run is active at this checkpoint.
+- Not verified: native TradingView compilation/replay, direct equivalence of the public data to TradingView NQ1!, or net profitability/predictive performance on untouched data.
