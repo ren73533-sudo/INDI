@@ -1,0 +1,16 @@
+{
+  "checks": [
+    "production Pine source hash matches run",
+    "5 trades, 2 positive net outcomes",
+    "ledger net P&L independently recalculated",
+    "entries timestamped after signal-bar close",
+    "2R brackets independently recalculated"
+  ],
+  "netUsd": 337.5,
+  "focusedTests": {
+    "passed": 9,
+    "failed": 0
+  },
+  "nativeTradingViewCompilation": "not performed",
+  "repoBaseCommit": "ef0181605546f9222a1e096a2f8aa3ad58f04e01"
+}

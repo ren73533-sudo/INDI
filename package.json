@@ -9,6 +9,8 @@
     "build:ethereal": "node tools/build-ethereal.mjs",
     "check:ethereal": "node tools/build-ethereal.mjs --check",
     "test": "node --test --test-concurrency=1 tests/*.test.mjs",
+    "test:ofi": "node tests/ofi.test.mjs",
+    "study:ofi": "node tools/ofi-study.mjs",
     "study": "node tools/poi-study.mjs"
   },
   "devDependencies": {

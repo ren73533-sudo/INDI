@@ -1,0 +1,281 @@
+//@version=6
+indicator("OFI — Orderflow Indicator v1.0", overlay = true, max_boxes_count = 200, max_labels_count = 200)
+
+// OFI is independent of INDI/Ethereal. Estimated OHLCV profile, no DOM or true delta.
+// Research signals are emitted at confirmed 1m CLOSE; simulated entries are NEXT open.
+rowPoints = input.float(2.0, "Profile row size (points)", minval = 0.25, maxval = 20.0, step = 0.25)
+edgeRatio = input.float(0.35, "Maximum thin / dense row ratio", minval = 0.05, maxval = 0.9)
+minNode = input.float(0.20, "Minimum dense row / POC volume", minval = 0.01, maxval = 1.0)
+maxZones = input.int(12, "Maximum daily zones", minval = 2, maxval = 30)
+zoneHalf = input.float(2.0, "Zone half width (points)", minval = 0.25, maxval = 20.0, step = 0.25)
+mode = input.string("Both", "Setups", options = ["Both", "Failed auction", "Balanced VWAP"])
+openingEfficiency = input.float(0.35, "Maximum opening-range efficiency", minval = 0.0, maxval = 1.0)
+flatSlope = input.float(0.35, "Maximum 10m VWAP change / ATR", minval = 0.0, maxval = 2.0)
+bandMult = input.float(2.0, "VWAP band deviations", minval = 1.0, maxval = 4.0)
+bandDistance = input.float(0.25, "Band to zone tolerance / ATR", minval = 0.0, maxval = 2.0)
+rejectMinutes = input.int(3, "Minutes allowed for reclaim", minval = 1, maxval = 15)
+confirmMinutes = input.int(3, "Minutes allowed for follow-through", minval = 1, maxval = 15)
+stopBuffer = input.float(1.0, "Stop beyond excursion (points)", minval = 0.25, maxval = 10.0, step = 0.25)
+drawZones = input.bool(true, "Draw zones")
+showSignals = input.bool(true, "Show confirmed signals")
+showVwap = input.bool(true, "Show RTH VWAP and bands")
+supportColor = input.color(#26a69a, "Support color")
+resistanceColor = input.color(#ef5350, "Resistance color")
+
+if barstate.isfirst and (not timeframe.isminutes or timeframe.multiplier != 1)
+    runtime.error("OFI v1 requires standard 1-minute candles. Other timeframes are not validated.")
+if barstate.isfirst and math.abs(rowPoints / syminfo.mintick - math.round(rowPoints / syminfo.mintick)) > 0.0001
+    runtime.error("Profile row size must be a multiple of the instrument tick.")
+
+type Zone
+    float lo
+    float hi
+    int side
+    int phase = 0
+    int touched = na
+    int rejected = na
+    int kind = 0
+    int beyond = 0
+    float excursion = na
+    float trigger = na
+    box drawing = na
+
+// Prior full RTH only. Uniform range-overlap allocation is an estimate of VAP.
+f_profile(array<float> hs, array<float> ls, array<float> vs) =>
+    array<float> levels = array.new_float()
+    array<int> sides = array.new_int()
+    array<float> scores = array.new_float()
+    float base = math.floor(array.min(ls) / rowPoints) * rowPoints
+    int rows = int(math.floor((array.max(hs) - base) / rowPoints)) + 1
+    array<float> bins = array.new_float(math.min(rows, 2000), 0.0)
+    float total = 0.0
+    if rows <= 2000
+        for j = 0 to array.size(hs) - 1
+            float h = array.get(hs, j)
+            float l = array.get(ls, j)
+            float v = array.get(vs, j)
+            int first = math.max(0, int(math.floor((l - base) / rowPoints)))
+            int last = math.min(rows - 1, int(math.floor((h - base) / rowPoints)))
+            for r = first to last
+                float overlap = math.max(0.0, math.min(h, base + (r + 1) * rowPoints) - math.max(l, base + r * rowPoints))
+                float allocation = h == l ? v : v * overlap / (h - l)
+                array.set(bins, r, array.get(bins, r) + allocation)
+        float peak = array.max(bins)
+        total := array.sum(bins)
+        if peak > 0
+            for r = 0 to rows - 1
+                float dense = array.get(bins, r)
+                if dense >= peak * minNode
+                    float below = r > 0 ? array.get(bins, r - 1) : 0.0
+                    float above = r < rows - 1 ? array.get(bins, r + 1) : 0.0
+                    // Include the boundary of a dense distribution (shelf), not
+                    // only a single-row cliff. Minute OHLCV allocation smooths cliffs.
+                    if below <= dense * edgeRatio or below < peak * minNode
+                        array.push(levels, base + r * rowPoints)
+                        array.push(sides, 1)
+                        array.push(scores, dense - below)
+                    if above <= dense * edgeRatio or above < peak * minNode
+                        array.push(levels, base + (r + 1) * rowPoints)
+                        array.push(sides, -1)
+                        array.push(scores, dense - above)
+    [levels, sides, scores, total, rows <= 2000]
+
+var array<float> sessionHighs = array.new_float()
+var array<float> sessionLows = array.new_float()
+var array<float> sessionVolumes = array.new_float()
+var array<Zone> zones = array.new<Zone>()
+var array<box> retainedBoxes = array.new_box()
+var int sessionDay = na
+var int lastMinute = na
+var int count = 0
+var bool intact = false
+var bool profileReady = false
+var float profileVolume = na
+var float sumVolume = 0.0
+var float mean = na
+var float m2 = 0.0
+var float atr = na
+var float trSum = 0.0
+var float lastClose = na
+var float openingHigh = na
+var float openingLow = na
+var float openingOpen = na
+var float openingClose = na
+var array<float> vwapHistory = array.new_float()
+
+int nyMinute = hour(time, "America/New_York") * 60 + minute(time, "America/New_York")
+int nyDay = year(time, "America/New_York") * 10000 + month(time, "America/New_York") * 100 + dayofmonth(time, "America/New_York")
+int weekday = dayofweek(time, "America/New_York")
+bool rth = weekday >= dayofweek.monday and weekday <= dayofweek.friday and nyMinute >= 570 and nyMinute < 960
+float signalDir = 0.0
+float signalStop = na
+float signalKind = 0.0
+float signalZoneLo = na
+float signalZoneHi = na
+float signalZoneId = na
+
+if barstate.isconfirmed and rth
+    bool freshSession = na(sessionDay) or nyDay != sessionDay
+    if freshSession
+        // End existing zones at the last observed RTH minute; never project through missing history.
+        if array.size(zones) > 0
+            for z in zones
+                if not na(z.drawing)
+                    box.set_right(z.drawing, lastMinute + 60000)
+        array.clear(zones)
+        profileReady := intact and count == 390
+        profileVolume := na
+        if profileReady
+            [prices, directions, qualities, pv, validRows] = f_profile(sessionHighs, sessionLows, sessionVolumes)
+            profileReady := validRows
+            profileVolume := pv
+            int candidates = array.size(prices)
+            if candidates > 0
+                for attempt = 0 to candidates - 1
+                    int best = array.indexof(qualities, array.max(qualities))
+                    float level = array.get(prices, best)
+                    int side = array.get(directions, best)
+                    array.set(qualities, best, -1.0)
+                    bool separate = true
+                    if array.size(zones) > 0
+                        for z in zones
+                            if math.abs((z.lo + z.hi) * 0.5 - level) <= 2.0 * zoneHalf
+                                separate := false
+                    if separate and array.size(zones) < maxZones
+                        Zone z = Zone.new(level - zoneHalf, level + zoneHalf, side)
+                        if drawZones
+                            color c = side == 1 ? supportColor : resistanceColor
+                            z.drawing := box.new(left = time, top = z.hi, right = time_close, bottom = z.lo, xloc = xloc.bar_time, border_color = c, bgcolor = color.new(c, 90), text = side == 1 ? "OFI support — candidate" : "OFI resistance — candidate", text_size = size.tiny)
+                            array.push(retainedBoxes, z.drawing)
+                            if array.size(retainedBoxes) > 180
+                                box.delete(array.shift(retainedBoxes))
+                        array.push(zones, z)
+        array.clear(sessionHighs)
+        array.clear(sessionLows)
+        array.clear(sessionVolumes)
+        array.clear(vwapHistory)
+        sessionDay := nyDay
+        count := 0
+        intact := nyMinute == 570
+        sumVolume := 0.0
+        mean := na
+        m2 := 0.0
+        atr := na
+        trSum := 0.0
+        lastClose := na
+        openingHigh := high
+        openingLow := low
+        openingOpen := open
+        openingClose := na
+    else if time != lastMinute + 60000
+        intact := false
+
+    // Context frozen at the preceding close, before the test candle is observed.
+    float priorAtr = atr
+    float priorMean = mean
+    float priorDev = sumVolume > 0 ? math.sqrt(math.max(0.0, m2 / sumVolume)) : na
+    int histCount = array.size(vwapHistory)
+    float oldMean = histCount >= 11 ? array.get(vwapHistory, histCount - 11) : na
+    bool flat = not na(priorAtr) and priorAtr > 0 and not na(oldMean) and math.abs(priorMean - oldMean) / priorAtr <= flatSlope
+    float efficiency = openingHigh > openingLow and not na(openingClose) ? math.abs(openingClose - openingOpen) / (openingHigh - openingLow) : na
+    bool openingBalance = not na(efficiency) and efficiency <= openingEfficiency
+
+    if array.size(zones) > 0
+        for zi = 0 to array.size(zones) - 1
+            Zone z = array.get(zones, zi)
+            if not na(z.drawing) and z.phase >= 0 and z.phase < 3
+                box.set_right(z.drawing, time_close)
+            bool outside = z.side == 1 ? close < z.lo : close > z.hi
+            z.beyond := outside ? z.beyond + 1 : 0
+            if z.phase >= 0 and z.phase < 3 and (z.beyond >= 2 or not intact)
+                z.phase := -1
+            bool eligibleTime = nyMinute >= 600 and nyMinute < 930 and intact and profileReady
+            if z.phase == 0 and eligibleTime
+                bool approached = not na(lastClose) and (z.side == 1 ? lastClose > z.hi : lastClose < z.lo)
+                bool touched = low <= z.hi and high >= z.lo
+                bool fa = openingBalance and (z.side == 1 ? z.hi < openingLow : z.lo > openingHigh)
+                float band = priorMean - z.side * bandMult * priorDev
+                float distance = math.max(0.0, math.max(z.lo - band, band - z.hi))
+                bool bv = flat and not na(priorDev) and priorDev > 0 and distance <= bandDistance * priorAtr
+                int kind = (fa and mode != "Balanced VWAP" ? 1 : 0) + (bv and mode != "Failed auction" ? 2 : 0)
+                if approached and touched and kind > 0
+                    z.phase := 1
+                    z.touched := time
+                    z.kind := kind
+                    z.excursion := z.side == 1 ? low : high
+            if z.phase == 1 or z.phase == 2
+                z.excursion := z.side == 1 ? math.min(z.excursion, low) : math.max(z.excursion, high)
+            if z.phase == 1
+                if time - z.touched > rejectMinutes * 60000
+                    z.phase := -1
+                else if z.side == 1 ? close > z.hi : close < z.lo
+                    z.phase := 2
+                    z.rejected := time
+                    z.trigger := z.side == 1 ? high : low
+            if z.phase == 2 and time > z.rejected
+                if time - z.rejected > confirmMinutes * 60000 or not eligibleTime
+                    z.phase := -1
+                else if z.side == 1 ? close > z.trigger : close < z.trigger
+                    // Stable profile-quality order resolves simultaneous signals.
+                    if signalDir == 0
+                        signalDir := z.side
+                        signalKind := z.kind
+                        signalStop := z.excursion - z.side * stopBuffer
+                        signalZoneLo := z.lo
+                        signalZoneHi := z.hi
+                        signalZoneId := zi
+                    z.phase := 3
+            if not na(z.drawing)
+                if z.phase == -1
+                    box.set_bgcolor(z.drawing, color.new(color.gray, 95))
+                    box.set_text(z.drawing, "OFI expired / invalid")
+                else if z.phase == 3
+                    box.set_bgcolor(z.drawing, color.new(z.side == 1 ? supportColor : resistanceColor, 65))
+                    box.set_text(z.drawing, z.kind == 1 ? "OFI FA confirmed" : z.kind == 2 ? "OFI VWAP confirmed" : "OFI FA + VWAP confirmed")
+                else if z.phase == 1 or z.phase == 2
+                    box.set_text(z.drawing, z.phase == 1 ? "OFI tested" : "OFI reclaimed — awaiting follow-through")
+
+    // Update current-session statistics after signal logic.
+    float tr = na(lastClose) ? high - low : math.max(high - low, math.max(math.abs(high - lastClose), math.abs(low - lastClose)))
+    trSum += tr
+    count += 1
+    atr := count <= 14 ? trSum / count : (atr * 13.0 + tr) / 14.0
+    if volume > 0 and not na(volume)
+        float price = hlc3
+        float newWeight = sumVolume + volume
+        float delta = na(mean) ? 0.0 : price - mean
+        float newMean = na(mean) ? price : mean + volume * delta / newWeight
+        m2 += volume * delta * (price - newMean)
+        mean := newMean
+        sumVolume := newWeight
+    else if na(volume)
+        intact := false
+    array.push(vwapHistory, mean)
+    if nyMinute < 600
+        openingHigh := math.max(openingHigh, high)
+        openingLow := math.min(openingLow, low)
+        openingClose := close
+    array.push(sessionHighs, high)
+    array.push(sessionLows, low)
+    array.push(sessionVolumes, nz(volume))
+    lastMinute := time
+    lastClose := close
+
+float dev = sumVolume > 0 ? math.sqrt(math.max(0.0, m2 / sumVolume)) : na
+plot(showVwap and rth ? mean : na, "RTH VWAP", color = color.orange, style = plot.style_linebr)
+plot(showVwap and rth ? mean + bandMult * dev : na, "Upper VWAP band", color = color.new(color.orange, 50), style = plot.style_linebr)
+plot(showVwap and rth ? mean - bandMult * dev : na, "Lower VWAP band", color = color.new(color.orange, 50), style = plot.style_linebr)
+plotshape(showSignals and signalDir == 1, "Confirmed long", style = shape.triangleup, location = location.belowbar, color = supportColor, size = size.tiny, text = "OFI")
+plotshape(showSignals and signalDir == -1, "Confirmed short", style = shape.triangledown, location = location.abovebar, color = resistanceColor, size = size.tiny, text = "OFI")
+alertcondition(signalDir == 1, "OFI confirmed long", "OFI long confirmed at bar close. Check risk before any trade.")
+alertcondition(signalDir == -1, "OFI confirmed short", "OFI short confirmed at bar close. Check risk before any trade.")
+// Stable machine-readable outputs used by the offline replay of THIS source.
+plot(signalDir, "OFI direction", display = display.none)
+plot(signalStop, "OFI stop", display = display.none)
+plot(signalKind, "OFI setup", display = display.none)
+plot(signalZoneLo, "OFI zone low", display = display.none)
+plot(signalZoneHi, "OFI zone high", display = display.none)
+plot(signalZoneId, "OFI zone ID", display = display.none)
+plot(profileReady ? 1 : 0, "OFI profile ready", display = display.none)
+plot(profileVolume, "OFI profile volume", display = display.none)
+plot(array.size(zones), "OFI zone count", display = display.none)

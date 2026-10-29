@@ -1,0 +1,17 @@
+✔ OFI actual Pine conserves prior profile volume and confirms only after a later follow-through close (1049.377212ms)
+✔ OFI Balanced VWAP setup executes with production defaults and a profile/band overlap (756.723714ms)
+✔ future candles and display controls cannot rewrite already confirmed Pine signals (1168.295777ms)
+✔ incomplete prior profile, source gaps and two-close acceptance suppress signals (1158.860356ms)
+✔ NY RTH boundaries follow DST and incomplete days are excluded (3.693909ms)
+✔ entries use next open with costs, gap stops exceed planned risk, and future frames are rejected (7.126651ms)
+✔ OHLC ambiguity is flagged with pessimistic and optimistic outcomes, including entry-bar ambiguity (5.663124ms)
+✔ one position, exact time exit, risk filter and session close are enforced (9.274349ms)
+✔ bootstrap resamples day blocks with replacement, includes empty days, is seeded and changes win rates (4.921084ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4206.026525

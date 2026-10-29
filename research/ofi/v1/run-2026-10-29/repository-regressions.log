@@ -1,0 +1,21 @@
+
+> indi-nq-key-levels@0.3.1 test
+> node --test --test-concurrency=1 tests/*.test.mjs
+
+✔ tests/ethereal-replay.test.mjs (3781.515508ms)
+✔ tests/ethereal-study.test.mjs (103.439244ms)
+✔ tests/ethereal-trades.test.mjs (89.821422ms)
+✔ tests/ethereal.test.mjs (282883.687165ms)
+✔ tests/indicator.test.mjs (72601.360514ms)
+✔ tests/ofi.test.mjs (3690.148379ms)
+✔ tests/poi-study.test.mjs (4404.717588ms)
+✔ tests/run-ethereal-session.test.mjs (122.519575ms)
+✔ tests/timeframes.test.mjs (162704.658536ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 530399.190078

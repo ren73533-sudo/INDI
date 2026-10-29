@@ -1,0 +1,51 @@
+{
+  "version": "OFI-1.0-shelf-boundaries",
+  "created": "2026-10-29",
+  "status": "Revised after the initial cliff-only implementation produced zero signals. Added the planned distribution-edge (shelf) crossings of the already specified 20%-of-peak density threshold. No winning/losing trades were available when revising. Chronological holdout is exploratory, not pristine after this feasibility inspection. No performance optimization.",
+  "signalEngine": "indicators/ofi.pine executed with PineTS 0.11.1; native TradingView verification outstanding",
+  "instrument": "NQ; public archive is NOT established as TradingView NQ1!",
+  "dataUrl": "https://raw.githubusercontent.com/axb0306/cme-futures-ohlc/60abd3fb6369c6ce0b6a4a65b0f2562fc96b1264/NQ/NQ_1min_20260120_20260415.csv",
+  "dataSha256": "583cd788b035c4b5ca612f8bb0e3e366d627348851c04d68bca295a5db116f61",
+  "timezone": "Raw datetime is UTC per source README; session America/New_York",
+  "profile": "Prior complete 390-minute RTH. 2-point rows, uniform candle-range volume allocation. Dense rows >=20% POC; neighboring row either <=35% dense (ledge) OR below 20% POC (distribution/shelf boundary). Rank volume drop, retain <=12 nonoverlapping zones, half-width 2 points.",
+  "failedAuction": "Opening 09:30-10:00 range is a deterministic balance proxy when abs(last close-first open)/range <=0.35. Only prior profile zones wholly outside that range qualify. Excursion to zone, reclaim within 3m, later close past rejection candle extreme within 3m. This is a simplified opening-balance failed excursion, not every discretionary FA setup.",
+  "balancedVwap": "Prior-close RTH HLC3 volume-weighted VWAP, weighted population SD, 2SD band within 0.25 ATR of prior profile zone. Absolute 10-minute VWAP change / 14-period RTH Wilder ATR <=0.35. Same reclaim and later follow-through.",
+  "signals": "Confirmed one-minute closes, 10:00-15:30 NY; one attempted qualifying test per zone per day. Two closes outside zone invalidate; gaps disable rest of session. Both-setup events appear once. Simultaneous candidates use profile-quality order.",
+  "dataRequirements": "Score only complete 390-minute RTH dates with a usable prior observed full RTH profile. Exclude initialization/unavailable-profile days from bootstrap eligibility rather than treating them as empty trading days. No invented candles; full input history retained.",
+  "holdoutStart": "2026-03-18",
+  "holdoutPolicy": "Fixed chronological split reused from vault. Initial cliff-only baseline emitted no signals over either split. Shelf revision frozen before observing any trade outcomes; later split is exploratory chronological validation, not a pristine untouched holdout. These dates are consumed for OFI after this run.",
+  "entry": "Next consecutive RTH minute open after confirmed signal; 1 NQ contract; one position; signals while occupied ignored; no entry after 15:30",
+  "stop": "Signal excursion extreme plus 1 point; initial planned risk after entry slippage must be 2 to 60 points inclusive",
+  "target": "2 times initial planned risk from slipped entry, rounded outward to 0.25 tick; fixed comparable trade model, not an intrinsic indicator win rate",
+  "maxHoldingMinutes": 60,
+  "exit": "Stop or target, otherwise 60th bar close or 15:59 close; missing-data exits censored, never invented",
+  "commissionRoundTripUsd": 4.5,
+  "pointValueUsd": 20,
+  "slippageTicksPerSide": 1,
+  "tickSize": 0.25,
+  "ambiguity": "Observed open resolves gaps first. If open inside brackets and both touched, stop-first is primary pessimistic assumption; target-first sensitivity also reported. Flag every ambiguous trade.",
+  "winDefinition": "Net P&L after modeled commission/slippage > 0; report TP rate separately; zero-net trades are not wins",
+  "monteCarlo": {
+    "paths": 10000,
+    "seed": 20261029,
+    "method": "moving blocks of 5 consecutive scored trading days, sampled with replacement; preserve intraday order and zero-trade days; horizon equals scored split length",
+    "outputs": [
+      "net win-rate percentile interval",
+      "total net USD distribution",
+      "max drawdown USD distribution",
+      "probability of net loss"
+    ],
+    "limits": "Conditional on this observed sample and cost model; no forecast guarantee, no fabricated price paths, no simple shuffle win-rate claim"
+  },
+  "settings": {
+    "Draw zones": false
+  },
+  "excludedFeatures": [
+    "exchange aggressor delta",
+    "DOM/MBO",
+    "GEX",
+    "TPO",
+    "five-day composite profile"
+  ],
+  "coverageAudit": "After first shelf replay, initialization days were found in bootstrap dates. Scoring eligibility was corrected; signal engine and trade rules unchanged. Superseded results are retained for audit."
+}

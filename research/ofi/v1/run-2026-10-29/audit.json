@@ -1,0 +1,29 @@
+{
+  "checks": [
+    "production Pine source hash matches run",
+    "trade/signal ledgers byte-identical before/after eligibility correction",
+    "five trades; two positive net outcomes",
+    "net USD independently recalculated from entry/exit, point value and fees",
+    "2R brackets and next-minute entry timestamps verified",
+    "initialization days excluded from bootstrap"
+  ],
+  "netUsd": 337.5,
+  "focusedTests": {
+    "passed": 10,
+    "failed": 0
+  },
+  "repositoryRegressionFiles": {
+    "passed": 9,
+    "failed": 0
+  },
+  "etherealGeneratedSource": "unchanged; build check passed",
+  "nativeTradingViewCompilation": "not performed",
+  "repoBaseCommit": "ef0181605546f9222a1e096a2f8aa3ad58f04e01",
+  "filesSha256": {
+    "indicators/ofi.pine": "cf76ef2142dc9a492d0a247235a84f5d0bb9233a82438de622e07e2b666e4793",
+    "tools/ofi-replay.mjs": "60e962d182382fb7a57c5cf53203be381bd6948751ca75b3ac46408b5d4417c7",
+    "tools/ofi-study.mjs": "725e818eb5d5067a1ad2d8fded68c5a874e40525ba7c6bc9cd7cd7413eb68608",
+    "tests/ofi.test.mjs": "1b45d894edf4093d200f36e4e524c42f6fdb10b5d396e1bc5032c6528b7f83be",
+    "package-lock.json": "221d29358dbaf77f20d3a4f1fccedb0c387b5503bad98aa708403f7d17f880d1"
+  }
+}
